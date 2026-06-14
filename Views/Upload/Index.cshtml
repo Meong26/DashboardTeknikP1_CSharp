@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Upload Data SAP";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white fw-bold">
+                Sinkronisasi Manual Data SAP (Fase POC)
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info">
+                    <strong>Catatan:</strong> Menu ini digunakan untuk melakukan ekstraksi data ke SQL Server selama fase POC berlangsung. Jika koneksi API/Background Job sudah di-ACC oleh Corporate IT, menu ini akan dinonaktifkan.
+                </div>
+
+                <form asp-controller="Upload" asp-action="ProcessUpload" method="post" enctype="multipart/form-data">
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">1. File Downtime (YP11.xlsx)</label>
+                        <input type="file" name="fileYP11" class="form-control" accept=".xlsx" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">2. File Produksi (YR21.xlsx)</label>
+                        <input type="file" name="fileYR21" class="form-control" accept=".xlsx" />
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">3. File Suku Cadang (SP.xlsx)</label>
+                        <input type="file" name="fileSP" class="form-control" accept=".xlsx" />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 fw-bold">Ekstrak & Simpan ke Database</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

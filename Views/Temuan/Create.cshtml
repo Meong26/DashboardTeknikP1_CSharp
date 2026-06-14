@@ -1,0 +1,43 @@
+@model DashboardTeknikP1.Models.TemuanAbnormal
+
+@{
+    ViewData["Title"] = "Input Temuan Baru";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-top border-primary border-4">
+            <div class="card-header bg-white">
+                <h4 class="mb-0 fw-bold">Formulir Ketidaksesuaian Mesin</h4>
+            </div>
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Pilih Mesin Bermasalah</label>
+                        <select asp-for="MesinID" class="form-select" required>
+                            <option value="">-- Pilih Mesin --</option>
+                            <option value="WR01">WR01 - Wrapper Line 1</option>
+                            <option value="AL01">AL01 - Autoloader Line 1</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Deskripsi Abnormalitas</label>
+                        <textarea asp-for="DeskripsiAbnormal" class="form-control" rows="3" placeholder="Contoh: Sensor X tidak membaca kemasan..." required></textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Tindakan Korektif (Perbaikan)</label>
+                        <textarea asp-for="TindakanKorektif" class="form-control" rows="3" placeholder="Contoh: Membersihkan mata sensor dan kalibrasi ulang..." required></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="/Temuan" class="btn btn-outline-secondary">Batal</a>
+                        <button type="submit" class="btn btn-primary px-5 fw-bold">Simpan Laporan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

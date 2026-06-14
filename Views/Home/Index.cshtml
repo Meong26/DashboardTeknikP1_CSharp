@@ -1,0 +1,265 @@
+﻿@{
+    ViewData["Title"] = "Dashboard Performance";
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h1 class="h4 fw-bold text-primary mb-1">Monitoring Real-Time Performa Teknik</h1>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4 border-top border-primary border-3">
+    <div class="card-body py-3">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label fw-bold small text-muted mb-1">Jenis Notifikasi</label>
+                <select id="fltNotif" class="form-select form-select-sm" onchange="updateDashboard()">
+                    <option value="">Semua (NV/NT)</option>
+                    <option value="NV">NV - Normal</option>
+                    <option value="NT">NT - Teknik</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold small text-muted mb-1">Regu / Shift</label>
+                <select id="fltShift" class="form-select form-select-sm" onchange="updateDashboard()">
+                    <option value="">Semua Regu</option>
+                    <option value="A">Regu A</option>
+                    <option value="B">Regu B</option>
+                    <option value="C">Regu C</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-muted mb-1">Spesifik Mesin</label>
+                <select id="fltMesin" class="form-select form-select-sm" onchange="updateDashboard()">
+                    <option value="">Semua Mesin</option>
+                    </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-muted mb-1">Tampilkan Grafik Berdasarkan</label>
+                <select id="grpTime" class="form-select form-select-sm bg-light" onchange="updateDashboard()">
+                    <option value="WC">Work Center / Line (Default)</option>
+                    <option value="Day">Tren Harian (Hari)</option>
+                    <option value="Week">Tren Mingguan (Week Indofood)</option>
+                    <option value="Month">Tren Bulanan (Bulan)</option>
+                    <option value="Year">Tren Tahunan (Tahun)</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-sm btn-outline-danger w-100 fw-bold" onclick="resetFilters()">Reset Filter</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 col-md-12">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white fw-bold">📊 Analitik Downtime Mesin (Menit)</div>
+            <div class="card-body">
+                <canvas id="downtimeChart" style="max-height: 300px;"></canvas>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white fw-bold d-flex justify-content-between align-items-center">
+                <span>🔍 Rincian Kasus Downtime</span>
+                <div>
+                    <button class="btn btn-sm btn-light border" onclick="sortTable(3)">Sort Durasi ⇅</button>
+                    <button class="btn btn-sm btn-light border" onclick="sortTable(4)">Sort Tanggal ⇅</button>
+                </div>
+            </div>
+            <div class="card-body p-0" style="max-height: 350px; overflow-y: auto;">
+                <table class="table table-striped table-hover mb-0 text-sm" style="font-size: 0.9rem;">
+                    <thead class="table-dark sticky-top">
+                        <tr>
+                            <th>Line / WC</th>
+                            <th>Mesin</th>
+                            <th>Deskripsi Gangguan</th>
+                            <th>Menit</th>
+                            <th>Tanggal</th>
+                            <th>Regu</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-12">
+        <div class="card shadow-sm border-start border-danger border-4">
+            <div class="card-header bg-danger text-white fw-bold d-flex justify-content-between align-items-center">
+                <span>⚠️ EWS Sparepart</span>
+                <span class="badge bg-white text-danger">@(((List<SAP_Sparepart>)ViewBag.EwsParts).Count) Kritis</span>
+            </div>
+            <div class="card-body p-0" style="max-height: 770px; overflow-y: auto;">
+                <ul class="list-group list-group-flush">
+                    @if (ViewBag.EwsParts != null && ((List<SAP_Sparepart>)ViewBag.EwsParts).Any())
+                    {
+                        foreach (var sp in (List<SAP_Sparepart>)ViewBag.EwsParts)
+                        {
+                            <li class="list-group-item d-flex justify-content-between py-3">
+                                <div>
+                                    <div class="fw-bold" style="font-size: 0.85rem;">@sp.MaterialNoDescription</div>
+                                    <small class="text-muted">No: @sp.MaterialNo | SLoc: @sp.SLoc</small>
+                                </div>
+                                <div class="text-end ms-2">
+                                    <span class="badge bg-danger rounded-pill d-block mb-1">Stok: @sp.TotalQtyStock</span>
+                                </div>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Tarik HANYA detailData, karena kita akan melakukan kalkulasi summary secara dinamis di JS!
+    const detailData = @Html.Raw(ViewBag.DetailsJson);
+    
+    let chartInstance = null;
+    let currentDataView = [];
+    let sortDirection = false;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        populateMesinDropdown();
+        updateDashboard(); // Render pertama kali
+    });
+
+    // 1. ISI DROPDOWN MESIN SECARA OTOMATIS
+    function populateMesinDropdown() {
+        const ddlMesin = document.getElementById("fltMesin");
+        const uniqueMesin = [...new Set(detailData.map(item => item.FunctionLocation).filter(m => m))].sort();
+        
+        uniqueMesin.forEach(mesin => {
+            let option = document.createElement("option");
+            option.value = mesin;
+            option.text = mesin;
+            ddlMesin.appendChild(option);
+        });
+    }
+
+    // 2. OTAK UTAMA: PROSES FILTER DAN GROUPING
+    function updateDashboard() {
+        const notif = document.getElementById("fltNotif").value;
+        const shift = document.getElementById("fltShift").value;
+        const mesin = document.getElementById("fltMesin").value;
+        const groupBy = document.getElementById("grpTime").value;
+
+        // A. Proses Filtering (Slicing)
+        currentDataView = detailData.filter(item => {
+            let matchNotif = notif === "" || (item.NotificationType && item.NotificationType.includes(notif));
+            let matchShift = shift === "" || (item.WageGroup_GroupShift && item.WageGroup_GroupShift.includes(shift));
+            let matchMesin = mesin === "" || (item.FunctionLocation === mesin);
+            return matchNotif && matchShift && matchMesin;
+        });
+
+        // B. Proses Grouping untuk Grafik (Dicing)
+        const aggregated = {};
+        currentDataView.forEach(item => {
+            let key = "Lainnya";
+            let dObj = new Date(item.NotificationDate);
+            
+            if (groupBy === "WC") key = item.WorkCenterPPDesc || "N/A";
+            else if (groupBy === "Day") key = dObj.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+            else if (groupBy === "Week") key = item.WeekKalendarIndofood ? `Week ${item.WeekKalendarIndofood}` : "No Week";
+            else if (groupBy === "Month") key = dObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+            else if (groupBy === "Year") key = dObj.getFullYear().toString();
+
+            if (!aggregated[key]) aggregated[key] = 0;
+            aggregated[key] += item.TotalDownTimeInMinutes;
+        });
+
+        // Konversi ke format array agar bisa digambar Chart.js
+        const chartLabels = Object.keys(aggregated);
+        const chartValues = Object.values(aggregated);
+
+        renderChart(chartLabels, chartValues, groupBy);
+        renderTable(currentDataView);
+    }
+
+    // 3. GAMBAR GRAFIK
+    function renderChart(labels, values, mode) {
+        const ctx = document.getElementById('downtimeChart').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+
+        // Variasi warna batang grafik agar lebih estetis
+        const barColor = mode === 'WC' ? 'rgba(54, 162, 235, 0.8)' : 'rgba(255, 159, 64, 0.8)';
+
+        chartInstance = new Chart(ctx, {
+            type: mode === 'WC' ? 'bar' : 'line', // Berubah jadi line chart jika waktu!
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Durasi Downtime (Menit)',
+                    data: values,
+                    backgroundColor: barColor,
+                    borderColor: barColor.replace('0.8', '1'),
+                    borderWidth: 2,
+                    fill: mode !== 'WC', // Beri warna latar jika Line Chart
+                    tension: 0.3 // Garis agak melengkung halus
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false }
+        });
+    }
+
+    // 4. UPDATE TABEL
+    function renderTable(dataToDisplay) {
+        const tbody = document.getElementById('table-body');
+        
+        if(dataToDisplay.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-3 text-danger fw-bold">Tidak ada data untuk filter tersebut.</td></tr>`;
+            return;
+        }
+
+        // Kumpulkan semua baris HTML ke dalam satu variabel penampung (buffer)
+        let rowsHtml = "";
+
+        dataToDisplay.forEach(item => {
+            const fDate = new Date(item.NotificationDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+            let shiftBadge = item.WageGroup_GroupShift ? item.WageGroup_GroupShift : '-';
+            
+            // Tambahkan ke penampung, BUKAN langsung ke layar
+            rowsHtml += `
+                <tr>
+                    <td class="fw-bold">${item.WorkCenterPPDesc || '-'}</td>
+                    <td><small>${item.FunctionLocation || '-'}</small></td>
+                    <td>${item.NotificationDesc} <br><small class="text-primary">${item.NotificationType}</small></td>
+                    <td class="text-danger fw-bold">${item.TotalDownTimeInMinutes}</td>
+                    <td>${fDate}</td>
+                    <td><span class="badge bg-secondary">${shiftBadge}</span></td>
+                </tr>`;
+        });
+
+        // Tembakkan ke layar HANYA 1 KALI (Mencegah browser hang)
+        tbody.innerHTML = rowsHtml;
+    }
+
+    // 5. FITUR SORT TABEL 
+    function sortTable(colIndex) {
+        sortDirection = !sortDirection;
+        let sorted = [...currentDataView];
+        
+        if (colIndex === 3) {
+            sorted.sort((a, b) => sortDirection ? a.TotalDownTimeInMinutes - b.TotalDownTimeInMinutes : b.TotalDownTimeInMinutes - a.TotalDownTimeInMinutes);
+        } else if (colIndex === 4) {
+            sorted.sort((a, b) => sortDirection ? new Date(a.NotificationDate) - new Date(b.NotificationDate) : new Date(b.NotificationDate) - new Date(a.NotificationDate));
+        }
+        renderTable(sorted);
+    }
+
+    // 6. RESET FILTER
+    function resetFilters() {
+        document.getElementById("fltNotif").value = "";
+        document.getElementById("fltShift").value = "";
+        document.getElementById("fltMesin").value = "";
+        document.getElementById("grpTime").value = "WC";
+        updateDashboard();
+    }
+</script>
