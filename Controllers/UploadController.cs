@@ -5,6 +5,7 @@ using DashboardTeknikP1.Models;
 using OfficeOpenXml;
 using System;
 using System.IO;
+using System.Globalization;
 
 namespace DashboardTeknikP1.Controllers
 {
@@ -152,10 +153,15 @@ namespace DashboardTeknikP1.Controllers
         // =========================================================
         private DateTime ParseDate(string dateText)
         {
-            dateText = dateText ?? "";
-            if (DateTime.TryParse(dateText, out DateTime result))
+            dateText = dateText?.Trim() ?? ""; 
+            
+            // Paksa C# membaca dengan format dd/MM/yyyy (Indonesia/Eropa)
+            CultureInfo idCulture = new CultureInfo("id-ID");
+
+            if (DateTime.TryParse(dateText, idCulture, DateTimeStyles.None, out DateTime result))
                 return result;
-            return new DateTime(1900, 1, 1);
+                
+            return new DateTime(1900, 1, 1); 
         }
 
         private double ParseDouble(string numberText)
@@ -184,10 +190,15 @@ namespace DashboardTeknikP1.Controllers
 
         private DateTime ParseTime(string dateText, string timeText)
         {
-            dateText = dateText ?? "";
-            timeText = timeText ?? "";
-            if (DateTime.TryParse($"{dateText} {timeText}", out DateTime result))
+            dateText = dateText?.Trim() ?? "";
+            timeText = timeText?.Trim() ?? "";
+
+            CultureInfo idCulture = new CultureInfo("id-ID");
+
+            // Menggabungkan kolom Tanggal dan Waktu (Jam)
+            if (DateTime.TryParse($"{dateText} {timeText}", idCulture, DateTimeStyles.None, out DateTime result))
                 return result;
+                
             return new DateTime(1900, 1, 1);
         }
     }

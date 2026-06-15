@@ -15,15 +15,13 @@ namespace DashboardTeknikP1.Controllers
 
         public IActionResult Index()
         {
-            var summary = _repository.GetDowntimeSummary();
-            var details = _repository.GetDowntimeDetails();
-            var ewsParts = _repository.GetEwsSpareparts();
+            var detailsYP = _repository.GetDowntimeDetails();
+            var detailsYR = _repository.GetProduksiDetails();
 
-            // Amankan data ke ViewBag dengan konversi JSON agar bisa dibaca langsung oleh JavaScript Chart
-            ViewBag.SummaryJson = JsonSerializer.Serialize(summary);
-            ViewBag.DetailsJson = JsonSerializer.Serialize(details);
-            ViewBag.EwsParts = ewsParts;
-
+            ViewBag.DetailsJson = JsonSerializer.Serialize(detailsYP);
+            ViewBag.Yr21Json = JsonSerializer.Serialize(detailsYR);
+            
+            // EWS Sparepart sementara tidak kita kirim ke view ini karena fokus ke YR21 & YP11
             return View();
         }
     }
