@@ -6,10 +6,11 @@ namespace DashboardTeknikP1.Models
     {
         public int TemuanID { get; set; }
         public DateTime TanggalInput { get; set; }
-        public string UserID { get; set; }
-        public string MesinID { get; set; }
-        public string DeskripsiAbnormal { get; set; }
-        public string TindakanKorektif { get; set; }
-        public string StatusTemuan { get; set; }
+        public string UserID { get; set; } = string.Empty;
+        public string KodeMesin { get; set; } = string.Empty;
+        public string NamaMesin { get; set; } = string.Empty; 
+        public string DeskripsiAbnormal { get; set; } = string.Empty;
+        public string TindakanKorektif { get; set; } = string.Empty;
+        public string StatusTemuan { get; set; } = string.Empty;
     }
 }

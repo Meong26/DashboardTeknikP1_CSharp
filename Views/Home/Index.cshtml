@@ -31,8 +31,8 @@
         <label class="form-label fw-bold small text-muted mb-1">Jenis Notifikasi</label>
         <select id="fltNotif" class="form-select form-select-sm" onchange="updateDashboard()">
             <option value="">Semua (NV & NT)</option>
-            <option value="NV">NV - Normal</option>
-            <option value="NT">NT - Teknik</option>
+            <option value="NV">NV - DT Lain Lain</option>
+            <option value="NT">NT - DT Mesin</option>
         </select>
     </div>
     <div class="col-md-2">
@@ -107,7 +107,7 @@
                 <table class="table table-sm table-hover table-striped mb-0" style="font-size: 0.85rem;" id="mainTable">
                     <thead class="table-dark sticky-top" id="table-header"></thead>
                     <tbody id="table-body">
-                        <tr><td colspan="6" class="text-center py-4 text-muted">Klik salah satu batang grafik di atas untuk melihat detail.</td></tr>
+                        <tr><td colspan="6" class="text-center py-4 text-muted">Klik salah satu titik waktu pada grafik di atas untuk melihat detail.</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -158,7 +158,22 @@
 
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
     const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    
+    // --- PEMANTAU TEMA DARK MODE ---
+    const themeObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.attributeName === "data-bs-theme") {
+                if (barChartInst) barChartInst.update();
+                if (pieChartInst) pieChartInst.update();
+            }
+        });
+    });
+    themeObserver.observe(document.documentElement, { attributes: true });
 
+    // Fungsi pembantu pendeteksi warna
+    const getChartLabelColor = () => document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '#f8f9fa' : '#333';
+    const getGridColor = () => document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+    
     document.addEventListener("DOMContentLoaded", () => {
         populateDynamicDropdowns();
         handleModeChange(); 
@@ -474,7 +489,7 @@
                         anchor: 'end', 
                         align: 'top', 
                         offset: 4, // Jarak teks dari titik agar tidak menabrak garis
-                        color: '#333', 
+                        color: getChartLabelColor, 
                         font: { weight: 'bold', size: 10 }, 
                         formatter: function(v, ctx) { 
                             return ctx.dataset.label === 'Standar (1.5%)' ? null : `${v}% \n(${ctx.dataset.customMinutes[ctx.dataIndex]} m)`; 
@@ -519,7 +534,7 @@
             data: {
                 labels: labels,
                 datasets: [
-                    { type: 'line', label: '% Kumulatif', data: cumPctData, borderColor: 'rgba(220, 53, 69, 1)', backgroundColor: 'rgba(220, 53, 69, 0.1)', borderWidth: 2, pointRadius: 4, yAxisID: 'yPareto', fill: false, datalabels: { anchor: 'bottom', align: 'top', formatter: v => `${v}%`, color: 'red', font: { size: 9 } } },
+                    { type: 'line', label: '% Kumulatif', data: cumPctData, borderColor: 'rgba(220, 53, 69, 1)', backgroundColor: 'rgba(220, 53, 69, 0.1)', borderWidth: 2, pointRadius: 4, yAxisID: 'yPareto', fill: false, datalabels: { anchor: 'bottom', align: 'top', formatter: v => `${v}%`, color: getChartLabelColor, font: { size: 9 } } },
                     { type: 'bar', label: 'Downtime (Menit)', data: minData, backgroundColor: 'rgba(153, 102, 255, 0.7)', borderColor: 'rgba(153, 102, 255, 1)', borderWidth: 1, borderRadius: 4, yAxisID: 'yMins', customMinutes: minData }
                 ]
             },
@@ -571,7 +586,7 @@
         barChartInst = new Chart(ctx, {
             type: 'bar',
             data: { labels: labels, datasets: [{ label: `Total Downtime (Menit) - ${selectedTimeLabel}`, data: dataMins, backgroundColor: 'rgba(255, 159, 64, 0.85)', borderColor: 'rgba(255, 159, 64, 1)', borderWidth: 1, borderRadius: 4 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor: 'end', align: 'top', color: '#333', font: { weight: 'bold', size: 11 }, formatter: val => `${val} m` } }, scales: { y: { beginAtZero: true, suggestedMax: Math.max(...dataMins) * 1.2 } }, onClick: (e, elements) => { if (elements.length > 0) { const idx = elements[0].index; const key = labels[idx]; loadDrillDownTable(`${selectedTimeLabel} ➔ ${key}`, subAgg[key].items); } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor: 'end', align: 'top', color: getChartLabelColor, font: { weight: 'bold', size: 11 }, formatter: val => `${val} m` } }, scales: { y: { beginAtZero: true, suggestedMax: Math.max(...dataMins) * 1.2 } }, onClick: (e, elements) => { if (elements.length > 0) { const idx = elements[0].index; const key = labels[idx]; loadDrillDownTable(`${selectedTimeLabel} ➔ ${key}`, subAgg[key].items); } } }
         });
     }
 
@@ -587,7 +602,7 @@
 
         const ctx = document.getElementById('pieChart').getContext('2d');
         if (pieChartInst) pieChartInst.destroy();
-        pieChartInst = new Chart(ctx, { type: 'pie', data: { labels: Object.keys(reguAgg), datasets: [{ data: Object.values(reguAgg), backgroundColor: ['rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)', 'rgba(201, 203, 207, 0.8)'], borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { color: '#fff', font: { weight: 'bold', size: 11 }, formatter: (val) => val > 0 ? `${val}m` : null } } } });
+        pieChartInst = new Chart(ctx, { type: 'pie', data: { labels: Object.keys(reguAgg), datasets: [{ data: Object.values(reguAgg), backgroundColor: ['rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)', 'rgba(201, 203, 207, 0.8)'], borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { color: getChartLabelColor, font: { weight: 'bold', size: 11 }, formatter: (val) => val > 0 ? `${val}m` : null } } } });
     }
 
     function loadDrillDownTable(title, items) {

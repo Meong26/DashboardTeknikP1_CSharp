@@ -1,0 +1,312 @@
+@{
+    ViewData["Title"] = "Manajemen Sparepart";
+}
+
+<div class="row mb-2 align-items-center" style="height: 8vh;">
+    <div class="col">
+        <h4 class="fw-bold text-primary mb-0">
+            <i class="bi bi-box-seam me-2"></i> Sistem Manajemen Sparepart & EWS
+        </h4>
+        <small class="text-muted">
+            Pantau ketersediaan material SAP, lokasi penyimpanan, dan peringatan dini stok kritis.
+        </small>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-3 border-top border-4 border-danger d-flex flex-column" style="height: 34vh;">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-2 border-bottom">
+        <span class="fw-bold text-danger" style="font-size: 0.9rem;">
+            <i class="bi bi-exclamation-octagon-fill me-2"></i> Early Warning System (Stok Habis & Kritis)
+        </span>
+        <span class="badge bg-danger rounded-pill px-3 py-1 fw-bold" id="ewsCount">0 Item</span>
+    </div>
+    <div class="card-body p-0 flex-grow-1" style="overflow-y: auto;">
+        <table class="table table-hover table-sm mb-0 align-middle font-monospace" style="font-size: 0.85rem;" id="ewsTable">
+            <thead class="table-dark sticky-top text-uppercase" style="z-index: 2;">
+                <tr>
+                    <th style="width: 15%;">No. Material</th>
+                    <th style="width: 40%;">Deskripsi Sparepart</th>
+                    <th style="width: 15%;">Bin Lokasi</th>
+                    <th style="width: 10%;" class="text-center">Safety</th>
+                    <th style="width: 10%;" class="text-center">Aktual</th>
+                    <th style="width: 10%;" class="text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody id="ewsTableBody" class="font-sans-serif">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 d-flex flex-column" style="height: 48vh;">
+    <div class="card-header bg-white py-2 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 border-bottom">
+        
+        <div class="input-group input-group-sm shadow-sm" style="max-width: 400px;">
+            <span class="input-group-text bg-white border-end-0 text-primary">
+                <i class="bi bi-search"></i>
+            </span>
+            <input type="text" class="form-control border-start-0 ps-1" id="smartSearch" 
+                   placeholder="Ketik 'bearing mixer', atau 'no material'..." onkeyup="handleSearch()">
+        </div>
+        
+        <div class="d-flex align-items-center gap-2">
+            <select id="statusFilter" class="form-select form-select-sm border-secondary w-auto shadow-sm" onchange="handleStatusFilter()">
+                <option value="ALL">Semua Status Suku Cadang</option>
+                <option value="EMPTY">Stok Kosong (0)</option>
+                <option value="CRITICAL">Stok Kritis (≤ Safety Stock)</option>
+                <option value="SAFE">Stok Aman</option>
+            </select>
+            <button class="btn btn-sm btn-outline-primary fw-bold shadow-sm" onclick="resetDashboard()">
+                <i class="bi bi-arrow-clockwise me-1"></i> Reset
+            </button>
+        </div>
+    </div>
+    
+    <div class="card-body p-0 flex-grow-1" style="overflow-y: auto;">
+        <table class="table table-hover table-striped table-sm mb-0 align-middle font-monospace" style="font-size: 0.85rem;" id="sparepartTable">
+            <thead class="table-dark sticky-top text-uppercase" style="z-index: 2;">
+                <tr>
+                    <th style="cursor:pointer; width: 12%;" onclick="sortTable(0)">No. Material ⇅</th>
+                    <th style="cursor:pointer; width: 35%;" onclick="sortTable(1)">Deskripsi Sparepart ⇅</th>
+                    <th style="cursor:pointer; width: 18%;" onclick="sortTable(2)">Grup Material ⇅</th>
+                    <th style="cursor:pointer; width: 10%;" onclick="sortTable(3)">Bin Lokasi ⇅</th>
+                    <th style="cursor:pointer; width: 8%;" class="text-center" onclick="sortTable(4)">Safety ⇅</th>
+                    <th style="cursor:pointer; width: 8%;" class="text-center" onclick="sortTable(5)">Aktual ⇅</th>
+                    <th style="width: 9%;" class="text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody id="sparepartTableBody" class="font-sans-serif">
+                </tbody>
+        </table>
+    </div>
+    
+    <div class="card-footer bg-white border-top py-1 px-3 text-muted small d-flex justify-content-between align-items-center">
+        <span style="font-size: 0.8rem;">Menampilkan <strong id="lblShowingCount">0</strong> dari <strong id="lblTotalCount">0</strong> baris material SAP.</span>
+        <span class="badge bg-light text-dark border font-monospace">SLoc: P1</span>
+    </div>
+</div>
+
+<script>
+    const dbDataRaw = @Html.Raw(ViewBag.DataJson ?? "[]");
+
+    const datasetSparepart = dbDataRaw.map(item => {
+        let actual = item.TotalQtyStock !== null ? item.TotalQtyStock : 0;
+        let safety = item.SafetyStock !== null ? item.SafetyStock : 0;
+        
+        return {
+            materialNo: item.MaterialNo ? item.MaterialNo.trim() : "-",
+            description: item.MaterialNoDescription ? item.MaterialNoDescription.trim() : "No Description",
+            groupDesc: item.MatrGroupDescription ? item.MatrGroupDescription.trim() : "-",
+            storageBin: item.StorBin ? item.StorBin.trim() : "-",
+            uom: item.BUn ? item.BUn.trim() : "PC",
+            safetyStock: safety,
+            actualStock: actual,
+            slowMovingDays: item.LamaTdkBergerakDay || 0,
+            price: item.MvgAvgPriceIDR || 0
+        };
+    });
+
+    let currentFilteredData = [...datasetSparepart];
+    let sortState = { col: -1, asc: true };
+
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById('lblTotalCount').innerText = datasetSparepart.length;
+        renderEWSContainer();
+        renderMainTableRows();
+    });
+
+    // ====================================================================
+    // LOGIKA EWS (SEKARANG MENJADI TABEL)
+    // ====================================================================
+    function renderEWSContainer() {
+        let outOfStockList = datasetSparepart.filter(item => item.actualStock === 0);
+        let criticalStockList = datasetSparepart.filter(item => item.actualStock > 0 && item.actualStock <= item.safetyStock);
+        let ewsCombinedList = [...outOfStockList, ...criticalStockList];
+
+        const tbody = document.getElementById('ewsTableBody');
+        document.getElementById('ewsCount').innerText = `${ewsCombinedList.length} Item`;
+
+        if (ewsCombinedList.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-4 text-success fw-bold font-sans-serif">
+                        <i class="bi bi-check-circle-fill me-2"></i> Luar biasa! Seluruh stok sparepart aman di atas ambang batas safety stock.
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        let htmlGrid = "";
+        ewsCombinedList.forEach(item => {
+            let isZero = item.actualStock === 0;
+            let rowClass = isZero ? "table-danger" : "table-warning";
+            let badgeClass = isZero ? "bg-danger" : "bg-warning text-dark border border-warning";
+            let statusText = isZero ? "HABIS" : "KRITIS";
+
+            htmlGrid += `
+            <tr class="${rowClass} ews-row" onclick="focusSearchToItem('${item.materialNo}')" title="Klik untuk melacak detail di tabel utama">
+                <td class="font-monospace fw-bold">${item.materialNo}</td>
+                <td class="fw-bold text-truncate" style="max-width: 300px;">${item.description}</td>
+                <td><span class="badge bg-secondary-subtle text-secondary-emphasis border">${item.storageBin}</span></td>
+                <td class="text-center text-muted fw-bold">${item.safetyStock}</td>
+                <td class="text-center fw-bold ${isZero ? 'text-danger' : ''}">${item.actualStock} <span class="small">${item.uom}</span></td>
+                <td class="text-center"><span class="badge ${badgeClass} fw-bold w-100">${statusText}</span></td>
+            </tr>`;
+        });
+        tbody.innerHTML = htmlGrid;
+    }
+
+    // ====================================================================
+    // LOGIKA SMART SEARCHBAR & TABEL BAWAH
+    // ====================================================================
+    function performFiltering() {
+        const searchQuery = document.getElementById('smartSearch').value.toLowerCase().trim();
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        let filteredResult = datasetSparepart;
+        if (searchQuery) {
+            let tokens = searchQuery.split(" ").filter(t => t !== "");
+            filteredResult = datasetSparepart.filter(item => {
+                let textToSearch = `${item.materialNo} ${item.description} ${item.groupDesc} ${item.storageBin}`.toLowerCase();
+                return tokens.every(token => textToSearch.includes(token));
+            });
+        }
+
+        if (statusFilter === "EMPTY") {
+            filteredResult = filteredResult.filter(item => item.actualStock === 0);
+        } else if (statusFilter === "CRITICAL") {
+            filteredResult = filteredResult.filter(item => item.actualStock > 0 && item.actualStock <= item.safetyStock);
+        } else if (statusFilter === "SAFE") {
+            filteredResult = filteredResult.filter(item => item.actualStock > item.safetyStock);
+        }
+
+        currentTableData = filteredResult;
+        renderMainTableRows();
+    }
+
+    function handleSearch() { performFiltering(); }
+    function handleStatusFilter() { performFiltering(); }
+
+    function focusSearchToItem(matNo) {
+        document.getElementById('statusFilter').value = "ALL";
+        document.getElementById('smartSearch').value = matNo;
+        performFiltering();
+        
+        // Gulir halus ke tabel bawah
+        document.getElementById('smartSearch').focus();
+        document.getElementById('smartSearch').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function resetDashboard() {
+        document.getElementById('smartSearch').value = "";
+        document.getElementById('statusFilter').value = "ALL";
+        currentTableData = [...datasetSparepart];
+        sortState = { col: -1, asc: true };
+        renderMainTableRows();
+    }
+
+    function sortTable(colIdx) {
+        if (currentTableData.length === 0) return;
+        
+        if (sortState.col === colIdx) {
+            sortState.asc = !sortState.asc;
+        } else {
+            sortState.col = colIdx;
+            sortState.asc = true;
+        }
+
+        currentTableData.sort((a, b) => {
+            let valA, valB;
+            if (colIdx === 0) { valA = a.materialNo; valB = b.materialNo; }
+            else if (colIdx === 1) { valA = a.description.toLowerCase(); valB = b.description.toLowerCase(); }
+            else if (colIdx === 2) { valA = a.groupDesc.toLowerCase(); valB = b.groupDesc.toLowerCase(); }
+            else if (colIdx === 3) { valA = a.storageBin.toLowerCase(); valB = b.storageBin.toLowerCase(); }
+            else if (colIdx === 4) { valA = a.safetyStock; valB = b.safetyStock; }
+            else if (colIdx === 5) { valA = a.actualStock; valB = b.actualStock; }
+            
+            if (valA < valB) return sortState.asc ? -1 : 1;
+            if (valA > valB) return sortState.asc ? 1 : -1;
+            return 0;
+        });
+
+        renderMainTableRows();
+    }
+
+    function renderMainTableRows() {
+        const tbody = document.getElementById('sparepartTableBody');
+        document.getElementById('lblShowingCount').innerText = currentTableData.length;
+        
+        if (currentTableData.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted fs-6 font-sans-serif">
+                        <i class="bi bi-search me-2 fs-5"></i> Tidak ada material suku cadang yang cocok.
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        let htmlBuffer = "";
+        currentTableData.forEach(item => {
+            let isZero = item.actualStock === 0;
+            let isCritical = item.actualStock > 0 && item.actualStock <= item.safetyStock;
+            
+            let badgeComponent = `<span class="badge bg-success-subtle text-success border border-success fw-bold px-2 w-100">AMAN</span>`;
+            let rowStyleClass = "";
+            let textStockStyle = "fw-bold text-success";
+
+            if (isZero) {
+                badgeComponent = `<span class="badge bg-danger text-white fw-bold px-2 w-100">KOSONG</span>`;
+                rowStyleClass = "table-danger opacity-90";
+                textStockStyle = "text-danger fw-bold fs-6";
+            } else if (isCritical) {
+                badgeComponent = `<span class="badge bg-warning text-dark fw-bold px-2 border border-warning w-100">KRITIS</span>`;
+                textStockStyle = "text-warning fw-bold fs-6";
+                rowStyleClass = "table-warning";
+            }
+
+            let titleTooltip = item.slowMovingDays > 30 ? `Material Slow Moving! Tidak bergerak selama ${item.slowMovingDays} hari.` : "";
+
+            htmlBuffer += `
+            <tr class="${rowStyleClass}" title="${titleTooltip}">
+                <td class="font-monospace fw-bold text-secondary text-nowrap">${item.materialNo}</td>
+                <td>
+                    <div class="fw-bold text-uppercase text-truncate" style="max-width: 380px;">${item.description}</div>
+                    ${item.slowMovingDays > 90 ? `<span class="text-danger fw-bold" style="font-size: 0.65rem;"><i class="bi bi-turtle-fill"></i> DORMANT > 90 DAYS</span>` : ""}
+                </td>
+                <td class="text-muted text-truncate" style="max-width: 200px;">${item.groupDesc}</td>
+                <td><span class="badge bg-secondary-subtle text-secondary-emphasis border font-monospace px-2">${item.storageBin}</span></td>
+                <td class="text-center text-secondary fw-bold">${item.safetyStock}</td>
+                <td class="text-center ${textStockStyle}">${item.actualStock} <span class="small text-muted fw-normal" style="font-size:0.7rem">${item.uom}</span></td>
+                <td class="text-center">${badgeComponent}</td>
+            </tr>`;
+        });
+        
+        tbody.innerHTML = htmlBuffer;
+    }
+</script>
+
+<style>
+    /* Mengunci tinggi elemen menggunakan flexbox dan Viewport Height (vh) */
+    /* Mencegah scroll ganda di layar, scroll hanya terjadi di dalam tubuh tabel */
+    #sparepartTable th, #ewsTable th {
+        border-bottom: 2px solid #222;
+        user-select: none;
+        white-space: nowrap;
+    }
+    #sparepartTable th:hover {
+        background-color: #212529 !important;
+        color: #ffc107 !important;
+    }
+    .font-sans-serif {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+    }
+    /* Efek hover khusus untuk baris EWS */
+    .ews-row {
+        cursor: pointer;
+        transition: background-color 0.15s;
+    }
+    .ews-row:hover {
+        opacity: 0.85;
+    }
+</style>

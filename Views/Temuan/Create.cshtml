@@ -15,21 +15,27 @@
                     
                     <div class="mb-3">
                         <label class="form-label fw-bold">Pilih Mesin Bermasalah</label>
-                        <select asp-for="MesinID" class="form-select" required>
+                        <select asp-for="KodeMesin" class="form-select" required>
                             <option value="">-- Pilih Mesin --</option>
-                            <option value="WR01">WR01 - Wrapper Line 1</option>
-                            <option value="AL01">AL01 - Autoloader Line 1</option>
+                            
+                            @if (ViewBag.DaftarMesin != null)
+                            {
+                                foreach (var mesin in ViewBag.DaftarMesin)
+                                {
+                                    <option value="@mesin.KodeMesin">@mesin.KodeMesin - @mesin.NamaMesin</option>
+                                }
+                            }
                         </select>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Deskripsi Abnormalitas</label>
-                        <textarea asp-for="DeskripsiAbnormal" class="form-control" rows="3" placeholder="Contoh: Sensor X tidak membaca kemasan..." required></textarea>
+                        <textarea asp-for="DeskripsiAbnormal" class="form-control" rows="3" placeholder="Contoh: Sensor proksimitas tidak membaca posisi silinder..." required></textarea>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label fw-bold">Tindakan Korektif (Perbaikan)</label>
-                        <textarea asp-for="TindakanKorektif" class="form-control" rows="3" placeholder="Contoh: Membersihkan mata sensor dan kalibrasi ulang..." required></textarea>
+                        <textarea asp-for="TindakanKorektif" class="form-control" rows="3" placeholder="Contoh: Membersihkan mata sensor dan menyetel ulang bracket..." required></textarea>
                     </div>
 
                     <div class="d-flex justify-content-between">

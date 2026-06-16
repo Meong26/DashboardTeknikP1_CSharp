@@ -1,0 +1,52 @@
+@model DashboardTeknikP1.Models.TemuanAbnormal
+
+@{
+    ViewData["Title"] = "Tutup Laporan Temuan";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm border-top border-danger border-4">
+            <div class="card-header bg-white">
+                <h4 class="mb-0 fw-bold text-danger">Penyelesaian Kendala Mesin</h4>
+            </div>
+            <div class="card-body p-4">
+                
+                <div class="bg-light p-3 rounded mb-4 border">
+                    <div class="row mb-2">
+                        <div class="col-sm-3 fw-bold text-muted">ID Laporan:</div>
+                        <div class="col-sm-9 fw-bold">#@Model.TemuanID</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-3 fw-bold text-muted">Mesin:</div>
+                        <div class="col-sm-9"><strong>@Model.KodeMesin</strong> - @Model.NamaMesin</div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-sm-3 fw-bold text-muted">Waktu Masuk:</div>
+                        <div class="col-sm-9">@Model.TanggalInput.ToString("dd MMM yyyy HH:mm")</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm-3 fw-bold text-muted">Deskripsi Masalah:</div>
+                        <div class="col-sm-9 text-danger fw-bold">@Model.DeskripsiAbnormal</div>
+                    </div>
+                </div>
+
+                <form asp-action="Close" method="post">
+                    <input type="hidden" name="TemuanID" value="@Model.TemuanID" />
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Tindakan Korektif / Perbaikan Final</label>
+                        <textarea name="TindakanKorektif" class="form-control" rows="4" required placeholder="Tuliskan perbaikan akhir yang telah dilakukan agar mesin bisa running kembali...">@Model.TindakanKorektif</textarea>
+                        <div class="form-text text-muted">Catatan perbaikan ini akan disimpan sebagai histori pemeliharaan mesin.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="/Temuan" class="btn btn-outline-secondary">Kembali</a>
+                        <button type="submit" class="btn btn-danger px-4 fw-bold">⚙️ Selesaikan & Tutup Laporan</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
