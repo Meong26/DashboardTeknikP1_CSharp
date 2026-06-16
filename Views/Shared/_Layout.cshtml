@@ -26,14 +26,12 @@
         #sidebar-wrapper {
             min-height: 100vh;
             width: 250px;
-            /* Gunakan transisi yang lebih cepat (0.2s) dengan bezier curve agar snappy */
             transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            /* PERINTAH SAKTI: Beritahu GPU untuk bersiap mengubah width */
             will-change: width; 
             display: flex;
             flex-direction: column;
             z-index: 1000;
-            overflow: hidden; /* Cegah teks tumpah saat menyusut */
+            overflow: visible; /* Diubah jadi visible agar dropup profil tidak terpotong */
         }
 
         #sidebar-wrapper.collapsed {
@@ -46,7 +44,7 @@
             overflow: hidden;
             cursor: pointer;
             transition: background-color 0.2s ease;
-            white-space: nowrap; /* Cegah teks turun ke bawah saat animasi */
+            white-space: nowrap; 
         }
         .sidebar-heading:hover {
             background-color: rgba(255,255,255,0.05);
@@ -62,13 +60,14 @@
         .sidebar-menu .list-group-item {
             border: none;
             padding: 1rem 1.5rem;
-            white-space: nowrap; /* Wajib agar teks tidak patah-patah */
+            white-space: nowrap; 
             overflow: hidden;
             display: flex;
             align-items: center;
             background: transparent;
             color: #d1d5db; 
             transition: background 0.2s, color 0.2s;
+            cursor: pointer;
         }
 
         .sidebar-menu .list-group-item:hover, .sidebar-menu .list-group-item.active {
@@ -99,20 +98,20 @@
         #sidebar-wrapper.collapsed .nav-text {
             display: none;
         }
+        
+        /* Sembunyikan panah dropup profil saat sidebar ciut */
+        #sidebar-wrapper.collapsed .dropdown-toggle::after {
+            display: none;
+        }
 
-        /* Area Konten Utama - OPTIMASI ANTI LAG */
+        /* Area Konten Utama */
         #page-content-wrapper {
             flex-grow: 1;
             overflow-y: auto;
-            overflow-x: hidden; /* PERINTAH SAKTI 2: Cegah scrollbar horizontal berkedip saat animasi */
+            overflow-x: hidden; 
             display: flex;
             flex-direction: column;
-            /* Tambahkan will-change agar konten web tidak kaget saat didorong sidebar */
             will-change: width, flex-grow; 
-        }
-
-        #top-navbar {
-            transition: background-color 0.2s ease;
         }
     </style>
 </head>
@@ -136,52 +135,41 @@
 
             </div>
             
-            <div class="list-group list-group-flush sidebar-menu mt-3 flex-grow-1">
-                <a href="/" class="list-group-item list-group-item-action text-decoration-none">
+            <div class="list-group list-group-flush sidebar-menu mt-3 flex-grow-1" style="overflow-y: auto; overflow-x: hidden;">
+                <a href="/" class="list-group-item list-group-item-action text-decoration-none nav-link-item">
                     <i class="bi bi-bar-chart-fill"></i> <span class="nav-text">Analitik Performa</span>
                 </a>
-                <a href="/Temuan" class="list-group-item list-group-item-action text-decoration-none">
+                <a href="/Temuan" class="list-group-item list-group-item-action text-decoration-none nav-link-item">
                     <i class="bi bi-tools"></i> <span class="nav-text">Log Kerusakan</span>
                 </a>
-                <a href="/Upload" class="list-group-item list-group-item-action text-decoration-none">
+                <a href="/Upload" class="list-group-item list-group-item-action text-decoration-none nav-link-item">
                     <i class="bi bi-cloud-arrow-up-fill"></i> <span class="nav-text">Sinkronisasi SAP</span>
                 </a>
             </div>
             
-            <div class="p-3 text-center text-secondary small nav-text border-top border-secondary">
-                v1.0.0
+            <div class="list-group list-group-flush sidebar-menu mt-auto border-top border-secondary pb-2 pt-2">
+                
+                <div class="list-group-item list-group-item-action" id="btnThemeToggle" title="Ganti Tema">
+                    <i class="bi bi-moon-stars-fill" id="themeIcon"></i> 
+                    <span class="nav-text">Mode Gelap</span>
+                </div>
+
+                <div class="dropup w-100">
+                    <div class="list-group-item list-group-item-action dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="accountDropup" title="Profil Akun">
+                        <i class="bi bi-person-circle text-warning"></i> 
+                        <span class="nav-text">Djaka Ramdhani</span>
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-dark shadow-lg mb-2 ms-2" style="min-width: 200px;">
+                        <li><a class="dropdown-item py-2" href="#"><i class="bi bi-gear me-3"></i>Pengaturan</a></li>
+                        <li><hr class="dropdown-divider border-secondary"></li>
+                        <li><a class="dropdown-item text-danger py-2" href="#"><i class="bi bi-box-arrow-right me-3"></i>Keluar</a></li>
+                    </ul>
+                </div>
+
             </div>
         </div>
 
         <div id="page-content-wrapper">
-            <nav class="navbar navbar-expand-lg bg-primary text-white shadow-sm" id="top-navbar">
-                <div class="container-fluid px-4">
-                    
-                    <button class="btn btn-outline-light border-0 fs-5 d-none d-md-block" id="topNavToggle">
-                        <i class="bi bi-text-indent-left"></i>
-                    </button>
-                    
-                    <div class="d-flex align-items-center ms-auto">
-                        <div class="form-check form-switch me-4 mb-0">
-                            <input class="form-check-input" type="checkbox" role="switch" id="themeToggle">
-                            <label class="form-check-label text-white" for="themeToggle"><i class="bi bi-moon-stars-fill"></i></label>
-                        </div>
-                        
-                        <div class="dropdown">
-                            <a class="text-white text-decoration-none dropdown-toggle d-flex align-items-center" href="#" role="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-person-circle fs-4 me-2"></i>
-                                <span class="fw-bold">Administrator</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow">
-                                <li><a class="dropdown-item" href="#"><i class="bi bi-gear me-2"></i>Pengaturan</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="#"><i class="bi bi-box-arrow-right me-2"></i>Keluar</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
             <div class="container-fluid p-4 bg-body-tertiary flex-grow-1">
                 @RenderBody()
             </div>
@@ -197,8 +185,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             const sidebarWrapper = document.getElementById('sidebar-wrapper');
-            const sidebarToggleArea = document.getElementById('sidebarToggleArea'); // Area Logo/Garis 3
-            const topNavToggle = document.getElementById('topNavToggle'); // Tombol Nav Atas
+            const sidebarToggleArea = document.getElementById('sidebarToggleArea'); 
 
             // --- 1. LOGIKA TOGGLE SUPER APP ---
             const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -206,56 +193,58 @@
                 sidebarWrapper.classList.add('collapsed');
             }
 
-            // Fungsi global untuk mengubah status sidebar
             function toggleSidebar() {
                 sidebarWrapper.classList.toggle('collapsed');
                 const isCollapsedNow = sidebarWrapper.classList.contains('collapsed');
                 localStorage.setItem('sidebarCollapsed', isCollapsedNow);
                 
                 setTimeout(() => {
-                    window.dispatchEvent(new Event('resize'));
+                    window.dispatchEvent(new Event('resize')); // Resize grafik Chart.js
                 }, 300);
             }
 
-            // Pasang trigger klik di area Header Sidebar (Logo / Garis 3)
             sidebarToggleArea.addEventListener('click', toggleSidebar);
-            
-            // Pasang trigger klik juga di tombol navbar atas
-            topNavToggle.addEventListener('click', toggleSidebar);
 
-            // --- 2. LOGIKA DARK MODE ---
+            // --- 2. LOGIKA DARK MODE (KLIK BARIS MENU) ---
             const htmlElement = document.getElementById('html-root');
-            const themeToggle = document.getElementById('themeToggle');
-            const topNavbar = document.getElementById('top-navbar');
+            const themeToggleBtn = document.getElementById('btnThemeToggle');
+            const themeIcon = document.getElementById('themeIcon');
             const footer = document.getElementById('main-footer');
 
             const currentTheme = localStorage.getItem('theme') || 'light';
             htmlElement.setAttribute('data-bs-theme', currentTheme);
-            themeToggle.checked = (currentTheme === 'dark');
             updateColors(currentTheme);
 
-            themeToggle.addEventListener('change', function () {
-                const newTheme = this.checked ? 'dark' : 'light';
+            themeToggleBtn.addEventListener('click', function () {
+                const activeTheme = htmlElement.getAttribute('data-bs-theme');
+                const newTheme = activeTheme === 'dark' ? 'light' : 'dark';
+                
                 htmlElement.setAttribute('data-bs-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
                 updateColors(newTheme);
             });
 
             function updateColors(theme) {
+                const textSpan = themeToggleBtn.querySelector('.nav-text');
                 if(theme === 'dark'){
-                    topNavbar.classList.replace('bg-primary', 'bg-dark');
-                    topNavbar.classList.add('border-secondary');
+                    themeIcon.classList.replace('bi-moon-stars-fill', 'bi-sun-fill');
+                    themeIcon.classList.add('text-warning');
+                    textSpan.innerText = "Mode Terang";
                     footer.classList.replace('bg-white', 'bg-dark');
+                    footer.classList.replace('border-top', 'border-secondary');
                 } else {
-                    topNavbar.classList.replace('bg-dark', 'bg-primary');
-                    topNavbar.classList.remove('border-secondary');
+                    themeIcon.classList.replace('bi-sun-fill', 'bi-moon-stars-fill');
+                    themeIcon.classList.remove('text-warning');
+                    textSpan.innerText = "Mode Gelap";
                     footer.classList.replace('bg-dark', 'bg-white');
+                    footer.classList.replace('border-secondary', 'border-top');
                 }
             }
             
             // --- 3. AUTO-ACTIVE MENU STATE ---
             const currentLocation = window.location.pathname;
-            const menuItems = document.querySelectorAll('.sidebar-menu .list-group-item');
+            // Hanya targetkan menu utama (abaikan menu akun/tema)
+            const menuItems = document.querySelectorAll('.nav-link-item'); 
             
             menuItems.forEach(item => {
                 const itemHref = item.getAttribute('href');
