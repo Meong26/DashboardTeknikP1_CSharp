@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using System;
 using DashboardTeknikP1.Models;
 using DashboardTeknikP1.Repositories;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
+    [Authorize]
     public class TemuanController : Controller
     {
         private readonly TemuanRepository _repository;
@@ -55,7 +57,7 @@ namespace DashboardTeknikP1.Controllers
             if (ModelState.IsValid)
             {
                 // Hardcode & otomatisasi sementara di sisi Backend
-                model.UserID = "ADMIN01";
+                model.UserID = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "SYSTEM";
                 model.TanggalInput = DateTime.Now;
                 model.StatusTemuan = "OPEN";
 
@@ -71,7 +73,7 @@ namespace DashboardTeknikP1.Controllers
 
             return View(model);
         }
-        
+
         // ====================================================================
         // 4. HALAMAN TUTUP LAPORAN (CLOSE - GET)
         // ====================================================================
@@ -83,7 +85,7 @@ namespace DashboardTeknikP1.Controllers
             {
                 return NotFound(); // Jika ID tidak ditemukan di database
             }
-            
+
             // Pastikan hanya laporan yang masih OPEN yang bisa ditutup
             if (temuan.StatusTemuan.ToUpper() == "CLOSED")
             {
@@ -101,7 +103,7 @@ namespace DashboardTeknikP1.Controllers
         {
             // Eksekusi update ke database melalui repository
             _repository.CloseTemuan(TemuanID, TindakanKorektif);
-            
+
             // Kembalikan ke halaman utama log teknik
             return RedirectToAction("Index");
         }

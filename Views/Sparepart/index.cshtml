@@ -87,93 +87,271 @@
 </div>
 
 <script>
-    // Data sekarang diawali dengan array kosong
     let datasetSparepart = [];
     let currentTableData = [];
     let sortState = { col: -1, asc: true };
+    
+    // Status mode PR manual & memori penyimpanan data centangan
+    let isPRModeActive = false;
+    let prSelections = {}; // Memori untuk menyimpan part yang sudah dicentang/diisi
 
     document.addEventListener("DOMContentLoaded", () => {
-        // Tampilkan loading saat halaman pertama kali dibuka
         document.getElementById('ewsTableBody').innerHTML = `<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-danger spinner-border-sm me-2"></div> Memuat data EWS...</td></tr>`;
         document.getElementById('sparepartTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary me-2"></div> Mengambil puluhan ribu data dari SAP...</td></tr>`;
         
-        // Panggil fungsi tarik data AJAX
+        injectPRControlButtons();
         fetchDataDariServer();
     });
 
-    // FUNGSI BARU: Mengambil data dari API C# menggunakan AJAX (Fetch)
+    function injectPRControlButtons() {
+        const ewsCardHeader = document.querySelector("#ewsCount").parentElement;
+        if (ewsCardHeader) {
+            const btnContainer = document.createElement("div");
+            btnContainer.className = "float-end d-flex gap-2 align-items-center";
+            
+            // Kolom Smart Search khusus EWS (default: tersembunyi / d-none)
+            btnContainer.innerHTML = `
+                <div class="input-group input-group-sm d-none shadow-sm" id="ewsSearchContainer" style="max-width: 250px;">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" id="ewsSearchInput" class="form-control border-start-0 ps-0" placeholder="Cari Part di EWS..." oninput="renderEWSContainer()">
+                </div>
+                
+                <button id="btnTogglePR" class="btn btn-sm btn-outline-primary fw-bold" onclick="togglePRMode()">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Buat Manual PR
+                </button>
+                <button id="btnDownloadPR" class="btn btn-sm btn-success fw-bold d-none" onclick="executeDownloadPR()">
+                    <i class="bi bi-download me-1"></i> Unduh PR Excel
+                </button>
+            `;
+            ewsCardHeader.appendChild(btnContainer);
+        }
+    }
+
     async function fetchDataDariServer() {
         try {
             const response = await fetch('/Sparepart/GetApiData');
             const dbDataRaw = await response.json();
 
-            // Lakukan pemetaan data persis seperti logika lama Anda
             datasetSparepart = dbDataRaw.map(item => {
-                let actual = item.TotalQtyStock !== null ? item.TotalQtyStock : 0;
-                let safety = item.SafetyStock !== null ? item.SafetyStock : 0;
-                
                 return {
                     materialNo: item.MaterialNo ? item.MaterialNo.trim() : "-",
                     description: item.MaterialNoDescription ? item.MaterialNoDescription.trim() : "No Description",
                     groupDesc: item.MatrGroupDescription ? item.MatrGroupDescription.trim() : "-",
                     storageBin: item.StorBin ? item.StorBin.trim() : "-",
                     uom: item.BUn ? item.BUn.trim() : "PC",
-                    safetyStock: safety,
-                    actualStock: actual,
+                    safetyStock: item.SafetyStock || 0,
+                    actualStock: item.TotalQtyStock || 0,
                     slowMovingDays: item.LamaTdkBergerakDay || 0,
                     price: item.MvgAvgPriceIDR || 0
                 };
             });
 
             currentTableData = [...datasetSparepart];
-            
-            // Perbarui UI setelah data sukses ditarik
             document.getElementById('lblTotalCount').innerText = datasetSparepart.length;
             renderEWSContainer();
             renderMainTableRows();
-
         } catch (error) {
             console.error("Gagal menarik data:", error);
-            document.getElementById('sparepartTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-5 text-danger fw-bold"><i class="bi bi-x-circle me-2"></i> Gagal terhubung ke Server Database.</td></tr>`;
         }
     }
 
-    // ====================================================================
-    // LOGIKA EWS & RENDER TABEL (TIDAK ADA YANG BERUBAH DARI SEBELUMNYA)
-    // ====================================================================
+    function togglePRMode() {
+        isPRModeActive = !isPRModeActive;
+        const btnToggle = document.getElementById("btnTogglePR");
+        const btnDownload = document.getElementById("btnDownloadPR");
+        const searchContainer = document.getElementById("ewsSearchContainer");
+        const searchInput = document.getElementById("ewsSearchInput");
+
+        if (isPRModeActive) {
+            btnToggle.innerHTML = `<i class="bi bi-x-circle me-1"></i> Batal PR`;
+            btnToggle.className = "btn btn-sm btn-danger fw-bold";
+            btnDownload.classList.remove("d-none");
+            searchContainer.classList.remove("d-none"); // Munculkan Searchbar
+        } else {
+            btnToggle.innerHTML = `<i class="bi bi-file-earmark-spreadsheet me-1"></i> Buat Manual PR`;
+            btnToggle.className = "btn btn-sm btn-outline-primary fw-bold";
+            btnDownload.classList.add("d-none");
+            searchContainer.classList.add("d-none");    // Sembunyikan Searchbar
+            
+            searchInput.value = ""; // Bersihkan kolom pencarian
+            prSelections = {};      // Hapus memori centangan saat batal
+        }
+        renderEWSContainer(); 
+    }
+
+    // Fungsi menyimpan inputan layar ke memori sebelum layar difilter/dibersihkan
+    function savePRState() {
+        if (!isPRModeActive) return;
+        const rows = document.querySelectorAll("#ewsTableBody tr");
+        rows.forEach(row => {
+            const chk = row.querySelector(".chk-pr-item");
+            if (chk) {
+                const matNo = chk.getAttribute("data-matno");
+                prSelections[matNo] = {
+                    checked: chk.checked,
+                    qty: row.querySelector(".txt-pr-qty").value,
+                    remark: row.querySelector(".txt-pr-remark").value
+                };
+            }
+        });
+    }
+
     function renderEWSContainer() {
+        savePRState(); // Simpan centangan yang ada di layar saat ini dulu
+
         let outOfStockList = datasetSparepart.filter(item => item.actualStock === 0);
         let criticalStockList = datasetSparepart.filter(item => item.actualStock > 0 && item.actualStock <= item.safetyStock);
         let ewsCombinedList = [...outOfStockList, ...criticalStockList];
         
+        // --- LOGIKA SMART SEARCH EWS ---
+        const searchInput = document.getElementById("ewsSearchInput");
+        if (isPRModeActive && searchInput && searchInput.value.trim() !== "") {
+            const searchQuery = searchInput.value.toLowerCase().trim();
+            let tokens = searchQuery.split(" ").filter(t => t !== "");
+            
+            ewsCombinedList = ewsCombinedList.filter(item => {
+                let textToSearch = `${item.materialNo} ${item.description}`.toLowerCase();
+                return tokens.every(token => textToSearch.includes(token));
+            });
+        }
+        
         const tbody = document.getElementById('ewsTableBody');
+        const thead = tbody.parentElement.querySelector("thead tr");
+        
         document.getElementById('ewsCount').innerText = `${ewsCombinedList.length} Item`;
 
+        if (isPRModeActive) {
+            thead.innerHTML = `
+                <th style="width: 40px;">Pilih</th>
+                <th>Material No</th>
+                <th>Description</th>
+                <th style="width: 90px;">Qty Order</th>
+                <th>Actual Stock</th>
+                <th>Remark PR</th>
+            `;
+        } else {
+            thead.innerHTML = `
+                <th>Material No</th>
+                <th>Description</th>
+                <th>Storage Bin</th>
+                <th class="text-center">Safety</th>
+                <th class="text-center">Actual</th>
+                <th class="text-center">Status</th>
+            `;
+        }
+
         if (ewsCombinedList.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-success fw-bold font-sans-serif"><i class="bi bi-check-circle-fill me-2"></i> Luar biasa! Seluruh stok sparepart aman di atas ambang batas safety stock.</td></tr>`;
+            let colSpan = isPRModeActive ? 6 : 6;
+            tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-4 text-muted"><i class="bi bi-search me-2"></i> Tidak ada material EWS yang cocok dengan pencarian.</td></tr>`;
             return;
         }
 
         let htmlGrid = "";
-        ewsCombinedList.forEach(item => {
+        ewsCombinedList.forEach((item) => {
             let isZero = item.actualStock === 0;
             let rowClass = isZero ? "table-danger" : "table-warning";
-            let badgeClass = isZero ? "bg-danger" : "bg-warning text-dark border border-warning";
-            let statusText = isZero ? "HABIS" : "KRITIS";
+            
+            if (isPRModeActive) {
+                // Terapkan memori yang tersimpan agar centangan tidak hilang setelah diketik
+                let memory = prSelections[item.materialNo] || {};
+                let isChecked = memory.checked ? "checked" : "";
+                let savedQty = memory.qty || "1";
+                let savedRemark = memory.remark || "";
 
-            htmlGrid += `
-            <tr class="${rowClass} ews-row" onclick="focusSearchToItem('${item.materialNo}')" title="Klik untuk melacak detail di tabel utama">
-                <td class="font-monospace fw-bold">${item.materialNo}</td>
-                <td class="fw-bold text-truncate" style="max-width: 300px;">${item.description}</td>
-                <td><span class="badge bg-secondary-subtle text-secondary-emphasis border">${item.storageBin}</span></td>
-                <td class="text-center text-muted fw-bold">${item.safetyStock}</td>
-                <td class="text-center fw-bold ${isZero ? 'text-danger' : ''}">${item.actualStock} <span class="small">${item.uom}</span></td>
-                <td class="text-center"><span class="badge ${badgeClass} fw-bold w-100">${statusText}</span></td>
-            </tr>`;
+                htmlGrid += `
+                <tr class="${rowClass}">
+                    <td class="text-center">
+                        <input type="checkbox" class="form-check-input chk-pr-item" data-matno="${item.materialNo}" ${isChecked}>
+                    </td>
+                    <td class="font-monospace fw-bold">${item.materialNo}</td>
+                    <td class="fw-bold text-truncate" style="max-width: 220px;">${item.description}</td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm txt-pr-qty" min="1" value="${savedQty}" style="padding: 2px 5px;">
+                    </td>
+                    <td class="text-center fw-bold">${item.actualStock} ${item.uom}</td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm txt-pr-remark" value="${savedRemark}" placeholder="Contoh: Urgent Line 3" style="padding: 2px 5px;">
+                    </td>
+                </tr>`;
+            } else {
+                let badgeClass = isZero ? "bg-danger" : "bg-warning text-dark border border-warning";
+                let statusText = isZero ? "HABIS" : "KRITIS";
+                htmlGrid += `
+                <tr class="${rowClass} ews-row" onclick="focusSearchToItem('${item.materialNo}')" style="cursor:pointer;">
+                    <td class="font-monospace fw-bold">${item.materialNo}</td>
+                    <td class="fw-bold text-truncate" style="max-width: 250px;">${item.description}</td>
+                    <td><span class="badge bg-secondary-subtle text-secondary-emphasis border">${item.storageBin}</span></td>
+                    <td class="text-center text-muted fw-bold">${item.safetyStock}</td>
+                    <td class="text-center fw-bold ${isZero ? 'text-danger' : ''}">${item.actualStock} <span class="small">${item.uom}</span></td>
+                    <td class="text-center"><span class="badge ${badgeClass} fw-bold w-100">${statusText}</span></td>
+                </tr>`;
+            }
         });
         tbody.innerHTML = htmlGrid;
     }
 
+    async function executeDownloadPR() {
+        savePRState(); // Kunci semua data terakhir di layar ke memori
+
+        const payloadItems = [];
+        // Loop melalui memori (bukan layar, agar part yang sedang tersembunyi filter tetap ikut terunduh)
+        for (const matNo in prSelections) {
+            if (prSelections[matNo].checked) {
+                payloadItems.push({ 
+                    MaterialNo: matNo, 
+                    Qty: parseFloat(prSelections[matNo].qty) || 1, 
+                    Remark: prSelections[matNo].remark 
+                });
+            }
+        }
+
+        if (payloadItems.length === 0) {
+            alert("Silakan pilih minimal satu item sparepart terlebih dahulu.");
+            return;
+        }
+
+        try {
+            const btnDownload = document.getElementById("btnDownloadPR");
+            const originalHtml = btnDownload.innerHTML;
+            btnDownload.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Merakit...`;
+            btnDownload.disabled = true;
+
+            const response = await fetch('/Sparepart/ExportPR', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ Items: payloadItems })
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                
+                const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
+                a.download = `PR_Technical_P1_${dateStr}.xlsx`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+                
+                togglePRMode(); // Sukses unduh, kembali ke normal
+            } else {
+                const errText = await response.text();
+                alert("Gagal memproses Purchase Request: " + errText);
+            }
+
+            btnDownload.innerHTML = originalHtml;
+            btnDownload.disabled = false;
+        } catch (error) {
+            console.error("Error mengunduh:", error);
+            alert("Terjadi kesalahan jaringan.");
+        }
+    }
+
+    // ====================================================================
+    // LOGIKA TABEL UTAMA (TIDAK ADA PERUBAHAN)
+    // ====================================================================
     function performFiltering() {
         const searchQuery = document.getElementById('smartSearch').value.toLowerCase().trim();
         const statusFilter = document.getElementById('statusFilter').value;
@@ -248,7 +426,7 @@
         document.getElementById('lblShowingCount').innerText = currentTableData.length;
         
         if (currentTableData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted fs-6 font-sans-serif"><i class="bi bi-search me-2 fs-5"></i> Tidak ada material suku cadang yang cocok.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted fs-6"><i class="bi bi-search me-2 fs-5"></i> Tidak ada material suku cadang yang cocok.</td></tr>`;
             return;
         }
 

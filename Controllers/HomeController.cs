@@ -2,9 +2,11 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using System.Text.Json;
 using DashboardTeknikP1.Repositories;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
+    [Authorize]
     public class HomeController : Controller
     {
         private readonly HomeRepository _repository;

@@ -8,9 +8,11 @@ using System.IO;
 using System.Globalization;
 using System.Collections.Generic;
 using System.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
+    [Authorize]
     public class UploadController : Controller
     {
         private readonly UploadRepository _repository;
@@ -156,7 +158,8 @@ namespace DashboardTeknikP1.Controllers
                 // Jika ada MaterialNo yang duplikat, stok dan harganya otomatis digabungkan.
                 var groupedSpList = rawList
                     .GroupBy(x => x.MaterialNo ?? "UNKNOWN")
-                    .Select(group => {
+                    .Select(group =>
+                    {
                         var firstItem = group.First();
                         firstItem.TotalQtyStock = group.Sum(x => x.TotalQtyStock);
                         firstItem.TotValuatedStockIDR = group.Sum(x => x.TotValuatedStockIDR);
@@ -175,11 +178,11 @@ namespace DashboardTeknikP1.Controllers
         // =========================================================
         private DateTime ParseDate(string dateText)
         {
-            dateText = dateText?.Trim() ?? ""; 
+            dateText = dateText?.Trim() ?? "";
             CultureInfo idCulture = new CultureInfo("id-ID");
             if (DateTime.TryParse(dateText, idCulture, DateTimeStyles.None, out DateTime result))
                 return result;
-            return new DateTime(1900, 1, 1); 
+            return new DateTime(1900, 1, 1);
         }
 
         private double ParseDouble(string numberText)
