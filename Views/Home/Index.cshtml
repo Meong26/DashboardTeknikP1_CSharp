@@ -139,8 +139,9 @@
 <script>
     Chart.register(ChartDataLabels);
 
-    const ypDataRaw = @Html.Raw(ViewBag.DetailsJson);
-    const yrDataRaw = @Html.Raw(ViewBag.Yr21Json);
+    // KOSONGKAN DATA AWAL
+    let ypDataRaw = [];
+    let yrDataRaw = [];
 
     let barChartInst = null;
     let pieChartInst = null;
@@ -148,17 +149,16 @@
     let topLevelAgg = {}; 
     let chartLevel = 0; 
     let selectedTimeLabel = "";
-    let selectedTimeKey = ""; // VARIABEL BARU: Menyimpan kunci asli (YYYY-MM-DD)
+    let selectedTimeKey = "";
     let subDrillMode = "Line"; 
-    let currentTableMode = "Raw"; 
+    let currentTableMode = "Raw";
     let currentFilteredData = [];
-
     let currentDrillDownData = [];
     let sortState = { col: -1, asc: true };
 
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
     const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-    
+
     // --- PEMANTAU TEMA DARK MODE ---
     const themeObserver = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
@@ -170,14 +170,43 @@
     });
     themeObserver.observe(document.documentElement, { attributes: true });
 
-    // Fungsi pembantu pendeteksi warna
     const getChartLabelColor = () => document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '#f8f9fa' : '#333';
     const getGridColor = () => document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
-    
+
     document.addEventListener("DOMContentLoaded", () => {
-        populateDynamicDropdowns();
-        handleModeChange(); 
+        // 1. Tampilkan animasi loading di area Bad Actors
+        document.getElementById("rowBadActors").innerHTML = `
+            <div class="col-12 text-center py-3">
+                <div class="spinner-border text-primary me-2 spinner-border-sm"></div> 
+                <span class="text-muted fw-bold">Memuat Analitik Performa dari Server...</span>
+            </div>`;
+            
+        // 2. Panggil data dari API
+        fetchDashboardData();
     });
+
+    // FUNGSI BARU: Ambil data Asinkronus
+    async function fetchDashboardData() {
+        try {
+            const response = await fetch('/Home/GetDashboardData');
+            const data = await response.json();
+            
+            // Masukkan data ke variabel global
+            ypDataRaw = data.ypData || [];
+            yrDataRaw = data.yrData || [];
+
+            // Panggil fungsi render bawaan yang sudah ada
+            populateDynamicDropdowns();
+            handleModeChange(); 
+            
+        } catch (error) {
+            console.error("Gagal menarik data dasbor:", error);
+            document.getElementById("rowBadActors").innerHTML = `
+                <div class="col-12 text-center py-3 text-danger fw-bold">
+                    <i class="bi bi-x-circle me-2"></i> Gagal terhubung ke Database.
+                </div>`;
+        }
+    }
 
     function getLineName(funcLoc) {
         if (!funcLoc) return "-";

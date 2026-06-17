@@ -6,6 +6,8 @@ using OfficeOpenXml;
 using System;
 using System.IO;
 using System.Globalization;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace DashboardTeknikP1.Controllers
 {
@@ -32,6 +34,7 @@ namespace DashboardTeknikP1.Controllers
             if (fileYP11 != null && fileYP11.Length > 0)
             {
                 _repository.TruncateTable("tbl_SAP_YP11");
+                var listData = new List<SAP_YP11>();
 
                 using (var stream = new MemoryStream())
                 {
@@ -60,10 +63,12 @@ namespace DashboardTeknikP1.Controllers
                                 WorkCenterPPDesc = worksheet.Cells[row, 13].Text,
                                 DownTimeCode_ActivityCodeDesc = worksheet.Cells[row, 14].Text
                             };
-                            _repository.InsertDataYP11(data);
+                            listData.Add(data); // Simpan ke wadah dulu
                         }
                     }
                 }
+                // Kirim seluruh wadah untuk dibombardir ke SQL sekaligus
+                _repository.InsertBulkYP11(listData);
             }
 
             // =========================================================
@@ -72,6 +77,7 @@ namespace DashboardTeknikP1.Controllers
             if (fileYR21 != null && fileYR21.Length > 0)
             {
                 _repository.TruncateTable("tbl_SAP_YR21");
+                var listData = new List<SAP_YR21>();
 
                 using (var stream = new MemoryStream())
                 {
@@ -98,10 +104,11 @@ namespace DashboardTeknikP1.Controllers
                                 Efficiency_Pct = ParseDouble(worksheet.Cells[row, 11].Text),
                                 Ach_Pct = ParseDouble(worksheet.Cells[row, 12].Text)
                             };
-                            _repository.InsertDataYR21(data);
+                            listData.Add(data);
                         }
                     }
                 }
+                _repository.InsertBulkYR21(listData);
             }
 
             // =========================================================
@@ -110,7 +117,8 @@ namespace DashboardTeknikP1.Controllers
             if (fileSP != null && fileSP.Length > 0)
             {
                 _repository.TruncateTable("tbl_SAP_Sparepart");
-                
+                var rawList = new List<SAP_Sparepart>();
+
                 using (var stream = new MemoryStream())
                 {
                     fileSP.CopyTo(stream);
@@ -137,12 +145,26 @@ namespace DashboardTeknikP1.Controllers
                                 DateOfLastMvt = ParseDate(worksheet.Cells[row, 12].Text),
                                 LamaTdkBergerakDay = ParseInt(worksheet.Cells[row, 13].Text),
                                 StorBin = worksheet.Cells[row, 14].Text,
-                                SafetyStock = 1
+                                SafetyStock = 1 // Bisa disesuaikan dengan rule bisnis
                             };
-                            _repository.InsertDataSparepart(data);
+                            rawList.Add(data);
                         }
                     }
                 }
+
+                // Kalkulasi Agregat menggunakan LINQ di memori C# (Jauh lebih cepat dari SQL)
+                // Jika ada MaterialNo yang duplikat, stok dan harganya otomatis digabungkan.
+                var groupedSpList = rawList
+                    .GroupBy(x => x.MaterialNo ?? "UNKNOWN")
+                    .Select(group => {
+                        var firstItem = group.First();
+                        firstItem.TotalQtyStock = group.Sum(x => x.TotalQtyStock);
+                        firstItem.TotValuatedStockIDR = group.Sum(x => x.TotValuatedStockIDR);
+                        firstItem.DateOfLastMvt = group.Max(x => x.DateOfLastMvt);
+                        return firstItem;
+                    }).ToList();
+
+                _repository.InsertBulkSparepart(groupedSpList);
             }
 
             return RedirectToAction("Index");
@@ -154,13 +176,9 @@ namespace DashboardTeknikP1.Controllers
         private DateTime ParseDate(string dateText)
         {
             dateText = dateText?.Trim() ?? ""; 
-            
-            // Paksa C# membaca dengan format dd/MM/yyyy (Indonesia/Eropa)
             CultureInfo idCulture = new CultureInfo("id-ID");
-
             if (DateTime.TryParse(dateText, idCulture, DateTimeStyles.None, out DateTime result))
                 return result;
-                
             return new DateTime(1900, 1, 1); 
         }
 
@@ -192,13 +210,9 @@ namespace DashboardTeknikP1.Controllers
         {
             dateText = dateText?.Trim() ?? "";
             timeText = timeText?.Trim() ?? "";
-
             CultureInfo idCulture = new CultureInfo("id-ID");
-
-            // Menggabungkan kolom Tanggal dan Waktu (Jam)
             if (DateTime.TryParse($"{dateText} {timeText}", idCulture, DateTimeStyles.None, out DateTime result))
                 return result;
-                
             return new DateTime(1900, 1, 1);
         }
     }

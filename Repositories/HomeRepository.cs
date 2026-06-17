@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using DashboardTeknikP1.Models;
@@ -15,26 +16,26 @@ namespace DashboardTeknikP1.Repositories
             _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
 
-        // 1. Ambil data detail breakdown downtime (YP11)
-       public List<SAP_YP11> GetDowntimeDetails()
+        // 1. Ambil data detail breakdown downtime (YP11) secara Asinkronus
+        public async Task<List<SAP_YP11>> GetDowntimeDetailsAsync()
         {
             var list = new List<SAP_YP11>();
+
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                // Kolom ActivityText sekarang dimasukkan ke dalam SELECT
                 string query = @"SELECT WorkCenterPPDesc, NotificationDesc, TotalDownTimeInMinutes, 
                                         NotificationDate, DownTimeCode_ActivityCodeDesc,
                                         FunctionLocation, NotificationType, WageGroup_GroupShift, 
                                         WeekKalendarIndofood, ActivityText
                                  FROM tbl_SAP_YP11 
                                  ORDER BY NotificationDate DESC";
-                                 
+
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    conn.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    await conn.OpenAsync();
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
-                        while (reader.Read())
+                        while (await reader.ReadAsync())
                         {
                             list.Add(new SAP_YP11
                             {
@@ -47,7 +48,6 @@ namespace DashboardTeknikP1.Repositories
                                 NotificationType = reader["NotificationType"].ToString(),
                                 WageGroup_GroupShift = reader["WageGroup_GroupShift"].ToString(),
                                 WeekKalendarIndofood = reader["WeekKalendarIndofood"].ToString(),
-                                // Mapping data baru
                                 ActivityText = reader["ActivityText"].ToString()
                             });
                         }
@@ -56,20 +56,22 @@ namespace DashboardTeknikP1.Repositories
             }
             return list;
         }
-        // 2. Ambil data Produksi (YR21) untuk perhitungan persentase jam kerja
-        public List<SAP_YR21> GetProduksiDetails()
+
+        // 2. Ambil data Produksi (YR21) secara Asinkronus
+        public async Task<List<SAP_YR21>> GetProduksiDetailsAsync()
         {
             var list = new List<SAP_YR21>();
+
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                // Kueri diperkaya dengan WageGroup (Shift) dan Week
                 string query = "SELECT PostingDate, ResourceName, PlannedHour, WageGroup, WeekOfBasicFinishedDate FROM tbl_SAP_YR21";
+
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    conn.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    await conn.OpenAsync();
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
-                        while (reader.Read())
+                        while (await reader.ReadAsync())
                         {
                             list.Add(new SAP_YR21
                             {
@@ -86,22 +88,24 @@ namespace DashboardTeknikP1.Repositories
             return list;
         }
 
-        // 3. Ambil data Sparepart EWS (Tetap kita simpan di sini untuk halaman EWS terpisah nanti)
-        public List<SAP_Sparepart> GetEwsSpareparts()
+        // 3. Ambil data Sparepart EWS (Jika sewaktu-waktu dibutuhkan di Home)
+        public async Task<List<SAP_Sparepart>> GetEwsSparepartsAsync()
         {
             var list = new List<SAP_Sparepart>();
+
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 string query = @"SELECT MaterialNo, MaterialNoDescription, TotalQtyStock, SafetyStock, SLoc 
                                 FROM tbl_SAP_Sparepart 
                                 WHERE TotalQtyStock <= SafetyStock 
                                 ORDER BY TotalQtyStock ASC";
+
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    conn.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    await conn.OpenAsync();
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
-                        while (reader.Read())
+                        while (await reader.ReadAsync())
                         {
                             list.Add(new SAP_Sparepart
                             {

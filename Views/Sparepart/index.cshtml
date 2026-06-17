@@ -87,52 +87,70 @@
 </div>
 
 <script>
-    const dbDataRaw = @Html.Raw(ViewBag.DataJson ?? "[]");
-
-    const datasetSparepart = dbDataRaw.map(item => {
-        let actual = item.TotalQtyStock !== null ? item.TotalQtyStock : 0;
-        let safety = item.SafetyStock !== null ? item.SafetyStock : 0;
-        
-        return {
-            materialNo: item.MaterialNo ? item.MaterialNo.trim() : "-",
-            description: item.MaterialNoDescription ? item.MaterialNoDescription.trim() : "No Description",
-            groupDesc: item.MatrGroupDescription ? item.MatrGroupDescription.trim() : "-",
-            storageBin: item.StorBin ? item.StorBin.trim() : "-",
-            uom: item.BUn ? item.BUn.trim() : "PC",
-            safetyStock: safety,
-            actualStock: actual,
-            slowMovingDays: item.LamaTdkBergerakDay || 0,
-            price: item.MvgAvgPriceIDR || 0
-        };
-    });
-
-    let currentFilteredData = [...datasetSparepart];
+    // Data sekarang diawali dengan array kosong
+    let datasetSparepart = [];
+    let currentTableData = [];
     let sortState = { col: -1, asc: true };
 
     document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById('lblTotalCount').innerText = datasetSparepart.length;
-        renderEWSContainer();
-        renderMainTableRows();
+        // Tampilkan loading saat halaman pertama kali dibuka
+        document.getElementById('ewsTableBody').innerHTML = `<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-danger spinner-border-sm me-2"></div> Memuat data EWS...</td></tr>`;
+        document.getElementById('sparepartTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary me-2"></div> Mengambil puluhan ribu data dari SAP...</td></tr>`;
+        
+        // Panggil fungsi tarik data AJAX
+        fetchDataDariServer();
     });
 
+    // FUNGSI BARU: Mengambil data dari API C# menggunakan AJAX (Fetch)
+    async function fetchDataDariServer() {
+        try {
+            const response = await fetch('/Sparepart/GetApiData');
+            const dbDataRaw = await response.json();
+
+            // Lakukan pemetaan data persis seperti logika lama Anda
+            datasetSparepart = dbDataRaw.map(item => {
+                let actual = item.TotalQtyStock !== null ? item.TotalQtyStock : 0;
+                let safety = item.SafetyStock !== null ? item.SafetyStock : 0;
+                
+                return {
+                    materialNo: item.MaterialNo ? item.MaterialNo.trim() : "-",
+                    description: item.MaterialNoDescription ? item.MaterialNoDescription.trim() : "No Description",
+                    groupDesc: item.MatrGroupDescription ? item.MatrGroupDescription.trim() : "-",
+                    storageBin: item.StorBin ? item.StorBin.trim() : "-",
+                    uom: item.BUn ? item.BUn.trim() : "PC",
+                    safetyStock: safety,
+                    actualStock: actual,
+                    slowMovingDays: item.LamaTdkBergerakDay || 0,
+                    price: item.MvgAvgPriceIDR || 0
+                };
+            });
+
+            currentTableData = [...datasetSparepart];
+            
+            // Perbarui UI setelah data sukses ditarik
+            document.getElementById('lblTotalCount').innerText = datasetSparepart.length;
+            renderEWSContainer();
+            renderMainTableRows();
+
+        } catch (error) {
+            console.error("Gagal menarik data:", error);
+            document.getElementById('sparepartTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-5 text-danger fw-bold"><i class="bi bi-x-circle me-2"></i> Gagal terhubung ke Server Database.</td></tr>`;
+        }
+    }
+
     // ====================================================================
-    // LOGIKA EWS (SEKARANG MENJADI TABEL)
+    // LOGIKA EWS & RENDER TABEL (TIDAK ADA YANG BERUBAH DARI SEBELUMNYA)
     // ====================================================================
     function renderEWSContainer() {
         let outOfStockList = datasetSparepart.filter(item => item.actualStock === 0);
         let criticalStockList = datasetSparepart.filter(item => item.actualStock > 0 && item.actualStock <= item.safetyStock);
         let ewsCombinedList = [...outOfStockList, ...criticalStockList];
-
+        
         const tbody = document.getElementById('ewsTableBody');
         document.getElementById('ewsCount').innerText = `${ewsCombinedList.length} Item`;
 
         if (ewsCombinedList.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="6" class="text-center py-4 text-success fw-bold font-sans-serif">
-                        <i class="bi bi-check-circle-fill me-2"></i> Luar biasa! Seluruh stok sparepart aman di atas ambang batas safety stock.
-                    </td>
-                </tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-success fw-bold font-sans-serif"><i class="bi bi-check-circle-fill me-2"></i> Luar biasa! Seluruh stok sparepart aman di atas ambang batas safety stock.</td></tr>`;
             return;
         }
 
@@ -156,9 +174,6 @@
         tbody.innerHTML = htmlGrid;
     }
 
-    // ====================================================================
-    // LOGIKA SMART SEARCHBAR & TABEL BAWAH
-    // ====================================================================
     function performFiltering() {
         const searchQuery = document.getElementById('smartSearch').value.toLowerCase().trim();
         const statusFilter = document.getElementById('statusFilter').value;
@@ -191,8 +206,6 @@
         document.getElementById('statusFilter').value = "ALL";
         document.getElementById('smartSearch').value = matNo;
         performFiltering();
-        
-        // Gulir halus ke tabel bawah
         document.getElementById('smartSearch').focus();
         document.getElementById('smartSearch').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
@@ -207,7 +220,6 @@
 
     function sortTable(colIdx) {
         if (currentTableData.length === 0) return;
-        
         if (sortState.col === colIdx) {
             sortState.asc = !sortState.asc;
         } else {
@@ -228,7 +240,6 @@
             if (valA > valB) return sortState.asc ? 1 : -1;
             return 0;
         });
-
         renderMainTableRows();
     }
 
@@ -237,12 +248,7 @@
         document.getElementById('lblShowingCount').innerText = currentTableData.length;
         
         if (currentTableData.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="text-center py-4 text-muted fs-6 font-sans-serif">
-                        <i class="bi bi-search me-2 fs-5"></i> Tidak ada material suku cadang yang cocok.
-                    </td>
-                </tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted fs-6 font-sans-serif"><i class="bi bi-search me-2 fs-5"></i> Tidak ada material suku cadang yang cocok.</td></tr>`;
             return;
         }
 
@@ -266,7 +272,6 @@
             }
 
             let titleTooltip = item.slowMovingDays > 30 ? `Material Slow Moving! Tidak bergerak selama ${item.slowMovingDays} hari.` : "";
-
             htmlBuffer += `
             <tr class="${rowStyleClass}" title="${titleTooltip}">
                 <td class="font-monospace fw-bold text-secondary text-nowrap">${item.materialNo}</td>

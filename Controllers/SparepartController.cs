@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using System.Text.Json;
+using System.Threading.Tasks;
 using DashboardTeknikP1.Repositories;
 
 namespace DashboardTeknikP1.Controllers
@@ -9,21 +9,27 @@ namespace DashboardTeknikP1.Controllers
     {
         private readonly SparepartRepository _sparepartRepo;
 
-        // Tangkap IConfiguration dari kerangka kerja .NET
-        public SparepartController(IConfiguration configuration)
+        public SparepartController(SparepartRepository sparepartRepo)
         {
-            // Teruskan configuration ke Repository
-            _sparepartRepo = new SparepartRepository(configuration);
+            _sparepartRepo = sparepartRepo;
         }
 
+        // 1. Fungsi ini sekarang HANYA meluncurkan HTML kosong secepat kilat
         public IActionResult Index()
         {
-            var dataDb = _sparepartRepo.GetAllSpareparts();
-
-            // Ubah menjadi JSON agar bisa dikonsumsi oleh JavaScript di View
-            ViewBag.DataJson = JsonSerializer.Serialize(dataDb);
-
+            // ViewBag.DataJson TELAH DIHAPUS agar HTML tidak bengkak
             return View();
+        }
+
+        // 2. Fungsi API Asinkronus untuk menyuplai data ke JavaScript di latar belakang
+        [HttpGet]
+        public async Task<IActionResult> GetApiData()
+        {
+            var dataDb = await _sparepartRepo.GetAllSparepartsAsync();
+            
+            // PropertyNamingPolicy = null memastikan format huruf besar/kecil (PascalCase) 
+            // tidak diubah secara otomatis oleh .NET, agar JavaScript lama Anda tetap berfungsi.
+            return Json(dataDb, new JsonSerializerOptions { PropertyNamingPolicy = null });
         }
     }
 }
