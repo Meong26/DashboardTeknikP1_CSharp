@@ -20,7 +20,7 @@ namespace DashboardTeknikP1.Repositories
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                if (tableName == "tbl_SAP_YP11" || tableName == "tbl_SAP_YR21" || tableName == "tbl_SAP_Sparepart")
+                if (tableName == "tbl_SAP_YP11" || tableName == "tbl_SAP_YR21" || tableName == "tbl_SAP_Sparepart" || tableName == "tbl_SAP_YP14")
                 {
                     string query = $"TRUNCATE TABLE {tableName}";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -157,6 +157,48 @@ namespace DashboardTeknikP1.Repositories
                             cmd.Parameters.AddWithValue("@SlowMoving", data.LamaTdkBergerakDay);
                             cmd.Parameters.AddWithValue("@StorBin", data.StorBin ?? (object)DBNull.Value);
                             cmd.Parameters.AddWithValue("@Safety", data.SafetyStock);
+
+                            cmd.ExecuteNonQuery();
+                        }
+                    }
+                    trans.Commit();
+                }
+            }
+        }
+
+        // 4. BULK INSERT YP14 (Actual Sparepart Cost)
+        public void InsertBulkYP14(List<SAP_YP14> dataList)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                conn.Open();
+                using (SqlTransaction trans = conn.BeginTransaction())
+                {
+                    string query = @"INSERT INTO tbl_SAP_YP14 
+                                    (OrderType, OrderNo, Description, DocumentDate, MaterialNo, MaterialDescription, 
+                                     Qty, PricePerUnit, UoM, MaterialCost, WorkCenter, EquipmentDescription, CostCenter) 
+                                    VALUES 
+                                    (@Type, @OrderNo, @Desc, @DocDate, @MatNo, @MatDesc, 
+                                     @Qty, @Price, @UoM, @MatCost, @WorkCenter, @EquipDesc, @CostCenter)";
+
+                    using (SqlCommand cmd = new SqlCommand(query, conn, trans))
+                    {
+                        foreach (var data in dataList)
+                        {
+                            cmd.Parameters.Clear();
+                            cmd.Parameters.AddWithValue("@Type", data.OrderType ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@OrderNo", data.OrderNo ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Desc", data.Description ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@DocDate", data.DocumentDate);
+                            cmd.Parameters.AddWithValue("@MatNo", data.MaterialNo ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@MatDesc", data.MaterialDescription ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Qty", data.Qty);
+                            cmd.Parameters.AddWithValue("@Price", data.PricePerUnit);
+                            cmd.Parameters.AddWithValue("@UoM", data.UoM ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@MatCost", data.MaterialCost);
+                            cmd.Parameters.AddWithValue("@WorkCenter", data.WorkCenter ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@EquipDesc", data.EquipmentDescription ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@CostCenter", data.CostCenter ?? (object)DBNull.Value);
 
                             cmd.ExecuteNonQuery();
                         }

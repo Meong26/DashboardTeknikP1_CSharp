@@ -1,0 +1,480 @@
+@{
+    ViewData["Title"] = "Pemakaian Sparepart";
+}
+
+<div class="row mb-2 align-items-center" style="height: 8vh;">
+    <div class="col">
+        <h4 class="fw-bold text-primary mb-0"><i class="bi bi-cart-dash me-2"></i> Monitoring Pemakaian Part</h4>
+        <small class="text-muted">Pantau biaya dan input riwayat pengambilan suku cadang harian.</small>
+    </div>
+</div>
+
+<div class="row mb-3 g-3">
+    <div class="col-md-4">
+        <div class="card bg-primary text-white shadow-sm border-0" onclick="toggleHistoryMode('ESTIMASI')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+            <div class="card-body py-3">
+                <div class="small fw-bold text-uppercase opacity-75 mb-1">Total Pengeluaran (Estimasi)</div>
+                <h3 class="mb-0 fw-bold">Rp <span id="lblCostThisWeek">0</span></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-success text-white shadow-sm border-0" onclick="toggleHistoryMode('FIX')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" title="Klik untuk melihat Detail Data SAP YP14">
+            <div class="card-body py-3">
+                <div class="small fw-bold text-uppercase opacity-75 mb-1">Biaya Aktual SAP (Minggu Lalu)</div>
+                <h3 class="mb-0 fw-bold">Rp <span id="lblCostLastWeek">0</span></h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-warning text-dark shadow-sm border-0">
+            <div class="card-body py-3">
+                <div class="small fw-bold text-uppercase opacity-75 mb-1">Rasio Cost / Output (Minggu Lalu)</div>
+                <h3 class="mb-0 fw-bold"><span id="lblRatio">0.00</span> <span class="fs-6 fw-normal">Rp/Pcs</span></h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 border-top border-4 border-success mb-4 d-print-none">
+    <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-success" style="font-size: 0.9rem;"><i class="bi bi-table me-1"></i> Form Pengambilan (Input Cepat)</span>
+        <div class="spinner-border spinner-border-sm text-primary d-none" id="loadingMaster"></div>
+    </div>
+    <div class="card-body p-0 table-responsive" style="max-height: 25vh; overflow-y: auto;">
+        <table class="table table-bordered table-sm align-middle mb-0" style="font-size: 0.85rem;" id="tblInput">
+            <thead class="table-light sticky-top">
+                <tr class="text-center">
+                    <th style="width: 12%;">Tgl Ambil</th>
+                    <th style="width: 14%;">No Material</th>
+                    <th style="width: 25%;">Material Desc</th>
+                    <th style="width: 18%;">Tujuan Pengambilan</th>
+                    <th style="width: 14%;">Nama Pengambil</th>
+                    <th style="width: 7%;">Qty</th>
+                    <th style="width: 10%;">Sisa Stok</th>
+                    <th style="width: 4%;"></th>
+                </tr>
+            </thead>
+            <tbody id="inputBody"></tbody>
+        </table>
+    </div>
+    <div class="card-footer bg-white py-2 d-flex justify-content-between align-items-center">
+        <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="addNewRow()">+ Tambah Baris (Manual)</button>
+        <button class="btn btn-sm btn-success fw-bold px-4 shadow-sm" onclick="saveData()">
+            <i class="bi bi-save me-1"></i> Simpan Data Pengambilan
+        </button>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 border-top border-4 border-primary">
+    <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center d-print-none">
+        <span class="fw-bold text-primary" style="font-size: 0.9rem;">
+            <i class="bi bi-clock-history me-1"></i> Riwayat Pengambilan Suku Cadang
+        </span>
+        <div class="d-flex align-items-center gap-2">
+            <button id="btnModeKarantina" class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="toggleModeKarantinaUI()">
+                <i class="bi bi-pencil-square me-1"></i> Mode Karantina / Edit
+            </button>
+            <button id="btnExecuteKarantina" class="btn btn-sm btn-danger fw-bold shadow-sm d-none" onclick="submitKarantinaBulk()">
+                <i class="bi bi-exclamation-octagon-fill me-1"></i> Simpan ke Karantina
+            </button>
+            <button id="btnPrintReport" class="btn btn-sm btn-dark fw-bold shadow-sm" onclick="printLaporanLolos()">
+                <i class="bi bi-printer me-1"></i> Cetak Lap. Lolos
+            </button>
+            <button class="btn btn-sm btn-warning fw-bold shadow-sm border border-warning-subtle position-relative me-2" data-bs-toggle="modal" data-bs-target="#modalKarantina">
+                <i class="bi bi-shield-exclamation me-1"></i> Data Karantina
+                <span id="badgeKarantinaCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+            </button>
+
+            <select id="historyWeekFilter" class="form-select form-select-sm border-primary shadow-sm" onchange="renderHistoryTable()" style="width: auto; min-width: 150px;">
+            </select>
+        </div>
+    </div>
+    <div class="d-none d-print-block text-center mb-3">
+        <h4 class="fw-bold mb-0">LAPORAN REKAPITULASI PEMAKAIAN SPAREPART</h4>
+        <p class="text-secondary small">Printed Date: @DateTime.Now.ToString("dd MMMM yyyy HH:mm")</p>
+    </div>
+    <div class="card-body p-0 table-responsive" style="max-height: 35vh; overflow-y: auto;" id="printArea">
+        <table class="table table-hover table-striped table-bordered table-sm align-middle mb-0" style="font-size: 0.85rem;" id="mainHistoryTable">
+            <thead class="table-dark sticky-top">
+                <tr class="text-center" id="historyTheadRow"></tr>
+            </thead>
+            <tbody id="historyTableBody">
+                <tr><td colspan="8" class="text-center py-4 text-muted">Memuat riwayat pengambilan...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="modal fade" id="modalKarantina" mountaineer="-1" aria-labelledby="modalKarantinaLabel" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-top border-4 border-danger">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title fw-bold text-danger" id="modalKarantinaLabel">
+                    <i class="bi bi-shield-exclamation me-2"></i> Gudang Karantina Anggaran (Shadow Ledger)
+                </h5>
+                <button type="button" class="btn-close" data-bs-redirect="modal" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-0">
+                <table class="table table-bordered table-striped table-sm align-middle mb-0" style="font-size: 0.85rem;">
+                    <thead class="table-dark sticky-top">
+                        <tr class="text-center">
+                            <th>Tanggal Masuk</th>
+                            <th>No Material</th>
+                            <th>Deskripsi Suku Cadang</th>
+                            <th>Tujuan / Mesin</th>
+                            <th>Nama Pengambil</th>
+                            <th style="width: 5%;">Qty</th>
+                            <th>Total Nilai</th>
+                            <th style="width: 250px;">Aksi Kendali Anggaran</th>
+                        </tr>
+                    </thead>
+                    <tbody id="karantinaTableBody">
+                        <tr><td colspan="8" class="text-center py-4 text-muted">Tidak ada data di gudang karantina.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer bg-light py-2">
+                <button type="button" class="btn btn-sm btn-secondary fw-bold" data-bs-dismiss="modal">Tutup Jendela</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let masterSparepart = [];
+    let historyDatasetEstimasi = [];
+    let historyDatasetFix = [];
+    let historyDatasetKarantina = []; // Memori penampung data karantina
+    let serverCurrentWeek = "";
+    let currentHistoryMode = 'ESTIMASI'; 
+    let isQuarantineEditModeActive = false; // Flag mode checklist karantina
+
+    document.addEventListener("DOMContentLoaded", () => {
+        fetchMasterData();
+        loadHistoryFromServer();
+    });
+
+    async function fetchMasterData() {
+        document.getElementById('loadingMaster').classList.remove('d-none');
+        try {
+            const response = await fetch('/Sparepart/GetApiData');
+            masterSparepart = await response.json();
+            addNewRow(); 
+        } catch (error) { console.error(error); }
+        finally { document.getElementById('loadingMaster').classList.add('d-none'); }
+    }
+
+    async function loadHistoryFromServer() {
+        try {
+            const response = await fetch('/Pemakaian/GetHistoryData');
+            const resJson = await response.json();
+            
+            historyDatasetEstimasi = resJson.dataEstimasi;
+            historyDatasetFix = resJson.dataFix;
+            historyDatasetKarantina = resJson.dataKarantina;
+            serverCurrentWeek = resJson.currentWeek;
+
+            document.getElementById("lblCostLastWeek").innerText = resJson.costLastWeek.toLocaleString("id-ID");
+            document.getElementById("lblRatio").innerText = resJson.ratioLastWeek.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById("badgeKarantinaCount").innerText = historyDatasetKarantina.length;
+
+            populateWeekFilterDropdown();
+            renderHistoryTable();
+            renderKarantinaTableModal();
+        } catch (error) { console.error(error); }
+    }
+
+    function toggleHistoryMode(mode) {
+        if(isQuarantineEditModeActive) toggleModeKarantinaUI(); // Matikan mode edit jika berpindah
+        currentHistoryMode = mode;
+        const ddlFilter = document.getElementById("historyWeekFilter");
+        const btnEdit = document.getElementById("btnModeKarantina");
+        
+        if (mode === 'FIX') {
+            ddlFilter.innerHTML = `<option value="SAP_ACTUAL">Data Aktual SAP YP14</option>`;
+            ddlFilter.disabled = true;
+            btnEdit.classList.add("d-none"); // Sembunyikan tombol edit jika data SAP di-togle
+        } else {
+            ddlFilter.disabled = false;
+            btnEdit.classList.remove("d-none");
+            populateWeekFilterDropdown();
+        }
+        renderHistoryTable();
+    }
+
+    function populateWeekFilterDropdown() {
+        if(currentHistoryMode === 'FIX') return;
+        const ddl = document.getElementById("historyWeekFilter");
+        const currentSelection = ddl.value; 
+        ddl.innerHTML = "";
+
+        let uniqueWeeks = {};
+        uniqueWeeks[serverCurrentWeek] = `Week ${serverCurrentWeek.split('-W')[1]} (Estimasi Berjalan)`;
+        historyDatasetEstimasi.forEach(item => { uniqueWeeks[item.WeekYearKey] = item.WeekDisplay; });
+
+        const sortedKeys = Object.keys(uniqueWeeks).sort((a, b) => b.localeCompare(a));
+        sortedKeys.forEach(key => { ddl.innerHTML += `<option value="${key}">${uniqueWeeks[key]}</option>`; });
+
+        if (currentSelection && sortedKeys.includes(currentSelection)) ddl.value = currentSelection;
+        else ddl.value = serverCurrentWeek;
+    }
+
+    function renderHistoryTable() {
+        const selectedWeek = document.getElementById("historyWeekFilter").value;
+        const theadRow = document.getElementById("historyTheadRow");
+        const tbody = document.getElementById("historyTableBody");
+        
+        if (currentHistoryMode === 'FIX') {
+            theadRow.innerHTML = `<th>Tanggal</th><th>No Material</th><th>Deskripsi Barang</th><th>Tujuan Pengambilan</th><th>No Order</th><th style="width: 6%;">Qty</th><th>Harga Satuan</th><th>Total Biaya</th>`;
+        } else {
+            let prefixTh = isQuarantineEditModeActive ? `<th style="width:40px;">Pilih</th>` : "";
+            theadRow.innerHTML = `${prefixTh}<th>Tanggal</th><th>No Material</th><th>Deskripsi Barang</th><th>Tujuan Pengambilan</th><th>Nama Pengambil</th><th style="width: 6%;">Qty</th><th>Harga Satuan</th><th>Total Biaya</th>`;
+        }
+
+        let sourceData = currentHistoryMode === 'FIX' ? historyDatasetFix : historyDatasetEstimasi;
+        let filteredData = sourceData.filter(x => x.WeekYearKey === selectedWeek);
+        
+        if (currentHistoryMode === 'ESTIMASI') {
+            let totalCostSelectedWeek = filteredData.reduce((sum, item) => sum + item.TotalHargaNumeric, 0);
+            document.getElementById("lblCostThisWeek").innerText = totalCostSelectedWeek.toLocaleString("id-ID");
+        }
+
+        if (filteredData.length === 0) {
+            let spanCount = isQuarantineEditModeActive ? 9 : 8;
+            tbody.innerHTML = `<tr><td colspan="${spanCount}" class="text-center py-4 text-muted">Tidak ada riwayat pengambilan pada periode ini.</td></tr>`;
+            return;
+        }
+
+        let htmlGrid = "";
+        filteredData.forEach(item => {
+            let middleColValue = currentHistoryMode === 'FIX' ? item.OrderNo : (item.NamaPengambil || '-');
+            let prefixTd = isQuarantineEditModeActive ? `<td class="text-center"><input type="checkbox" class="form-check-input chk-quarantine-item" data-id="${item.PengambilanID}"></td>` : "";
+            
+            htmlGrid += `
+            <tr class="${currentHistoryMode === 'FIX' ? 'table-success opacity-85' : ''}">
+                ${prefixTd}
+                <td class="text-center text-secondary">${item.TanggalFormated}</td>
+                <td class="font-monospace fw-bold text-dark">${item.MaterialNo}</td>
+                <td class="text-uppercase text-truncate" style="max-width: 260px;" title="${item.MaterialDesc}">${item.MaterialDesc}</td>
+                <td class="text-muted text-truncate" style="max-width: 180px;" title="${item.TujuanPengambilan}">${item.TujuanPengambilan || '-'}</td>
+                <td>${middleColValue}</td>
+                <td class="text-center fw-bold text-primary">${item.JumlahPengambilan}</td>
+                <td class="text-end font-monospace">Rp ${item.HargaSatuanFormated}</td>
+                <td class="text-end font-monospace fw-bold text-danger">Rp ${item.TotalHargaFormated}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = htmlGrid;
+    }
+
+    // TOGGLE UI UNTUK MENAMPILKAN CHECKBOX DI TABEL HISTORI ESTIMASI
+    function toggleModeKarantinaUI() {
+        isQuarantineEditModeActive = !isQuarantineEditModeActive;
+        const btnToggle = document.getElementById("btnModeKarantina");
+        const btnExecute = document.getElementById("btnExecuteKarantina");
+        
+        if(isQuarantineEditModeActive) {
+            btnToggle.innerHTML = `<i class="bi bi-x-circle me-1"></i> Batal Edit`;
+            btnToggle.className = "btn btn-sm btn-outline-secondary fw-bold shadow-sm";
+            btnExecute.classList.remove("d-none");
+        } else {
+            btnToggle.innerHTML = `<i class="bi bi-pencil-square me-1"></i> Mode Karantina / Edit`;
+            btnToggle.className = "btn btn-sm btn-outline-danger fw-bold shadow-sm";
+            btnExecute.classList.add("d-none");
+        }
+        renderHistoryTable();
+    }
+
+    // TEMBAK API UNTUK MEMINDAHKAN STATUS BARIS KE KARANTINA
+    async function submitKarantinaBulk() {
+        const checkBoxes = document.querySelectorAll(".chk-quarantine-item:checked");
+        let targetIds = Array.from(checkBoxes).map(cb => parseInt(cb.getAttribute("data-id")));
+
+        if(targetIds.length === 0) {
+            alert("Silakan centang item sparepart yang ingin Anda karantina terlebih dahulu.");
+            return;
+        }
+
+        if(!confirm("Karantina item terpilih? Data tidak akan terlihat di tabel rekap utama.")) return;
+
+        try {
+            const response = await fetch('/Pemakaian/QuarantineItems', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(targetIds)
+            });
+
+            if (response.ok) {
+                isQuarantineEditModeActive = false;
+                document.getElementById("btnExecuteKarantina").classList.add("d-none");
+                document.getElementById("btnModeKarantina").innerHTML = `<i class="bi bi-pencil-square me-1"></i> Mode Karantina / Edit`;
+                document.getElementById("btnModeKarantina").className = "btn btn-sm btn-outline-danger fw-bold shadow-sm";
+                loadHistoryFromServer(); // Reload massal data
+            } else { alert("Gagal melakukan karantina."); }
+        } catch (error) { alert("Kesalahan jaringan."); }
+    }
+
+    // MERENDER DATA DI DALAM POP-UP MODAL GUDANG KARANTINA
+    function renderKarantinaTableModal() {
+        const tbody = document.getElementById("karantinaTableBody");
+        if(historyDatasetKarantina.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted"><i class="bi bi-shield-check text-success me-1 fs-5"></i> Gudang karantina bersih. Tidak ada item yang ditahan.</td></tr>`;
+            return;
+        }
+
+        let htmlGrid = "";
+        historyDatasetKarantina.forEach(item => {
+            htmlGrid += `
+            <tr>
+                <td class="text-center text-secondary">${item.TanggalFormated}</td>
+                <td class="font-monospace fw-bold">${item.MaterialNo}</td>
+                <td class="text-truncate text-uppercase" style="max-width: 220px;">${item.MaterialDesc}</td>
+                <td class="text-muted text-truncate" style="max-width: 150px;">${item.TujuanPengambilan || '-'}</td>
+                <td>${item.NamaPengambil || '-'}</td>
+                <td class="text-center fw-bold text-dark">${item.JumlahPengambilan}</td>
+                <td class="text-end font-monospace text-danger fw-bold">Rp ${item.TotalHargaFormated}</td>
+                <td class="text-center">
+                    <div class="btn-group btn-group-sm w-100">
+                        <button class="btn btn-outline-primary fw-bold py-1" onclick="executeRestore(${item.PengambilanID})" title="Kembalikan ke rekap utama">
+                            <i class="bi bi-arrow-counterclockwise"></i> Batal Tahan
+                        </button>
+                        <button class="btn btn-outline-danger fw-bold py-1" onclick="executeRetur(${item.PengambilanID})">
+                            <i class="bi bi-trash-fill"></i> Retur Part
+                        </button>
+                        <button class="btn btn-success fw-bold py-1" onclick="executeRollForward(${item.PengambilanID})">
+                            <i class="bi bi-arrow-right-short"></i> Ke Week Depan
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+        });
+        tbody.innerHTML = htmlGrid;
+    }
+
+    // FUNGSI EKSEKUSI: BATAL KONTROL / KEMBALIKAN DATA ASAL
+    async function executeRestore(id) {
+        if(!confirm("Kembalikan item sparepart ini ke dalam data transaksi asal minggu berjalan?")) return;
+        try {
+            const response = await fetch(`/Pemakaian/RestoreItem?id=${id}`, { method: 'POST' });
+            if (response.ok) {
+                loadHistoryFromServer(); // Refresh data otomatis
+            } else {
+                alert("Gagal mengembalikan data.");
+            }
+        } catch (error) { alert("Error jaringan."); }
+    }
+
+    // AKSI MODAL: HAPUS PERMANEN (RETUR)
+    async function executeRetur(id) {
+        if(!confirm("Retur ke gudang sparepart? Data transaksi ini akan dihapus permanen dari sistem.")) return;
+        try {
+            const response = await fetch(`/Pemakaian/ReturItem?id=${id}`, { method: 'POST' });
+            if (response.ok) { loadHistoryFromServer(); }
+        } catch (error) { alert("Error jaringan."); }
+    }
+
+    // AKSI MODAL: GEBER TRANS-DATE KE MINGGU DEPAN
+    async function executeRollForward(id) {
+        if(!confirm("Geser beban biaya item ini ke laporan minggu depan?")) return;
+        try {
+            const response = await fetch(`/Pemakaian/ShiftToNextWeek?id=${id}`, { method: 'POST' });
+            if (response.ok) { loadHistoryFromServer(); }
+        } catch (error) { alert("Error jaringan."); }
+    }
+
+    // CETAK FISIK INTERAKTIF HANYA ITEM YANG LOLOS VERIFIKASI ANGGARAN
+    function printLaporanLolos() {
+        const filterVal = document.getElementById("historyWeekFilter").value;
+        if (currentHistoryMode === 'FIX') {
+            alert("Mode Cetak hanya diperbolehkan untuk merekap data laporan Estimasi berjalan harian.");
+            return;
+        }
+        window.print(); // Memicu printer driver browser bawaan
+    }
+
+    // KONTROL ELEMENT DI LAYAR INPUT UTAMA (TIDAK BERUBAH)
+    function addNewRow() {
+        const tbody = document.getElementById('inputBody');
+        const tr = document.createElement('tr');
+        const today = new Date().toISOString().split('T')[0];
+        tr.innerHTML = `<td><input type="date" class="form-control form-control-sm border-0 bg-transparent inp-tgl" value="${today}"></td><td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-matno font-monospace fw-bold" placeholder="Ketik/Scan..." onblur="lookupMaterial(this)"></td><td><input type="text" class="form-control form-control-sm border-0 bg-light text-muted inp-desc" readonly tabindex="-1"></td><td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-tujuan" placeholder="Lokasi mesin/line..."></td><td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-nama" placeholder="Nama teknisi"></td><td><input type="number" class="form-control form-control-sm border-0 bg-transparent inp-qty text-center fw-bold" placeholder="0" onkeydown="handleExcelTab(event, this)"></td><td class="p-0"><input type="text" class="form-control form-control-sm border-0 text-center fw-bold inp-stok h-100 bg-light" readonly tabindex="-1" style="border-radius: 0;"></td><td class="text-center"><button class="btn btn-sm text-danger border-0 p-0" onclick="removeRow(this)" tabindex="-1"><i class="bi bi-trash"></i></button><input type="hidden" class="inp-harga" value="0"></td>`;
+        tbody.appendChild(tr);
+    }
+    function removeRow(btn) { const tbody = document.getElementById('inputBody'); if (tbody.children.length > 1) { btn.closest('tr').remove(); } else { const row = btn.closest('tr'); row.querySelector('.inp-matno').value = ""; lookupMaterial(row.querySelector('.inp-matno')); } }
+    function lookupMaterial(inputElement) { const row = inputElement.closest('tr'); const matNo = inputElement.value.trim(); const inpDesc = row.querySelector('.inp-desc'); const inpStok = row.querySelector('.inp-stok'); const inpHarga = row.querySelector('.inp-harga'); if (matNo === "") { inpDesc.value = ""; inpStok.value = ""; inpHarga.value = "0"; inpStok.className = "form-control form-control-sm border-0 text-center bg-light fw-bold inp-stok h-100"; return; } const part = masterSparepart.find(x => x.MaterialNo && x.MaterialNo.trim() === matNo); if (part) { inpDesc.value = part.MaterialNoDescription; inpHarga.value = part.MvgAvgPriceIDR || 0; const actualQty = part.TotalQtyStock || 0; inpStok.value = `${actualQty} PC`; if (actualQty === 0) inpStok.className = "form-control form-control-sm border-0 text-center table-danger fw-bold text-danger inp-stok h-100"; else if (actualQty <= (part.SafetyStock || 0)) inpStok.className = "form-control form-control-sm border-0 text-center table-warning fw-bold text-warning-emphasis inp-stok h-100"; else inpStok.className = "form-control form-control-sm border-0 text-center table-success fw-bold text-success inp-stok h-100"; } else { inpDesc.value = "TIDAK DIKENAL (SAP)"; inpStok.value = "N/A"; inpHarga.value = "0"; inpStok.className = "form-control form-control-sm border-0 text-center bg-secondary text-white fw-bold inp-stok h-100"; } }
+    function handleExcelTab(e, inputElement) { if (e.key === 'Tab' || e.key === 'Enter') { e.preventDefault(); const tbody = document.getElementById('inputBody'); const currentRow = inputElement.closest('tr'); if (currentRow === tbody.lastElementChild) addNewRow(); const nextRow = currentRow.nextElementSibling; if (nextRow) nextRow.querySelector('.inp-matno').focus(); } }
+    async function saveData() { const rows = document.querySelectorAll('#inputBody tr'); let payload = []; let hasError = false; rows.forEach((row, index) => { const matNo = row.querySelector('.inp-matno').value.trim(); const qtyStr = row.querySelector('.inp-qty').value; const desc = row.querySelector('.inp-desc').value; if (matNo === "" && qtyStr === "") return; if (desc.startsWith("TIDAK DIKENAL")) { alert(`Baris ke-${index + 1}: Material No tidak valid.`); hasError = true; return; } const qty = parseFloat(qtyStr); if (isNaN(qty) || qty <= 0) { alert(`Baris ke-${index + 1}: Kuantitas tidak valid.`); hasError = true; return; } payload.push({ TanggalPengambilan: row.querySelector('.inp-tgl').value, MaterialNo: matNo, JumlahPengambilan: qty, TujuanPengambilan: row.querySelector('.inp-tujuan').value.trim(), NamaPengambil: row.querySelector('.inp-nama').value.trim(), HargaSatuanSaatIni: parseFloat(row.querySelector('.inp-harga').value) }); }); if (hasError) return; if (payload.length === 0) { alert("Isi data terlebih dadaulu."); return; } try { const response = await fetch('/Pemakaian/SaveData', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (response.ok) { alert("Data pemakaian berhasil disimpan!"); document.getElementById('inputBody').innerHTML = ""; addNewRow(); loadHistoryFromServer(); } else { alert("Gagal menyimpan."); } } catch (error) { alert("Kesalahan jaringan."); } }
+</script>
+
+<style>
+    @@media print {
+        /* 1. Pengaturan Layout Kertas A4 Portrait dengan Margin Ekstrem */
+        @@page {
+            size: A4 portrait;
+            margin: 4cm 3cm 4cm 3cm; /* Batas margin permintaan User */
+        }
+        
+        /* 2. Reset Body agar bersih, background putih, teks hitam */
+        body, html, #wrapper, #page-content-wrapper, .container-fluid {
+            background-color: #ffffff !important;
+            color: #000000 !important;
+            font-family: Arial, sans-serif !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+        }
+
+        /* 3. Sembunyikan elemen Super App yang tidak perlu dicetak */
+        #sidebar-wrapper, 
+        .row.mb-3, /* Widget atas */
+        .row.mb-2, /* Judul atas */
+        .card-header:not(.d-print-block), /* Header tabel (kecuali judul print) */
+        .d-print-none { 
+            display: none !important; 
+        }
+        
+        /* 4. Tampilkan Area Cetak Utama dan bebaskan dari batasan scroll */
+        .d-print-block { display: block !important; }
+        .card { border: none !important; box-shadow: none !important; }
+        #printArea { 
+            max-height: none !important; 
+            overflow: visible !important; 
+            width: 100% !important; 
+        }
+
+        /* 5. Rekayasa Tabel agar muat di sisa ruang 15cm */
+        #mainHistoryTable {
+            width: 100% !important;
+            border-collapse: collapse !important;
+            font-size: 9pt !important; /* Diperkecil agar muat 8 kolom */
+        }
+
+        #mainHistoryTable th, #mainHistoryTable td {
+            border: 1px solid #000000 !important; /* Garis hitam pekat */
+            padding: 6px !important;
+            color: #000000 !important;
+        }
+        
+        /* 6. Paksa kolom yang isinya pendek/angka agar TIDAK turun baris */
+        #mainHistoryTable th:nth-child(1), #mainHistoryTable td:nth-child(1), /* Tanggal */
+        #mainHistoryTable th:nth-child(6), #mainHistoryTable td:nth-child(6), /* Qty */
+        #mainHistoryTable th:nth-child(7), #mainHistoryTable td:nth-child(7), /* Harga Satuan */
+        #mainHistoryTable th:nth-child(8), #mainHistoryTable td:nth-child(8)  /* Total Biaya */ {
+            white-space: nowrap !important;
+        }
+
+        /* 7. Pastikan Header Tabel berulang otomatis di halaman ke-2, ke-3, dst */
+        #mainHistoryTable thead {
+            display: table-header-group !important;
+        }
+        #mainHistoryTable tr {
+            page-break-inside: avoid !important;
+        }
+        
+        /* Hapus warna background abu-abu/hijau bawaan tabel HTML */
+        #mainHistoryTable tr, #mainHistoryTable th, #mainHistoryTable td {
+            background-color: transparent !important;
+        }
+    }
+</style>
