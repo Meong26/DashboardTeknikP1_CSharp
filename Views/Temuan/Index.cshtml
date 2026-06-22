@@ -1,77 +1,289 @@
-@model IEnumerable<DashboardTeknikP1.Models.TemuanAbnormal>
-
 @{
     ViewData["Title"] = "Log Temuan Mesin";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold text-primary">Rekapitulasi Temuan Abnormalitas</h2>
-    <a href="/Temuan/Create" class="btn btn-success fw-bold shadow-sm">+ Input Laporan Baru</a>
-</div>
-
-<div class="card shadow-sm border-0">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover table-striped mb-0">
-                <thead class="table-dark">
-                    <tr>
-                        <th class="px-3">ID</th>
-                        <th>Waktu Laporan</th>
-                        <th>Pelapor</th>
-                        <th>Mesin Bermasalah</th>
-                        <th>Deskripsi Kendala</th>
-                        <th>Tindakan / Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model != null && Model.Any())
-                    {
-                        foreach (var item in Model)
-                        {
-                            <tr>
-                                <td class="px-3 fw-bold text-secondary">#@item.TemuanID</td>
-                                <td>@item.TanggalInput.ToString("dd MMM yyyy HH:mm")</td>
-                                <td><span class="badge bg-secondary">@item.UserID</span></td>
-                                <td>
-                                    <div class="fw-bold text-dark">@item.KodeMesin</div>
-                                    <small class="text-muted">@item.NamaMesin</small>
-                                </td>
-                                <td>@item.DeskripsiAbnormal</td>
-                                <td>
-                                    <div class="mb-1 text-break">@item.TindakanKorektif</div>
-                                    
-                                    @if (item.StatusTemuan?.ToUpper() == "OPEN")
-                                    {
-                                        <div class="d-flex align-items-center gap-2">
-                                            <span class="badge bg-danger">OPEN</span>
-                                            <a href="/Temuan/Close/@item.TemuanID" class="btn btn-sm btn-outline-danger py-0 px-2 fw-bold" style="font-size: 0.75rem;">
-                                                Tutup Laporan →
-                                            </a>
-                                        </div>
-                                    }
-                                    else if (item.StatusTemuan?.ToUpper() == "CLOSED")
-                                    {
-                                        <span class="badge bg-success">CLOSED</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-warning text-dark">@item.StatusTemuan</span>
-                                    }
-                                </td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="6" class="text-center text-muted py-5">
-                                <i class="fs-4 d-block mb-2 text-secondary">📭</i>
-                                Belum ada data temuan yang dilaporkan.
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+<div class="row mb-3 align-items-center" style="height: 8vh;">
+    <div class="col">
+        <h4 class="fw-bold text-primary mb-0"><i class="bi bi-tools me-2"></i> Log Kerusakan & Abnormalitas</h4>
+        <small class="text-muted">Catat temuan masalah mesin dengan cepat dan pantau status perbaikannya.</small>
     </div>
 </div>
+
+<div class="card shadow-sm border-0 border-top border-4 border-primary mb-4">
+    <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+        <span class="fw-bold text-primary" style="font-size: 0.9rem;">
+            <i class="bi bi-pencil-square me-1"></i> Form Input Cepat (Bisa input lebih dari 1 mesin)
+        </span>
+        <div class="spinner-border spinner-border-sm text-primary d-none" id="loadingForm"></div>
+    </div>
+    <div class="card-body p-0 table-responsive" style="max-height: 30vh; overflow-y: auto;">
+        <table class="table table-bordered table-sm align-middle mb-0" style="font-size: 0.85rem;" id="tblInputTemuan">
+            <thead class="table-light sticky-top">
+                <tr class="text-center">
+                    <th style="width: 25%;">Kode / Nama Mesin</th>
+                    <th style="width: 45%;">Deskripsi Masalah / Kendala</th>
+                    <th style="width: 25%;">Tindakan Awal (Opsional)</th>
+                    <th style="width: 5%;">Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="inputBody">
+                </tbody>
+        </table>
+    </div>
+    <div class="card-footer bg-white py-2 d-flex justify-content-between align-items-center">
+        <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="addNewRow()">+ Tambah Baris Masalah</button>
+        <button class="btn btn-sm btn-primary fw-bold px-4 shadow-sm" onclick="saveDataTemuan()">
+            <i class="bi bi-send-fill me-1"></i> Kirim Laporan
+        </button>
+    </div>
+</div>
+
+<datalist id="listMasterMesin"></datalist>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
+        <span class="fw-bold" style="font-size: 0.9rem;">
+            <i class="bi bi-clock-history me-1"></i> Riwayat Laporan Temuan
+        </span>
+    </div>
+    <div class="card-body p-0 table-responsive" style="max-height: 45vh; overflow-y: auto;">
+        <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem;">
+            <thead class="table-dark sticky-top">
+                <tr>
+                    <th class="px-3" style="width: 8%;">ID</th>
+                    <th style="width: 15%;">Waktu Laporan</th>
+                    <th style="width: 8%;">Pelapor</th>
+                    <th style="width: 20%;">Mesin Bermasalah</th>
+                    <th style="width: 25%;">Deskripsi Kendala</th>
+                    <th>Tindakan / Status</th>
+                </tr>
+            </thead>
+            <tbody id="historyBody">
+                <tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-secondary me-2"></div> Memuat riwayat...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let masterMesin = [];
+    let historyTemuan = [];
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        await fetchApiData();
+    });
+
+    async function fetchApiData() {
+        document.getElementById('loadingForm').classList.remove('d-none');
+        try {
+            const response = await fetch('/Temuan/GetApiData');
+            const data = await response.json();
+            
+            masterMesin = data.mesin;
+            historyTemuan = data.history;
+            
+            populateDatalist();
+            renderHistoryTable();
+            
+            // Pastikan minimal ada 1 baris kosong di form
+            if (document.getElementById('inputBody').children.length === 0) {
+                addNewRow();
+            }
+        } catch (error) {
+            console.error("Gagal menarik data API Temuan", error);
+        } finally {
+            document.getElementById('loadingForm').classList.add('d-none');
+        }
+    }
+
+    function populateDatalist() {
+        const dataList = document.getElementById('listMasterMesin');
+        dataList.innerHTML = "";
+        masterMesin.forEach(m => {
+            // Kombinasi Kode dan Nama agar teknisi bisa mengetik salah satunya
+            dataList.innerHTML += `<option value="${m.KodeMesin}">[${m.KodeMesin}] - ${m.NamaMesin}</option>`;
+        });
+    }
+
+    // =========================================================
+    // LOGIKA FORM INPUT CELERITY (EXCEL-STYLE)
+    // =========================================================
+    function addNewRow() {
+        const tbody = document.getElementById('inputBody');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>
+                <input list="listMasterMesin" class="form-control form-control-sm border-0 bg-transparent fw-bold text-primary inp-mesin" placeholder="Ketik/Pilih Mesin..." onchange="validateMesin(this)" onkeydown="handleEnter(event, this, '.inp-desc')">
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm border-0 bg-transparent inp-desc" placeholder="Jelaskan kendala mesin..." onkeydown="handleEnter(event, this, '.inp-tindakan')">
+            </td>
+            <td>
+                <input type="text" class="form-control form-control-sm border-0 bg-transparent text-muted inp-tindakan" placeholder="Biarkan kosong jika belum ada..." onkeydown="handleEnter(event, this, 'NEW_ROW')">
+            </td>
+            <td class="text-center align-middle">
+                <button class="btn btn-sm text-danger border-0 p-0" onclick="removeRow(this)" tabindex="-1"><i class="bi bi-trash fs-5"></i></button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+        
+        // Auto-focus ke baris baru
+        tr.querySelector('.inp-mesin').focus();
+    }
+
+    function removeRow(btn) { 
+        const tbody = document.getElementById('inputBody'); 
+        if (tbody.children.length > 1) { 
+            btn.closest('tr').remove(); 
+        } else { 
+            // Jika sisa 1 baris, bersihkan saja isinya
+            const row = btn.closest('tr'); 
+            row.querySelector('.inp-mesin').value = ""; 
+            row.querySelector('.inp-desc').value = ""; 
+            row.querySelector('.inp-tindakan').value = ""; 
+        } 
+    }
+
+    function validateMesin(inputElement) {
+        const val = inputElement.value.trim();
+        if (val === "") return;
+        
+        // Cek apakah inputan ada di daftar KodeMesin
+        const isExist = masterMesin.some(m => m.KodeMesin === val);
+        if (!isExist) {
+            alert("Kode Mesin tidak valid! Silakan pilih dari rekomendasi yang muncul.");
+            inputElement.value = "";
+            inputElement.focus();
+        }
+    }
+
+    function handleEnter(e, currentElement, nextSelector) {
+        if (e.key === 'Tab' || e.key === 'Enter') {
+            e.preventDefault();
+            const currentRow = currentElement.closest('tr');
+            
+            if (nextSelector === 'NEW_ROW') {
+                const tbody = document.getElementById('inputBody');
+                if (currentRow === tbody.lastElementChild) {
+                    addNewRow();
+                } else {
+                    currentRow.nextElementSibling.querySelector('.inp-mesin').focus();
+                }
+            } else {
+                currentRow.querySelector(nextSelector).focus();
+            }
+        }
+    }
+
+    async function saveDataTemuan() {
+        const rows = document.querySelectorAll('#inputBody tr');
+        let payload = []; 
+        let hasError = false;
+
+        rows.forEach((row, index) => {
+            const mesin = row.querySelector('.inp-mesin').value.trim();
+            const desc = row.querySelector('.inp-desc').value.trim();
+            const tindakan = row.querySelector('.inp-tindakan').value.trim();
+
+            if (mesin === "" && desc === "") return; // Abaikan baris kosong
+
+            if (mesin === "") { alert(`Baris ke-${index + 1}: Kode Mesin belum diisi.`); hasError = true; return; }
+            if (desc === "") { alert(`Baris ke-${index + 1}: Deskripsi masalah wajib diisi.`); hasError = true; return; }
+
+            payload.push({
+                KodeMesin: mesin,
+                DeskripsiAbnormal: desc,
+                TindakanKorektif: tindakan
+            });
+        });
+
+        if (hasError) return;
+        if (payload.length === 0) { alert("Tidak ada data yang diisi."); return; }
+
+        try {
+            const response = await fetch('/Temuan/SaveDataFast', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                // Bersihkan form
+                document.getElementById('inputBody').innerHTML = "";
+                addNewRow();
+                // Tarik ulang data agar tabel bawah terupdate seketika
+                await fetchApiData(); 
+            } else {
+                alert("Gagal menyimpan laporan temuan.");
+            }
+        } catch (error) {
+            alert("Terjadi kesalahan jaringan.");
+        }
+    }
+
+    // =========================================================
+    // RENDER TABEL HISTORY BAWAH
+    // =========================================================
+    function renderHistoryTable() {
+        const tbody = document.getElementById('historyBody');
+        
+        if (historyTemuan.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-3 d-block mb-2"></i> Belum ada laporan temuan.</td></tr>`;
+            return;
+        }
+
+        let htmlGrid = "";
+        historyTemuan.forEach(item => {
+            
+            // Logika pewarnaan status dan tombol aksi
+            let statusBadge = "";
+            if (item.Status === "OPEN") {
+                statusBadge = `
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-danger shadow-sm">OPEN</span>
+                        <a href="/Temuan/Close/${item.TemuanID}" class="btn btn-sm btn-outline-danger py-0 px-2 fw-bold" style="font-size: 0.75rem; transition: transform 0.2s;" onmouseover="this.style.transform='translateX(3px)'" onmouseout="this.style.transform='translateX(0)'">
+                            Tutup Laporan &rarr;
+                        </a>
+                    </div>`;
+            } else if (item.Status === "CLOSED") {
+                statusBadge = `<span class="badge bg-success shadow-sm"><i class="bi bi-check2-all me-1"></i>CLOSED</span>`;
+            } else {
+                statusBadge = `<span class="badge bg-warning text-dark">${item.Status}</span>`;
+            }
+
+            htmlGrid += `
+                <tr>
+                    <td class="px-3 fw-bold text-secondary">#${item.TemuanID}</td>
+                    <td>${item.TanggalFormated}</td>
+                    <td><span class="badge bg-secondary font-monospace">${item.Pelapor}</span></td>
+                    <td>
+                        <div class="fw-bold text-dark text-nowrap">${item.KodeMesin}</div>
+                        <small class="text-muted d-block text-truncate" style="max-width: 180px;">${item.NamaMesin}</small>
+                    </td>
+                    <td><div class="text-break pe-2" style="max-height: 3.6em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.DeskripsiAbnormal}</div></td>
+                    <td class="align-middle">
+                        <div class="mb-1 text-muted small text-truncate" style="max-width: 200px;" title="${item.TindakanKorektif}">${item.TindakanKorektif}</div>
+                        ${statusBadge}
+                    </td>
+                </tr>
+            `;
+        });
+        
+        tbody.innerHTML = htmlGrid;
+    }
+</script>
+
+<style>
+    /* Styling agar datalist dan input menyatu mulus */
+    .inp-mesin::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+    }
+    .inp-mesin::-webkit-calendar-picker-indicator:hover {
+        opacity: 1;
+    }
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+</style>

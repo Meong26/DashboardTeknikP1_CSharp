@@ -109,10 +109,13 @@ namespace DashboardTeknikP1.Controllers
             }
 
             // =========================================================
-            // 3. PROSES FILE SPAREPART (SP) - KEMBALI KE 14 KOLOM
+            // 3. PROSES FILE SPAREPART (SP) - DENGAN PROTEKSI PRIORITAS
             // =========================================================
             if (fileSP != null && fileSP.Length > 0)
             {
+                // Amankan data prioritas yang ada di DB saat ini sebelum tabel di-truncate
+                var savedPriorities = _repository.GetExistingPriorities();
+
                 _repository.TruncateTable("tbl_SAP_Sparepart");
                 var rawList = new List<SAP_Sparepart>();
                 using (var stream = new MemoryStream())
@@ -140,7 +143,7 @@ namespace DashboardTeknikP1.Controllers
                                 DateOfLastMvt = ParseDate(worksheet.Cells[row, 12]),
                                 LamaTdkBergerakDay = ParseInt(worksheet.Cells[row, 13]),
                                 StorBin = worksheet.Cells[row, 14].Text,
-                                SafetyStock = 1 // Aturan bawaan
+                                SafetyStock = 1 
                             };
                             rawList.Add(data);
                         }
@@ -151,9 +154,18 @@ namespace DashboardTeknikP1.Controllers
                     .GroupBy(x => x.MaterialNo ?? "UNKNOWN")
                     .Select(group => {
                         var firstItem = group.First();
+                        string cleanMatNo = firstItem.MaterialNo?.Trim() ?? "";
+
                         firstItem.TotalQtyStock = group.Sum(x => x.TotalQtyStock);
                         firstItem.TotValuatedStockIDR = group.Sum(x => x.TotValuatedStockIDR);
                         firstItem.DateOfLastMvt = group.Max(x => x.DateOfLastMvt);
+                        
+                        // RESTORE LOGIC: Jika nomor material ini sebelumnya diberi flag 'Y', pasang kembali!
+                        if (savedPriorities.Contains(cleanMatNo))
+                        {
+                            firstItem.Priority = "Y";
+                        }
+
                         return firstItem;
                     }).ToList();
 

@@ -13,7 +13,7 @@
     </div>
 </div>
 
-<div class="card shadow-sm border-0 mb-3 border-top border-4 border-danger d-flex flex-column" style="height: 34vh;">
+<div class="card shadow-sm border-0 mb-3 border-top border-4 border-danger d-flex flex-column" style="height: 38vh;">
     <div class="card-header bg-white d-flex justify-content-between align-items-center py-2 border-bottom">
         <span class="fw-bold text-danger" style="font-size: 0.9rem;">
             <i class="bi bi-exclamation-octagon-fill me-2"></i> Early Warning System (Stok Habis & Kritis)
@@ -23,35 +23,36 @@
     <div class="card-body p-0 flex-grow-1" style="overflow-y: auto;">
         <table class="table table-hover table-sm mb-0 align-middle font-monospace" style="font-size: 0.85rem;" id="ewsTable">
             <thead class="table-dark sticky-top text-uppercase" style="z-index: 2;">
-                <tr>
-                    <th style="width: 15%;">No. Material</th>
-                    <th style="width: 40%;">Deskripsi Sparepart</th>
-                    <th style="width: 15%;">Bin Lokasi</th>
-                    <th style="width: 10%;" class="text-center">Safety</th>
-                    <th style="width: 10%;" class="text-center">Aktual</th>
-                    <th style="width: 10%;" class="text-center">Status</th>
+                <tr id="ewsTheadRow">
+                    <th>Material No</th>
+                    <th>Description</th>
+                    <th>Storage Bin</th>
+                    <th class="text-center">Safety</th>
+                    <th class="text-center">Actual</th>
+                    <th class="text-center">Status</th>
                 </tr>
             </thead>
             <tbody id="ewsTableBody" class="font-sans-serif">
-                </tbody>
+                <tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-danger spinner-border-sm me-2"></div> Memuat data EWS...</td></tr>
+            </tbody>
         </table>
     </div>
 </div>
 
-<div class="card shadow-sm border-0 d-flex flex-column" style="height: 48vh;">
+<div class="card shadow-sm border-0 d-flex flex-column" style="height: 44vh;">
     <div class="card-header bg-white py-2 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 border-bottom">
         
-        <div class="input-group input-group-sm shadow-sm" style="max-width: 400px;">
+        <div class="input-group input-group-sm shadow-sm" style="max-width: 350px;">
             <span class="input-group-text bg-white border-end-0 text-primary">
                 <i class="bi bi-search"></i>
             </span>
-            <input type="text" class="form-control border-start-0 ps-1" id="smartSearch" 
-                   placeholder="Ketik 'bearing mixer', atau 'no material'..." onkeyup="handleSearch()">
+            <input type="text" class="form-control border-start-0" id="smartSearch" placeholder="Ketik nomor part atau nama barang..." onkeyup="handleSearch()">
         </div>
         
         <div class="d-flex align-items-center gap-2">
             <select id="statusFilter" class="form-select form-select-sm border-secondary w-auto shadow-sm" onchange="handleStatusFilter()">
                 <option value="ALL">Semua Status Suku Cadang</option>
+                <option value="PRIORITY_ONLY">⭐ Khusus Sparepart Prioritas</option>
                 <option value="EMPTY">Stok Kosong (0)</option>
                 <option value="CRITICAL">Stok Kritis (≤ Safety Stock)</option>
                 <option value="SAFE">Stok Aman</option>
@@ -61,7 +62,7 @@
             </button>
         </div>
     </div>
-    
+     
     <div class="card-body p-0 flex-grow-1" style="overflow-y: auto;">
         <table class="table table-hover table-striped table-sm mb-0 align-middle font-monospace" style="font-size: 0.85rem;" id="sparepartTable">
             <thead class="table-dark sticky-top text-uppercase" style="z-index: 2;">
@@ -76,7 +77,8 @@
                 </tr>
             </thead>
             <tbody id="sparepartTableBody" class="font-sans-serif">
-                </tbody>
+                <tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary me-2"></div> Mengambil data dari SAP...</td></tr>
+            </tbody>
         </table>
     </div>
     
@@ -91,31 +93,34 @@
     let currentTableData = [];
     let sortState = { col: -1, asc: true };
     
-    // Status mode PR manual & memori penyimpanan data centangan
     let isPRModeActive = false;
-    let prSelections = {}; // Memori untuk menyimpan part yang sudah dicentang/diisi
+    let isPriorityModeActive = false; // Flag Mode Prioritas
+    let prSelections = {}; 
 
     document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById('ewsTableBody').innerHTML = `<tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-danger spinner-border-sm me-2"></div> Memuat data EWS...</td></tr>`;
-        document.getElementById('sparepartTableBody').innerHTML = `<tr><td colspan="7" class="text-center py-5"><div class="spinner-border text-primary me-2"></div> Mengambil puluhan ribu data dari SAP...</td></tr>`;
-        
-        injectPRControlButtons();
+        injectControlButtons();
         fetchDataDariServer();
     });
 
-    function injectPRControlButtons() {
+    function injectControlButtons() {
         const ewsCardHeader = document.querySelector("#ewsCount").parentElement;
         if (ewsCardHeader) {
             const btnContainer = document.createElement("div");
             btnContainer.className = "float-end d-flex gap-2 align-items-center";
             
-            // Kolom Smart Search khusus EWS (default: tersembunyi / d-none)
             btnContainer.innerHTML = `
-                <div class="input-group input-group-sm d-none shadow-sm" id="ewsSearchContainer" style="max-width: 250px;">
+                <div class="input-group input-group-sm d-none shadow-sm" id="ewsSearchContainer" style="max-width: 220px;">
                     <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
                     <input type="text" id="ewsSearchInput" class="form-control border-start-0 ps-0" placeholder="Cari Part di EWS..." oninput="renderEWSContainer()">
                 </div>
                 
+                <button id="btnTogglePriority" class="btn btn-sm btn-outline-warning fw-bold text-dark" onclick="togglePriorityMode()">
+                    <i class="bi bi-star-fill me-1 text-warning"></i> Set Priority Mode
+                </button>
+                <button id="btnSavePriority" class="btn btn-sm btn-warning fw-bold d-none text-dark" onclick="executeSavePriorities()">
+                    <i class="bi bi-save2 me-1"></i> Simpan List Prioritas
+                </button>
+
                 <button id="btnTogglePR" class="btn btn-sm btn-outline-primary fw-bold" onclick="togglePRMode()">
                     <i class="bi bi-file-earmark-spreadsheet me-1"></i> Buat Manual PR
                 </button>
@@ -142,20 +147,72 @@
                     safetyStock: item.SafetyStock || 0,
                     actualStock: item.TotalQtyStock || 0,
                     slowMovingDays: item.LamaTdkBergerakDay || 0,
-                    price: item.MvgAvgPriceIDR || 0
+                    price: item.MvgAvgPriceIDR || 0,
+                    priority: item.Priority ? item.Priority.trim() : "" // Properti prioritas dipetakan
                 };
             });
-
             currentTableData = [...datasetSparepart];
             document.getElementById('lblTotalCount').innerText = datasetSparepart.length;
             renderEWSContainer();
             renderMainTableRows();
-        } catch (error) {
-            console.error("Gagal menarik data:", error);
+        } catch (error) { console.error("Gagal menarik data:", error); }
+    }
+
+    // =========================================================
+    // KENDALI UI: TOGGLE MODE PRIORITAS
+    // =========================================================
+    function togglePriorityMode() {
+        if (isPRModeActive) togglePRMode(); // Matikan mode PR jika sedang aktif
+
+        isPriorityModeActive = !isPriorityModeActive;
+        const btnToggle = document.getElementById("btnTogglePriority");
+        const btnSave = document.getElementById("btnSavePriority");
+
+        if (isPriorityModeActive) {
+            btnToggle.innerHTML = `<i class="bi bi-x-circle me-1"></i> Batal Prioritas`;
+            btnToggle.className = "btn btn-sm btn-danger fw-bold";
+            btnSave.classList.remove("d-none");
+        } else {
+            btnToggle.innerHTML = `<i class="bi bi-star-fill me-1 text-warning"></i> Set Priority Mode`;
+            btnToggle.className = "btn btn-sm btn-outline-warning fw-bold text-dark";
+            btnSave.classList.add("d-none");
+        }
+        renderEWSContainer();
+    }
+
+    async function executeSavePriorities() {
+        // Ambil semua checkbox prioritas yang dicentang di dalam EWS
+        const checkBoxes = document.querySelectorAll(".chk-priority-flag:checked");
+        let listPriorityMaterialNos = Array.from(checkBoxes).map(cb => cb.getAttribute("data-matno"));
+
+        if (!confirm(`Simpan ${listPriorityMaterialNos.length} item sebagai sparepart prioritas baru? \nItem di luar ini akan dihapus status prioritasnya.`)) return;
+
+        const btnSave = document.getElementById("btnSavePriority");
+        btnSave.disabled = true;
+        btnSave.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...`;
+
+        try {
+            const response = await fetch('/Sparepart/UpdatePriorities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(listPriorityMaterialNos)
+            });
+
+            if (response.ok) {
+                alert("Daftar prioritas sparepart berhasil diperbarui!");
+                togglePriorityMode();
+                await fetchDataDariServer(); // Muat ulang data terbaru
+            } else { alert("Gagal menyimpan prioritas."); }
+        } catch (error) { alert("Kesalahan komunikasi jaringan."); }
+        finally {
+            btnSave.disabled = false;
+            btnSave.innerHTML = `<i class="bi bi-save2 me-1"></i> Simpan List Prioritas`;
         }
     }
 
     function togglePRMode() {
+        if (isPriorityModeActive) togglePriorityMode(); // Matikan mode prioritas jika aktif
+
         isPRModeActive = !isPRModeActive;
         const btnToggle = document.getElementById("btnTogglePR");
         const btnDownload = document.getElementById("btnDownloadPR");
@@ -166,20 +223,18 @@
             btnToggle.innerHTML = `<i class="bi bi-x-circle me-1"></i> Batal PR`;
             btnToggle.className = "btn btn-sm btn-danger fw-bold";
             btnDownload.classList.remove("d-none");
-            searchContainer.classList.remove("d-none"); // Munculkan Searchbar
+            searchContainer.classList.remove("d-none");
         } else {
             btnToggle.innerHTML = `<i class="bi bi-file-earmark-spreadsheet me-1"></i> Buat Manual PR`;
             btnToggle.className = "btn btn-sm btn-outline-primary fw-bold";
             btnDownload.classList.add("d-none");
-            searchContainer.classList.add("d-none");    // Sembunyikan Searchbar
-            
-            searchInput.value = ""; // Bersihkan kolom pencarian
-            prSelections = {};      // Hapus memori centangan saat batal
+            searchContainer.classList.add("d-none");
+            searchInput.value = "";
+            prSelections = {};
         }
-        renderEWSContainer(); 
+        renderEWSContainer();
     }
 
-    // Fungsi menyimpan inputan layar ke memori sebelum layar difilter/dibersihkan
     function savePRState() {
         if (!isPRModeActive) return;
         const rows = document.querySelectorAll("#ewsTableBody tr");
@@ -196,63 +251,75 @@
         });
     }
 
+    // =========================================================
+    // RENDER: GUDANG PENGAWASAN EWS (DENGAN LOGIKA URUT PRIORITAS)
+    // =========================================================
     function renderEWSContainer() {
-        savePRState(); // Simpan centangan yang ada di layar saat ini dulu
+        savePRState();
 
         let outOfStockList = datasetSparepart.filter(item => item.actualStock === 0);
         let criticalStockList = datasetSparepart.filter(item => item.actualStock > 0 && item.actualStock <= item.safetyStock);
         let ewsCombinedList = [...outOfStockList, ...criticalStockList];
-        
-        // --- LOGIKA SMART SEARCH EWS ---
+
         const searchInput = document.getElementById("ewsSearchInput");
         if (isPRModeActive && searchInput && searchInput.value.trim() !== "") {
             const searchQuery = searchInput.value.toLowerCase().trim();
             let tokens = searchQuery.split(" ").filter(t => t !== "");
-            
             ewsCombinedList = ewsCombinedList.filter(item => {
                 let textToSearch = `${item.materialNo} ${item.description}`.toLowerCase();
                 return tokens.every(token => textToSearch.includes(token));
             });
         }
         
+        // SUNTIKAN FORMULA STRATEGIS: Urutkan agar item prioritas ('Y') melesat ke baris teratas!
+        ewsCombinedList.sort((a, b) => {
+            if (a.priority === 'Y' && b.priority !== 'Y') return -1;
+            if (a.priority !== 'Y' && b.priority === 'Y') return 1;
+            return 0; 
+        });
+        
         const tbody = document.getElementById('ewsTableBody');
-        const thead = tbody.parentElement.querySelector("thead tr");
+        const theadRow = document.getElementById("ewsTheadRow");
         
         document.getElementById('ewsCount').innerText = `${ewsCombinedList.length} Item`;
 
-        if (isPRModeActive) {
-            thead.innerHTML = `
-                <th style="width: 40px;">Pilih</th>
-                <th>Material No</th>
-                <th>Description</th>
-                <th style="width: 90px;">Qty Order</th>
-                <th>Actual Stock</th>
-                <th>Remark PR</th>
-            `;
+        if (isPriorityModeActive) {
+            theadRow.innerHTML = `<th style="width: 50px;">Prioritas</th><th>Material No</th><th>Description</th><th class="text-center">Actual Stock</th><th class="text-center">Status</th>`;
+        } else if (isPRModeActive) {
+            theadRow.innerHTML = `<th style="width: 40px;">Pilih</th><th>Material No</th><th>Description</th><th style="width: 90px;">Qty Order</th><th>Actual Stock</th><th>Remark PR</th>`;
         } else {
-            thead.innerHTML = `
-                <th>Material No</th>
-                <th>Description</th>
-                <th>Storage Bin</th>
-                <th class="text-center">Safety</th>
-                <th class="text-center">Actual</th>
-                <th class="text-center">Status</th>
-            `;
+            theadRow.innerHTML = `<th>Material No</th><th>Description</th><th>Storage Bin</th><th class="text-center">Safety</th><th class="text-center">Actual</th><th class="text-center">Status</th>`;
         }
 
         if (ewsCombinedList.length === 0) {
-            let colSpan = isPRModeActive ? 6 : 6;
-            tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-4 text-muted"><i class="bi bi-search me-2"></i> Tidak ada material EWS yang cocok dengan pencarian.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted"><i class="bi bi-search me-2"></i> Kosong.</td></tr>`;
             return;
         }
 
         let htmlGrid = "";
         ewsCombinedList.forEach((item) => {
             let isZero = item.actualStock === 0;
-            let rowClass = isZero ? "table-danger" : "table-warning";
+            let isItemPriority = item.priority === 'Y';
             
-            if (isPRModeActive) {
-                // Terapkan memori yang tersimpan agar centangan tidak hilang setelah diketik
+            // Efek visual khusus: Jika dia adalah barang prioritas, beri tanda bintang soft kuning emas
+            let rowClass = isZero ? "table-danger" : "table-warning";
+            if (isItemPriority && !isPriorityModeActive && !isPRModeActive) {
+                rowClass = "table-light border-start border-4 border-warning";
+            }
+
+            if (isPriorityModeActive) {
+                let isChecked = isItemPriority ? "checked" : "";
+                htmlGrid += `
+                <tr class="${rowClass}">
+                    <td class="text-center">
+                        <input type="checkbox" class="form-check-input border-warning chk-priority-flag" data-matno="${item.materialNo}" ${isChecked}>
+                    </td>
+                    <td class="font-monospace fw-bold">${item.materialNo} ${isItemPriority ? '⭐' : ''}</td>
+                    <td class="fw-bold text-truncate" style="max-width: 320px;">${item.description}</td>
+                    <td class="text-center fw-bold">${item.actualStock} ${item.uom}</td>
+                    <td class="text-center"><span class="badge ${isZero?'bg-danger':'bg-warning text-dark'} fw-bold">${isZero?'HABIS':'KRITIS'}</span></td>
+                </tr>`;
+            } else if (isPRModeActive) {
                 let memory = prSelections[item.materialNo] || {};
                 let isChecked = memory.checked ? "checked" : "";
                 let savedQty = memory.qty || "1";
@@ -263,19 +330,17 @@
                     <td class="text-center">
                         <input type="checkbox" class="form-check-input chk-pr-item" data-matno="${item.materialNo}" ${isChecked}>
                     </td>
-                    <td class="font-monospace fw-bold">${item.materialNo}</td>
+                    <td class="font-monospace fw-bold">${item.materialNo} ${isItemPriority ? '⭐' : ''}</td>
                     <td class="fw-bold text-truncate" style="max-width: 220px;">${item.description}</td>
-                    <td>
-                        <input type="number" class="form-control form-control-sm txt-pr-qty" min="1" value="${savedQty}" style="padding: 2px 5px;">
-                    </td>
+                    <td><input type="number" class="form-control form-control-sm txt-pr-qty" min="1" value="${savedQty}" style="padding: 2px 5px;"></td>
                     <td class="text-center fw-bold">${item.actualStock} ${item.uom}</td>
-                    <td>
-                        <input type="text" class="form-control form-control-sm txt-pr-remark" value="${savedRemark}" placeholder="Contoh: Urgent Line 3" style="padding: 2px 5px;">
-                    </td>
+                    <td><input type="text" class="form-control form-control-sm txt-pr-remark" value="${savedRemark}" placeholder="Urgent" style="padding: 2px 5px;"></td>
                 </tr>`;
             } else {
                 let badgeClass = isZero ? "bg-danger" : "bg-warning text-dark border border-warning";
                 let statusText = isZero ? "HABIS" : "KRITIS";
+                if (isItemPriority) statusText = "⭐ PRIORITAS";
+
                 htmlGrid += `
                 <tr class="${rowClass} ews-row" onclick="focusSearchToItem('${item.materialNo}')" style="cursor:pointer;">
                     <td class="font-monospace fw-bold">${item.materialNo}</td>
@@ -291,10 +356,8 @@
     }
 
     async function executeDownloadPR() {
-        savePRState(); // Kunci semua data terakhir di layar ke memori
-
+        savePRState();
         const payloadItems = [];
-        // Loop melalui memori (bukan layar, agar part yang sedang tersembunyi filter tetap ikut terunduh)
         for (const matNo in prSelections) {
             if (prSelections[matNo].checked) {
                 payloadItems.push({ 
@@ -305,10 +368,7 @@
             }
         }
 
-        if (payloadItems.length === 0) {
-            alert("Silakan pilih minimal satu item sparepart terlebih dahulu.");
-            return;
-        }
+        if (payloadItems.length === 0) { alert("Silakan pilih minimal satu item sparepart terlebih dahulu."); return; }
 
         try {
             const btnDownload = document.getElementById("btnDownloadPR");
@@ -327,30 +387,23 @@
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                
                 const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
                 a.download = `PR_Technical_P1_${dateStr}.xlsx`;
                 document.body.appendChild(a);
                 a.click();
                 a.remove();
                 window.URL.revokeObjectURL(url);
-                
-                togglePRMode(); // Sukses unduh, kembali ke normal
-            } else {
-                const errText = await response.text();
-                alert("Gagal memproses Purchase Request: " + errText);
-            }
-
-            btnDownload.innerHTML = originalHtml;
-            btnDownload.disabled = false;
-        } catch (error) {
-            console.error("Error mengunduh:", error);
-            alert("Terjadi kesalahan jaringan.");
+                togglePRMode(); 
+            } else { alert("Gagal memproses Purchase Request."); }
+        } catch (error) { alert("Terjadi kesalahan jaringan."); }
+        finally {
+            document.getElementById("btnDownloadPR").disabled = false;
+            document.getElementById("btnDownloadPR").innerHTML = `<i class="bi bi-download me-1"></i> Unduh PR Excel`;
         }
     }
 
     // ====================================================================
-    // LOGIKA TABEL UTAMA (TIDAK ADA PERUBAHAN)
+    // LOGIKA TABEL UTAMA & PENYARINGAN DATA (FILTERS)
     // ====================================================================
     function performFiltering() {
         const searchQuery = document.getElementById('smartSearch').value.toLowerCase().trim();
@@ -365,13 +418,23 @@
             });
         }
 
-        if (statusFilter === "EMPTY") {
+        // LOGIKA PENYARINGAN BARU
+        if (statusFilter === "PRIORITY_ONLY") {
+            filteredResult = filteredResult.filter(item => item.priority === 'Y');
+        } else if (statusFilter === "EMPTY") {
             filteredResult = filteredResult.filter(item => item.actualStock === 0);
         } else if (statusFilter === "CRITICAL") {
             filteredResult = filteredResult.filter(item => item.actualStock > 0 && item.actualStock <= item.safetyStock);
         } else if (statusFilter === "SAFE") {
             filteredResult = filteredResult.filter(item => item.actualStock > item.safetyStock);
         }
+
+        // Urutkan tabel bawah agar prioritas 'Y' selalu nangkring di paling atas
+        filteredResult.sort((a, b) => {
+            if (a.priority === 'Y' && b.priority !== 'Y') return -1;
+            if (a.priority !== 'Y' && b.priority === 'Y') return 1;
+            return 0;
+        });
 
         currentTableData = filteredResult;
         renderMainTableRows();
@@ -385,7 +448,6 @@
         document.getElementById('smartSearch').value = matNo;
         performFiltering();
         document.getElementById('smartSearch').focus();
-        document.getElementById('smartSearch').scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
     function resetDashboard() {
@@ -393,17 +455,19 @@
         document.getElementById('statusFilter').value = "ALL";
         currentTableData = [...datasetSparepart];
         sortState = { col: -1, asc: true };
+        
+        currentTableData.sort((a, b) => {
+            if (a.priority === 'Y' && b.priority !== 'Y') return -1;
+            if (a.priority !== 'Y' && b.priority === 'Y') return 1;
+            return 0;
+        });
         renderMainTableRows();
     }
 
     function sortTable(colIdx) {
         if (currentTableData.length === 0) return;
-        if (sortState.col === colIdx) {
-            sortState.asc = !sortState.asc;
-        } else {
-            sortState.col = colIdx;
-            sortState.asc = true;
-        }
+        if (sortState.col === colIdx) { sortState.asc = !sortState.asc; } 
+        else { sortState.col = colIdx; sortState.asc = true; }
 
         currentTableData.sort((a, b) => {
             let valA, valB;
@@ -434,6 +498,7 @@
         currentTableData.forEach(item => {
             let isZero = item.actualStock === 0;
             let isCritical = item.actualStock > 0 && item.actualStock <= item.safetyStock;
+            let isItemPriority = item.priority === 'Y';
             
             let badgeComponent = `<span class="badge bg-success-subtle text-success border border-success fw-bold px-2 w-100">AMAN</span>`;
             let rowStyleClass = "";
@@ -448,11 +513,18 @@
                 textStockStyle = "text-warning fw-bold fs-6";
                 rowStyleClass = "table-warning";
             }
+            
+            if (isItemPriority && !isZero && !isCritical) {
+                rowStyleClass = "table-light";
+                badgeComponent = `<span class="badge bg-info text-white fw-bold px-2 w-100">⭐ PRIORITAS</span>`;
+            } else if (isItemPriority) {
+                badgeComponent = `<span class="badge ${isZero?'bg-danger':'bg-warning text-dark'} fw-bold px-2 w-100">⭐ PRIORITAS</span>`;
+            }
 
             let titleTooltip = item.slowMovingDays > 30 ? `Material Slow Moving! Tidak bergerak selama ${item.slowMovingDays} hari.` : "";
             htmlBuffer += `
             <tr class="${rowStyleClass}" title="${titleTooltip}">
-                <td class="font-monospace fw-bold text-secondary text-nowrap">${item.materialNo}</td>
+                <td class="font-monospace fw-bold text-secondary text-nowrap">${item.materialNo} ${isItemPriority ? '⭐' : ''}</td>
                 <td>
                     <div class="fw-bold text-uppercase text-truncate" style="max-width: 380px;">${item.description}</div>
                     ${item.slowMovingDays > 90 ? `<span class="text-danger fw-bold" style="font-size: 0.65rem;"><i class="bi bi-turtle-fill"></i> DORMANT > 90 DAYS</span>` : ""}
@@ -470,8 +542,6 @@
 </script>
 
 <style>
-    /* Mengunci tinggi elemen menggunakan flexbox dan Viewport Height (vh) */
-    /* Mencegah scroll ganda di layar, scroll hanya terjadi di dalam tubuh tabel */
     #sparepartTable th, #ewsTable th {
         border-bottom: 2px solid #222;
         user-select: none;
@@ -484,12 +554,9 @@
     .font-sans-serif {
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
     }
-    /* Efek hover khusus untuk baris EWS */
     .ews-row {
         cursor: pointer;
         transition: background-color 0.15s;
     }
-    .ews-row:hover {
-        opacity: 0.85;
-    }
+    .ews-row:hover { opacity: 0.85; }
 </style>

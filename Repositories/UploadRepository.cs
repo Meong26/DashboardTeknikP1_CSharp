@@ -128,15 +128,14 @@ namespace DashboardTeknikP1.Repositories
                 conn.Open();
                 using (SqlTransaction trans = conn.BeginTransaction())
                 {
-                    // Karena data duplikat sudah disatukan di Controller C#, kita bisa langsung INSERT biasa
                     string query = @"INSERT INTO tbl_SAP_Sparepart 
                                     (PlantCode, MType, MatGrp, MatrGroupDescription, SLoc, MaterialNo, 
                                     MaterialNoDescription, TotalQtyStock, BUn, MvgAvgPriceIDR, 
-                                    TotValuatedStockIDR, DateOfLastMvt, LamaTdkBergerakDay, StorBin, SafetyStock) 
+                                    TotValuatedStockIDR, DateOfLastMvt, LamaTdkBergerakDay, StorBin, SafetyStock, Priority) 
                                     VALUES 
                                     (@Plant, @MType, @MatGrp, @MatDesc, @SLoc, @MatNo, @MatNoDesc, 
-                                    @Qty, @BUn, @Price, @TotVal, @LastMvt, @SlowMoving, @StorBin, @Safety)";
-
+                                    @Qty, @BUn, @Price, @TotVal, @LastMvt, @SlowMoving, @StorBin, @Safety, @Priority)";
+                                    
                     using (SqlCommand cmd = new SqlCommand(query, conn, trans))
                     {
                         foreach (var data in dataList)
@@ -157,6 +156,7 @@ namespace DashboardTeknikP1.Repositories
                             cmd.Parameters.AddWithValue("@SlowMoving", data.LamaTdkBergerakDay);
                             cmd.Parameters.AddWithValue("@StorBin", data.StorBin ?? (object)DBNull.Value);
                             cmd.Parameters.AddWithValue("@Safety", data.SafetyStock);
+                            cmd.Parameters.AddWithValue("@Priority", string.IsNullOrEmpty(data.Priority) ? (object)DBNull.Value : data.Priority);
 
                             cmd.ExecuteNonQuery();
                         }
@@ -206,6 +206,28 @@ namespace DashboardTeknikP1.Repositories
                     trans.Commit();
                 }
             }
+        }
+
+        public List<string> GetExistingPriorities()
+        {
+            var list = new List<string>();
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                string query = "SELECT MaterialNo FROM tbl_SAP_Sparepart WHERE Priority = 'Y'";
+                using (SqlCommand cmd = new SqlCommand(query, conn))
+                {
+                    conn.Open();
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            if (reader["MaterialNo"] != DBNull.Value)
+                                list.Add(reader["MaterialNo"].ToString().Trim());
+                        }
+                    }
+                }
+            }
+            return list;
         }
     }
 }

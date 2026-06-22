@@ -44,13 +44,55 @@ namespace DashboardTeknikP1.Repositories
                                 TotalQtyStock = reader["TotalQtyStock"] != DBNull.Value ? Convert.ToDouble(reader["TotalQtyStock"]) : 0,
                                 SafetyStock = reader["SafetyStock"] != DBNull.Value ? Convert.ToInt32(reader["SafetyStock"]) : 0,
                                 LamaTdkBergerakDay = reader["LamaTdkBergerakDay"] != DBNull.Value ? Convert.ToInt32(reader["LamaTdkBergerakDay"]) : 0,
-                                MvgAvgPriceIDR = reader["MvgAvgPriceIDR"] != DBNull.Value ? Convert.ToDecimal(reader["MvgAvgPriceIDR"]) : 0
+                                MvgAvgPriceIDR = reader["MvgAvgPriceIDR"] != DBNull.Value ? Convert.ToDecimal(reader["MvgAvgPriceIDR"]) : 0,
+                                Priority = reader["Priority"] != DBNull.Value ? reader["Priority"].ToString() : null
                             });
                         }
                     }
                 }
             }
             return list;
+        }
+
+        public async Task SavePrioritiesBulkAsync(List<string> priorityMaterialNos)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                await conn.OpenAsync();
+                using (SqlTransaction trans = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        // 1. Reset seluruh bendera prioritas menjadi kosong/NULL
+                        string resetQuery = "UPDATE tbl_SAP_Sparepart SET Priority = NULL";
+                        using (SqlCommand cmd = new SqlCommand(resetQuery, conn, trans))
+                        {
+                            await cmd.ExecuteNonQueryAsync();
+                        }
+
+                        // 2. Set nilai 'Y' hanya untuk nomor material yang dikirim dari antarmuka
+                        if (priorityMaterialNos != null && priorityMaterialNos.Any())
+                        {
+                            string updateQuery = "UPDATE tbl_SAP_Sparepart SET Priority = 'Y' WHERE MaterialNo = @MatNo";
+                            using (SqlCommand cmd = new SqlCommand(updateQuery, conn, trans))
+                            {
+                                cmd.Parameters.Add("@MatNo", System.Data.SqlDbType.VarChar, 50);
+                                foreach (var matNo in priorityMaterialNos)
+                                {
+                                    cmd.Parameters["@MatNo"].Value = matNo;
+                                    await cmd.ExecuteNonQueryAsync();
+                                }
+                            }
+                        }
+                        trans.Commit();
+                    }
+                    catch
+                    {
+                        trans.Rollback();
+                        throw;
+                    }
+                }
+            }
         }
     }
 }

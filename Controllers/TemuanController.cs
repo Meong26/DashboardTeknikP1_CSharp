@@ -107,5 +107,62 @@ namespace DashboardTeknikP1.Controllers
             // Kembalikan ke halaman utama log teknik
             return RedirectToAction("Index");
         }
+
+        // ====================================================================
+        // 6. API UNTUK FORM INLINE (AMBIL MASTER MESIN & RIWAYAT)
+        // ====================================================================
+        [HttpGet]
+        public IActionResult GetApiData()
+        {
+            var listMesin = _repository.GetAllMesin();
+            var listTemuan = _repository.GetAllTemuan();
+            
+            // Format ulang data temuan agar mudah dibaca JavaScript
+            var formattedTemuan = listTemuan.Select(t => new {
+                t.TemuanID,
+                TanggalFormated = t.TanggalInput.ToString("dd MMM yyyy HH:mm"),
+                Pelapor = t.UserID,
+                t.KodeMesin,
+                NamaMesin = t.NamaMesin ?? "Mesin Tidak Dikenal",
+                t.DeskripsiAbnormal,
+                TindakanKorektif = string.IsNullOrEmpty(t.TindakanKorektif) ? "-" : t.TindakanKorektif,
+                Status = t.StatusTemuan ?? "OPEN"
+            }).ToList();
+
+            // PERBAIKAN: Tambahkan JsonSerializerOptions agar huruf besar/kecil (PascalCase) tidak diubah ke camelCase
+            return Json(new { 
+                mesin = listMesin, 
+                history = formattedTemuan 
+            }, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null });
+        }
+
+        // ====================================================================
+        // 7. API UNTUK SIMPAN MULTIPLE DATA (FORM INLINE EXCEL)
+        // ====================================================================
+        [HttpPost]
+        public IActionResult SaveDataFast([FromBody] List<TemuanAbnormal> payload)
+        {
+            if (payload == null || !payload.Any()) return BadRequest("Data laporan kosong.");
+
+            string activeUser = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "SYSTEM";
+
+            try
+            {
+                foreach (var item in payload)
+                {
+                    item.UserID = activeUser;
+                    item.TanggalInput = DateTime.Now;
+                    item.StatusTemuan = "OPEN";
+                    if (string.IsNullOrEmpty(item.TindakanKorektif)) item.TindakanKorektif = "";
+
+                    _repository.InsertTemuan(item);
+                }
+                return Ok("Berhasil disimpan");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
+        }
     }
 }

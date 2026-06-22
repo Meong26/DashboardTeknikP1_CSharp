@@ -20,5 +20,6 @@ namespace DashboardTeknikP1.Models
         public string StorBin { get; set; }
         public int SafetyStock { get; set; }
         public DateTime LastUploadTimestamp { get; set; }
+        public string? Priority { get; set; } = string.Empty;
     }
 }
