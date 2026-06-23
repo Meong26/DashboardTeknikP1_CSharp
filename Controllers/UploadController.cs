@@ -109,11 +109,12 @@ namespace DashboardTeknikP1.Controllers
             }
 
             // =========================================================
-            // 3. PROSES FILE SPAREPART (SP) - DENGAN PROTEKSI PRIORITAS
+            // 3. PROSES FILE SPAREPART (SP) - STRUKTUR SIMPLIFIKASI BARU
+            // Asumsi Kolom Excel: 
+            // 1:Plant | 2:Material | 3:Material Desc | 4:UoM | 5:Moving U.Price | 6:Current Stock | 7:Mat.Type | 8:Stor.Loct
             // =========================================================
             if (fileSP != null && fileSP.Length > 0)
             {
-                // Amankan data prioritas yang ada di DB saat ini sebelum tabel di-truncate
                 var savedPriorities = _repository.GetExistingPriorities();
 
                 _repository.TruncateTable("tbl_SAP_Sparepart");
@@ -124,43 +125,37 @@ namespace DashboardTeknikP1.Controllers
                     using (var package = new ExcelPackage(stream))
                     {
                         ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
-                        int rowCount = worksheet.Dimension.Rows;
+                        int rowCount = worksheet.Dimension?.Rows ?? 0;
                         for (int row = 2; row <= rowCount; row++)
                         {
                             var data = new SAP_Sparepart
                             {
-                                PlantCode = worksheet.Cells[row, 1].Text,
-                                MType = worksheet.Cells[row, 2].Text,
-                                MatGrp = worksheet.Cells[row, 3].Text,
-                                MatrGroupDescription = worksheet.Cells[row, 4].Text,
-                                SLoc = worksheet.Cells[row, 5].Text,
-                                MaterialNo = worksheet.Cells[row, 6].Text,
-                                MaterialNoDescription = worksheet.Cells[row, 7].Text,
-                                TotalQtyStock = ParseDouble(worksheet.Cells[row, 8]),
-                                BUn = worksheet.Cells[row, 9].Text,
-                                MvgAvgPriceIDR = ParseDecimal(worksheet.Cells[row, 10]),
-                                TotValuatedStockIDR = ParseDecimal(worksheet.Cells[row, 11]),
-                                DateOfLastMvt = ParseDate(worksheet.Cells[row, 12]),
-                                LamaTdkBergerakDay = ParseInt(worksheet.Cells[row, 13]),
-                                StorBin = worksheet.Cells[row, 14].Text,
-                                SafetyStock = 1 
+                                Plant = worksheet.Cells[row, 1].Text,
+                                Material = worksheet.Cells[row, 2].Text,
+                                MaterialDescription = worksheet.Cells[row, 3].Text,
+                                UoM = worksheet.Cells[row, 4].Text,
+                                MovingUnitPrice = ParseDecimal(worksheet.Cells[row, 5]),
+                                CurrentStock = ParseDouble(worksheet.Cells[row, 6]),
+                                MatType = worksheet.Cells[row, 7].Text,
+                                StorLoct = worksheet.Cells[row, 8].Text,
+                                SafetyStock = 1 // Default otomatis
                             };
                             rawList.Add(data);
                         }
                     }
                 }
 
+                // Logika Penyatuan Material (Agregasi)
                 var groupedSpList = rawList
-                    .GroupBy(x => x.MaterialNo ?? "UNKNOWN")
+                    .GroupBy(x => x.Material ?? "UNKNOWN")
                     .Select(group => {
                         var firstItem = group.First();
-                        string cleanMatNo = firstItem.MaterialNo?.Trim() ?? "";
-
-                        firstItem.TotalQtyStock = group.Sum(x => x.TotalQtyStock);
-                        firstItem.TotValuatedStockIDR = group.Sum(x => x.TotValuatedStockIDR);
-                        firstItem.DateOfLastMvt = group.Max(x => x.DateOfLastMvt);
                         
-                        // RESTORE LOGIC: Jika nomor material ini sebelumnya diberi flag 'Y', pasang kembali!
+                        // Perbaikan aman untuk C# (Mencegah Error CS0029)
+                        string cleanMatNo = firstItem.Material != null ? firstItem.Material.Trim() : "";
+
+                        firstItem.CurrentStock = group.Sum(x => x.CurrentStock);
+                        
                         if (savedPriorities.Contains(cleanMatNo))
                         {
                             firstItem.Priority = "Y";
@@ -185,7 +180,9 @@ namespace DashboardTeknikP1.Controllers
                     using (var package = new ExcelPackage(stream))
                     {
                         ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
-                        int rowCount = worksheet.Dimension.Rows;
+                        // PERBAIKAN: Gunakan null-conditional operator '?' agar tidak error saat Excel berantakan
+                        int rowCount = worksheet.Dimension?.Rows ?? 0; 
+                        
                         for (int row = 2; row <= rowCount; row++)
                         {
                             var data = new SAP_YP14

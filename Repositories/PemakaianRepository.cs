@@ -54,9 +54,9 @@ namespace DashboardTeknikP1.Repositories
             var list = new List<PengambilanSparepart>();
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                string query = @"SELECT p.*, s.MaterialNoDescription AS MaterialDesc 
+                string query = @"SELECT p.*, s.MaterialDescription AS MaterialDesc 
                                  FROM tbl_PengambilanSparepart p
-                                 LEFT JOIN tbl_SAP_Sparepart s ON p.MaterialNo = s.MaterialNo
+                                 LEFT JOIN tbl_SAP_Sparepart s ON p.MaterialNo = s.Material
                                  ORDER BY p.TanggalPengambilan DESC, p.TanggalInput DESC";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
@@ -118,7 +118,7 @@ namespace DashboardTeknikP1.Repositories
                     }
                 }
 
-                string qYr21 = "SELECT PostingDate, DelivQtyPcs FROM tbl_SAP_YR21";
+                string qYr21 = "SELECT PostingDate, DelivQtyPcs, WeekOfBasicFinishedDate FROM tbl_SAP_YR21";
                 using (SqlCommand cmd = new SqlCommand(qYr21, conn))
                 {
                     using (var reader = await cmd.ExecuteReaderAsync())
@@ -127,8 +127,10 @@ namespace DashboardTeknikP1.Repositories
                         {
                             listYr21.Add(new SAP_YR21
                             {
-                                PostingDate = Convert.ToDateTime(reader["PostingDate"]),
-                                DelivQtyPcs = Convert.ToDouble(reader["DelivQtyPcs"])
+                                PostingDate = reader["PostingDate"] != DBNull.Value ? Convert.ToDateTime(reader["PostingDate"]) : new DateTime(1900, 1, 1),
+                                DelivQtyPcs = reader["DelivQtyPcs"] != DBNull.Value ? Convert.ToDouble(reader["DelivQtyPcs"]) : 0,
+                                // PERBAIKAN: Tarik data Week dari SAP
+                                WeekOfBasicFinishedDate = reader["WeekOfBasicFinishedDate"] != DBNull.Value ? reader["WeekOfBasicFinishedDate"].ToString() : ""
                             });
                         }
                     }

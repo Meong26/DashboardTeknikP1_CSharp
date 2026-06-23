@@ -159,12 +159,12 @@
     let historyDatasetFix = [];
     let historyDatasetKarantina = [];
     let serverCurrentWeek = "";
+    let yr21OutputPerWeek = {}; // Variabel baru penampung output produksi
     
     let currentHistoryMode = 'ESTIMASI'; 
     let isQuarantineEditModeActive = false; 
     let isPRModeActive = false; 
 
-    // PERBAIKAN ASYNC: Unduh Master Stok dulu, baru Riwayat
     document.addEventListener("DOMContentLoaded", async () => {
         await fetchMasterData();
         await loadHistoryFromServer();
@@ -189,9 +189,8 @@
             historyDatasetFix = resJson.dataFix;
             historyDatasetKarantina = resJson.dataKarantina;
             serverCurrentWeek = resJson.currentWeek;
+            yr21OutputPerWeek = resJson.outputPerWeek || {}; // Ambil data dari server
 
-            document.getElementById("lblCostLastWeek").innerText = resJson.costLastWeek.toLocaleString("id-ID");
-            document.getElementById("lblRatio").innerText = resJson.ratioLastWeek.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             document.getElementById("badgeKarantinaCount").innerText = historyDatasetKarantina.length;
 
             populateWeekFilterDropdown();
@@ -212,17 +211,17 @@
         const btnEditKarantina = document.getElementById("btnModeKarantina");
         const btnEditPR = document.getElementById("btnModePR");
         
+        // PERBAIKAN: Aktifkan dropdown untuk kedua mode
+        ddlFilter.disabled = false; 
+        
         if (mode === 'FIX') {
-            ddlFilter.innerHTML = `<option value="SAP_ACTUAL">Data Aktual SAP YP14</option>`;
-            ddlFilter.disabled = true;
             btnEditKarantina.classList.add("d-none"); 
             btnEditPR.classList.add("d-none"); 
         } else {
-            ddlFilter.disabled = false;
             btnEditKarantina.classList.remove("d-none");
             btnEditPR.classList.remove("d-none");
-            populateWeekFilterDropdown();
         }
+        populateWeekFilterDropdown();
         renderHistoryTable();
     }
 
@@ -265,20 +264,30 @@
     }
 
     function populateWeekFilterDropdown() {
-        if(currentHistoryMode === 'FIX') return;
         const ddl = document.getElementById("historyWeekFilter");
         const currentSelection = ddl.value; 
         ddl.innerHTML = "";
 
         let uniqueWeeks = {};
-        uniqueWeeks[serverCurrentWeek] = `Week ${serverCurrentWeek.split('-W')[1]} (Estimasi Berjalan)`;
-        historyDatasetEstimasi.forEach(item => { uniqueWeeks[item.WeekYearKey] = item.WeekDisplay; });
+        
+        // Pilih sumber data berdasarkan mode yang aktif
+        if (currentHistoryMode === 'ESTIMASI') {
+            uniqueWeeks[serverCurrentWeek] = `Week ${serverCurrentWeek.split('-W')[1]} (Estimasi Berjalan)`;
+            historyDatasetEstimasi.forEach(item => { uniqueWeeks[item.WeekYearKey] = item.WeekDisplay; });
+        } else {
+            historyDatasetFix.forEach(item => { uniqueWeeks[item.WeekYearKey] = item.WeekDisplay; });
+        }
 
+        // Urutkan minggu dari yang terbaru (Descending)
         const sortedKeys = Object.keys(uniqueWeeks).sort((a, b) => b.localeCompare(a));
         sortedKeys.forEach(key => { ddl.innerHTML += `<option value="${key}">${uniqueWeeks[key]}</option>`; });
 
-        if (currentSelection && sortedKeys.includes(currentSelection)) ddl.value = currentSelection;
-        else ddl.value = serverCurrentWeek;
+        // Pertahankan seleksi sebelumnya jika masih relevan, jika tidak pilih yang paling atas
+        if (currentSelection && sortedKeys.includes(currentSelection)) {
+            ddl.value = currentSelection;
+        } else {
+            ddl.value = currentHistoryMode === 'ESTIMASI' ? serverCurrentWeek : (sortedKeys.length > 0 ? sortedKeys[0] : "");
+        }
     }
 
     // =========================================================
@@ -302,14 +311,23 @@
         let sourceData = currentHistoryMode === 'FIX' ? historyDatasetFix : historyDatasetEstimasi;
         let filteredData = sourceData.filter(x => x.WeekYearKey === selectedWeek);
         
+        // HITUNG NILAI WIDGET SECARA DINAMIS
+        let totalCostSelectedWeek = filteredData.reduce((sum, item) => sum + item.TotalHargaNumeric, 0);
+
         if (currentHistoryMode === 'ESTIMASI') {
-            let totalCostSelectedWeek = filteredData.reduce((sum, item) => sum + item.TotalHargaNumeric, 0);
             document.getElementById("lblCostThisWeek").innerText = totalCostSelectedWeek.toLocaleString("id-ID");
+        } else if (currentHistoryMode === 'FIX') {
+            document.getElementById("lblCostLastWeek").innerText = totalCostSelectedWeek.toLocaleString("id-ID");
+            
+            // Hitung Rasio dari data YR21 untuk minggu yang dipilih
+            let outputPcs = yr21OutputPerWeek[selectedWeek] || 0;
+            let ratio = outputPcs > 0 ? totalCostSelectedWeek / outputPcs : 0;
+            document.getElementById("lblRatio").innerText = ratio.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         }
 
         if (filteredData.length === 0) {
             let colSpan = currentHistoryMode === 'FIX' ? 8 : (isQuarantineEditModeActive || isPRModeActive ? 10 : 9);
-            tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-4 text-muted">Tidak ada riwayat pengambilan pada periode ini.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-4 text-muted">Tidak ada riwayat pada periode ini.</td></tr>`;
             return;
         }
 
@@ -328,8 +346,9 @@
                     <td class="text-end font-monospace fw-bold text-danger">Rp ${item.TotalHargaFormated}</td>
                 </tr>`;
             } else {
-                let partData = masterSparepart.find(m => m.MaterialNo && m.MaterialNo.trim() === item.MaterialNo.trim());
-                let sisaStok = partData ? partData.TotalQtyStock : 0;
+                // PENYESUAIAN C#: item.MaterialNo di Pemakaian dicocokkan dengan m.Material di tabel Sparepart yang baru
+                let partData = masterSparepart.find(m => m.Material && m.Material.trim() === item.MaterialNo.trim());
+                let sisaStok = partData ? partData.CurrentStock : 0;
                 let safetyStok = partData ? partData.SafetyStock : 0;
                 
                 let badgeClass = "bg-success";
@@ -544,12 +563,13 @@
             return; 
         } 
         
-        const part = masterSparepart.find(x => x.MaterialNo && x.MaterialNo.trim() === matNo); 
+        // MENGGUNAKAN KOLOM BARU "Material" & "MaterialDescription" dari masterSparepart
+        const part = masterSparepart.find(x => x.Material && x.Material.trim() === matNo); 
         
         if (part) { 
-            inpDesc.value = part.MaterialNoDescription; 
-            inpHarga.value = part.MvgAvgPriceIDR || 0; 
-            const actualQty = part.TotalQtyStock || 0; 
+            inpDesc.value = part.MaterialDescription; 
+            inpHarga.value = part.MovingUnitPrice || 0; 
+            const actualQty = part.CurrentStock || 0; 
             inpStok.value = `${actualQty} PC`; 
             
             if (actualQty === 0) inpStok.className = "form-control form-control-sm border-0 text-center table-danger fw-bold text-danger inp-stok h-100"; 

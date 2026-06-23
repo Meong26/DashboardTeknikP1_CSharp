@@ -129,33 +129,26 @@ namespace DashboardTeknikP1.Repositories
                 using (SqlTransaction trans = conn.BeginTransaction())
                 {
                     string query = @"INSERT INTO tbl_SAP_Sparepart 
-                                    (PlantCode, MType, MatGrp, MatrGroupDescription, SLoc, MaterialNo, 
-                                    MaterialNoDescription, TotalQtyStock, BUn, MvgAvgPriceIDR, 
-                                    TotValuatedStockIDR, DateOfLastMvt, LamaTdkBergerakDay, StorBin, SafetyStock, Priority) 
+                                    (Plant, Material, MaterialDescription, UoM, MovingUnitPrice, 
+                                     CurrentStock, SafetyStock, MatType, StorLoct, Priority) 
                                     VALUES 
-                                    (@Plant, @MType, @MatGrp, @MatDesc, @SLoc, @MatNo, @MatNoDesc, 
-                                    @Qty, @BUn, @Price, @TotVal, @LastMvt, @SlowMoving, @StorBin, @Safety, @Priority)";
+                                    (@Plant, @Material, @MaterialDescription, @UoM, @MovingUnitPrice, 
+                                     @CurrentStock, @SafetyStock, @MatType, @StorLoct, @Priority)";
                                     
                     using (SqlCommand cmd = new SqlCommand(query, conn, trans))
                     {
                         foreach (var data in dataList)
                         {
                             cmd.Parameters.Clear();
-                            cmd.Parameters.AddWithValue("@Plant", data.PlantCode ?? (object)DBNull.Value);
-                            cmd.Parameters.AddWithValue("@MType", data.MType ?? (object)DBNull.Value);
-                            cmd.Parameters.AddWithValue("@MatGrp", data.MatGrp ?? (object)DBNull.Value);
-                            cmd.Parameters.AddWithValue("@MatDesc", data.MatrGroupDescription ?? (object)DBNull.Value);
-                            cmd.Parameters.AddWithValue("@SLoc", data.SLoc ?? (object)DBNull.Value);
-                            cmd.Parameters.AddWithValue("@MatNo", data.MaterialNo ?? (object)DBNull.Value);
-                            cmd.Parameters.AddWithValue("@MatNoDesc", data.MaterialNoDescription ?? (object)DBNull.Value);
-                            cmd.Parameters.AddWithValue("@Qty", data.TotalQtyStock);
-                            cmd.Parameters.AddWithValue("@BUn", data.BUn ?? (object)DBNull.Value);
-                            cmd.Parameters.AddWithValue("@Price", data.MvgAvgPriceIDR);
-                            cmd.Parameters.AddWithValue("@TotVal", data.TotValuatedStockIDR);
-                            cmd.Parameters.AddWithValue("@LastMvt", data.DateOfLastMvt);
-                            cmd.Parameters.AddWithValue("@SlowMoving", data.LamaTdkBergerakDay);
-                            cmd.Parameters.AddWithValue("@StorBin", data.StorBin ?? (object)DBNull.Value);
-                            cmd.Parameters.AddWithValue("@Safety", data.SafetyStock);
+                            cmd.Parameters.AddWithValue("@Plant", data.Plant ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@Material", data.Material ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@MaterialDescription", data.MaterialDescription ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@UoM", data.UoM ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@MovingUnitPrice", data.MovingUnitPrice);
+                            cmd.Parameters.AddWithValue("@CurrentStock", data.CurrentStock);
+                            cmd.Parameters.AddWithValue("@SafetyStock", data.SafetyStock);
+                            cmd.Parameters.AddWithValue("@MatType", data.MatType ?? (object)DBNull.Value);
+                            cmd.Parameters.AddWithValue("@StorLoct", data.StorLoct ?? (object)DBNull.Value);
                             cmd.Parameters.AddWithValue("@Priority", string.IsNullOrEmpty(data.Priority) ? (object)DBNull.Value : data.Priority);
 
                             cmd.ExecuteNonQuery();
@@ -213,7 +206,7 @@ namespace DashboardTeknikP1.Repositories
             var list = new List<string>();
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                string query = "SELECT MaterialNo FROM tbl_SAP_Sparepart WHERE Priority = 'Y'";
+                string query = "SELECT Material FROM tbl_SAP_Sparepart WHERE Priority = 'Y'";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     conn.Open();
@@ -221,8 +214,8 @@ namespace DashboardTeknikP1.Repositories
                     {
                         while (reader.Read())
                         {
-                            if (reader["MaterialNo"] != DBNull.Value)
-                                list.Add(reader["MaterialNo"].ToString().Trim());
+                            if (reader["Material"] != DBNull.Value)
+                                list.Add(reader["Material"].ToString().Trim());
                         }
                     }
                 }

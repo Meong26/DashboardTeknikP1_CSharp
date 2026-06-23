@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - Dashboard Teknik P1</title>
     
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="~/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     
     <style>
         /* --- Kustomisasi Layout Sidebar & Wrapper --- */
@@ -86,7 +86,7 @@
         /* Menu Navigasi Mode Sembunyi */
         #sidebar-wrapper.collapsed .list-group-item {
             padding: 1rem;
-            justify-content: center;
+            justify-content: center !important;
             border-left: none; 
         }
         #sidebar-wrapper.collapsed .list-group-item.active {
@@ -207,7 +207,7 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {

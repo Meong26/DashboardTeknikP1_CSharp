@@ -102,23 +102,23 @@ namespace DashboardTeknikP1.Controllers
                     {
                         int currentRow = startRow + i;
                         var inputItem = itemsForThisPage[i];
-                        var dbItem = allSpareparts.FirstOrDefault(x => x.MaterialNo?.Trim() == inputItem.MaterialNo.Trim());
-
-                        // globalNumber memastikan jika masuk halaman 2, nomornya lanjut jadi 24, 25, dst
+                        
+                        // PERUBAHAN: Gunakan Material, MaterialDescription, UoM
+                        var dbItem = allSpareparts.FirstOrDefault(x => x.Material != null && x.Material.Trim() == inputItem.MaterialNo.Trim());
                         int globalNumber = (pageIndex * maxItemsPerPage) + i + 1;
-
+                        
                         currentSheet.Cells[currentRow, 2].Value = globalNumber;
                         currentSheet.Cells[currentRow, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                         currentSheet.Cells[currentRow, 5].Value = inputItem.MaterialNo;
                         currentSheet.Cells[currentRow, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-
-                        currentSheet.Cells[currentRow, 6].Value = dbItem?.MaterialNoDescription ?? "-";
+                        
+                        currentSheet.Cells[currentRow, 6].Value = dbItem?.MaterialDescription ?? "-";
 
                         currentSheet.Cells[currentRow, 7].Value = inputItem.Qty;
                         currentSheet.Cells[currentRow, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-                        currentSheet.Cells[currentRow, 8].Value = dbItem?.BUn ?? "PC";
+                        currentSheet.Cells[currentRow, 8].Value = dbItem?.UoM ?? "PC";
                         currentSheet.Cells[currentRow, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
                         currentSheet.Cells[currentRow, 9].Value = "14 Hari";

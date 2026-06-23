@@ -53,50 +53,83 @@ namespace DashboardTeknikP1.Controllers
                 var listFixData = sapRawTuple.Item1;
                 var listYr21 = sapRawTuple.Item2;
 
-                int currentIsoYear = System.Globalization.ISOWeek.GetYear(DateTime.Now);
-                int currentIsoWeek = System.Globalization.ISOWeek.GetWeekOfYear(DateTime.Now);
-                string currentWeekStr = $"{currentIsoYear}-W{currentIsoWeek}";
-                
-                DateTime targetWeeksAgo = DateTime.Now.AddDays(-7);
-                int prevWeekYear = System.Globalization.ISOWeek.GetYear(targetWeeksAgo);
-                int prevWeekNo = System.Globalization.ISOWeek.GetWeekOfYear(targetWeeksAgo);
+                // ==============================================================
+                // 1. BANGUN KAMUS KALENDER DINAMIS DARI DATA YR21 SAP
+                // ==============================================================
+                var dictCalendar = new Dictionary<DateTime, string>();
+                foreach (var yr in listYr21.Where(x => !string.IsNullOrEmpty(x.WeekOfBasicFinishedDate) && x.WeekOfBasicFinishedDate.Length >= 6))
+                {
+                    DateTime tgl = yr.PostingDate.Date;
+                    if (!dictCalendar.ContainsKey(tgl))
+                    {
+                        string rawWeek = yr.WeekOfBasicFinishedDate; // cth: "202601"
+                        string yearPart = rawWeek.Substring(0, 4);
+                        string weekPart = int.Parse(rawWeek.Substring(4, 2)).ToString(); // Ubah "01" jadi "1"
+                        dictCalendar[tgl] = $"{yearPart}-W{weekPart}";
+                    }
+                }
 
-                // Filter Data SAP YP14 (Minggu Lalu)
-                var filteredFixData = listFixData.Where(x => 
-                    System.Globalization.ISOWeek.GetYear(x.DocumentDate) == prevWeekYear && 
-                    System.Globalization.ISOWeek.GetWeekOfYear(x.DocumentDate) == prevWeekNo
-                ).ToList();
+                // Fungsi Penerjemah Tanggal -> Minggu Indofood
+                string GetIndofoodWeekString(DateTime targetDate)
+                {
+                    DateTime dateOnly = targetDate.Date;
+                    
+                    // Prioritas 1: Tanggal tersebut ada di produksi YR21
+                    if (dictCalendar.TryGetValue(dateOnly, out string exactWeek)) return exactWeek;
 
-                double outputLastWeek = listYr21.Where(x => 
-                    System.Globalization.ISOWeek.GetYear(x.PostingDate) == prevWeekYear && 
-                    System.Globalization.ISOWeek.GetWeekOfYear(x.PostingDate) == prevWeekNo
-                ).Sum(x => x.DelivQtyPcs);
+                    // Prioritas 2: Toleransi jika pabrik libur (Maju/Mundur max 3 hari) cari tanggal terdekat
+                    for (int i = 1; i <= 3; i++)
+                    {
+                        if (dictCalendar.TryGetValue(dateOnly.AddDays(-i), out string backWeek)) return backWeek;
+                        if (dictCalendar.TryGetValue(dateOnly.AddDays(i), out string fwdWeek)) return fwdWeek;
+                    }
 
-                decimal costLastWeek = filteredFixData.Sum(x => x.MaterialCost);
-                double ratioLastWeek = outputLastWeek > 0 ? (double)costLastWeek / outputLastWeek : 0;
+                    // Prioritas 3: Fallback (jika YR21 belum diupload sama sekali di server)
+                    int isoY = System.Globalization.ISOWeek.GetYear(dateOnly);
+                    int isoW = System.Globalization.ISOWeek.GetWeekOfYear(dateOnly);
+                    int adjW = isoW <= 2 ? 1 : isoW - 1; 
+                    return $"{isoY}-W{adjW}";
+                }
 
-                // ====================================================================
-                // PEMISAHAN DATA BERDASARKAN STATUS NYATA DI DATABASE
-                // ====================================================================
+                string GetDisplayWeek(string weekKey, string suffix = "") 
+                {
+                    var parts = weekKey.Split("-W");
+                    if(parts.Length == 2) return $"Week {parts[1]} ({parts[0]}){suffix}";
+                    return weekKey + suffix;
+                }
+
+                // ==============================================================
+                // 2. TERAPKAN KAMUS KALENDER KE SELURUH DATA
+                // ==============================================================
+                string currentWeekStr = GetIndofoodWeekString(DateTime.Now);
+
+                decimal costTotal = listFixData.Sum(x => x.MaterialCost);
+                double outputTotal = listYr21.Sum(x => x.DelivQtyPcs);
+                double ratioTotal = outputTotal > 0 ? (double)costTotal / outputTotal : 0;
+
+                var outputPerWeek = listYr21
+                    .Where(x => !string.IsNullOrEmpty(x.WeekOfBasicFinishedDate) && x.WeekOfBasicFinishedDate.Length >= 6)
+                    .GroupBy(x => GetIndofoodWeekString(x.PostingDate))
+                    .ToDictionary(g => g.Key, g => g.Sum(x => x.DelivQtyPcs));
+
                 var listEstimasi = allHistory.Where(x => x.Status.ToUpper() == "ESTIMASI").ToList();
                 var listKarantina = allHistory.Where(x => x.Status.ToUpper() == "KARANTINA").ToList();
 
                 var resultEstimasi = listEstimasi.Select(x => {
-                    int isoYear = System.Globalization.ISOWeek.GetYear(x.TanggalPengambilan);
-                    int isoWeek = System.Globalization.ISOWeek.GetWeekOfYear(x.TanggalPengambilan);
+                    string weekKey = GetIndofoodWeekString(x.TanggalPengambilan);
                     return new {
                         x.PengambilanID,
                         TanggalFormated = x.TanggalPengambilan.ToString("dd MMM yyyy"),
                         x.MaterialNo,
-                        MaterialDesc = x.MaterialDesc, // Menggunakan kueri join dari database master
+                        MaterialDesc = x.MaterialDesc, 
                         TujuanPengambilan = x.TujuanPengambilan,
                         NamaPengambil = x.NamaPengambil,
                         x.JumlahPengambilan,
                         HargaSatuanFormated = x.HargaSatuanSaatIni.ToString("N0"),
                         TotalHargaNumeric = (double)x.TotalHarga,
                         TotalHargaFormated = x.TotalHarga.ToString("N0"),
-                        WeekYearKey = $"{isoYear}-W{isoWeek}",
-                        WeekDisplay = $"Week {isoWeek} ({isoYear})"
+                        WeekYearKey = weekKey,
+                        WeekDisplay = GetDisplayWeek(weekKey)
                     };
                 }).ToList();
 
@@ -111,28 +144,32 @@ namespace DashboardTeknikP1.Controllers
                     TotalHargaFormated = x.TotalHarga.ToString("N0")
                 }).ToList();
 
-                var resultFix = filteredFixData.Select(x => new {
-                    PengambilanID = 0,
-                    TanggalFormated = x.DocumentDate.ToString("dd MMM yyyy"),
-                    MaterialNo = x.MaterialNo,
-                    MaterialDesc = x.MaterialDescription,
-                    TujuanPengambilan = x.EquipmentDescription, 
-                    OrderNo = x.OrderNo, 
-                    JumlahPengambilan = x.Qty,
-                    HargaSatuanFormated = x.PricePerUnit.ToString("N0"),
-                    TotalHargaNumeric = (double)x.MaterialCost,
-                    TotalHargaFormated = x.MaterialCost.ToString("N0"),
-                    WeekYearKey = "SAP_ACTUAL",
-                    WeekDisplay = "Data SAP (Minggu Lalu)"
+                var resultFix = listFixData.Select(x => {
+                    string weekKey = GetIndofoodWeekString(x.DocumentDate);
+                    return new {
+                        PengambilanID = 0,
+                        TanggalFormated = x.DocumentDate.ToString("dd MMM yyyy"),
+                        MaterialNo = x.MaterialNo,
+                        MaterialDesc = x.MaterialDescription,
+                        TujuanPengambilan = x.EquipmentDescription, 
+                        OrderNo = x.OrderNo, 
+                        JumlahPengambilan = x.Qty,
+                        HargaSatuanFormated = x.PricePerUnit.ToString("N0"),
+                        TotalHargaNumeric = (double)x.MaterialCost,
+                        TotalHargaFormated = x.MaterialCost.ToString("N0"),
+                        WeekYearKey = weekKey,
+                        WeekDisplay = GetDisplayWeek(weekKey, " Aktual")
+                    };
                 }).ToList();
 
                 return Json(new { 
                     currentWeek = currentWeekStr, 
                     dataEstimasi = resultEstimasi,
-                    dataKarantina = resultKarantina, // Disuplai ke pop-up modal karantina
+                    dataKarantina = resultKarantina,
                     dataFix = resultFix,
-                    costLastWeek = costLastWeek,
-                    ratioLastWeek = ratioLastWeek
+                    costLastWeek = costTotal,
+                    ratioLastWeek = ratioTotal,
+                    outputPerWeek = outputPerWeek
                 }, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null });
             }
             catch (Exception ex) { return StatusCode(500, ex.Message); }

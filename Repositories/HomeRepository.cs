@@ -92,14 +92,12 @@ namespace DashboardTeknikP1.Repositories
         public async Task<List<SAP_Sparepart>> GetEwsSparepartsAsync()
         {
             var list = new List<SAP_Sparepart>();
-
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                string query = @"SELECT MaterialNo, MaterialNoDescription, TotalQtyStock, SafetyStock, SLoc 
+                string query = @"SELECT Material, MaterialDescription, CurrentStock, SafetyStock, StorLoct 
                                 FROM tbl_SAP_Sparepart 
-                                WHERE TotalQtyStock <= SafetyStock 
-                                ORDER BY TotalQtyStock ASC";
-
+                                WHERE CurrentStock <= SafetyStock 
+                                ORDER BY CurrentStock ASC";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     await conn.OpenAsync();
@@ -109,11 +107,11 @@ namespace DashboardTeknikP1.Repositories
                         {
                             list.Add(new SAP_Sparepart
                             {
-                                MaterialNo = reader["MaterialNo"].ToString(),
-                                MaterialNoDescription = reader["MaterialNoDescription"].ToString(),
-                                TotalQtyStock = Convert.ToDouble(reader["TotalQtyStock"]),
+                                Material = reader["Material"].ToString(),
+                                MaterialDescription = reader["MaterialDescription"].ToString(),
+                                CurrentStock = Convert.ToDouble(reader["CurrentStock"]),
                                 SafetyStock = Convert.ToInt32(reader["SafetyStock"]),
-                                SLoc = reader["SLoc"].ToString()
+                                StorLoct = reader["StorLoct"].ToString()
                             });
                         }
                     }

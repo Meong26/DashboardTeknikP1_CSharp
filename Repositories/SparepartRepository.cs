@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
@@ -16,35 +17,30 @@ namespace DashboardTeknikP1.Repositories
             _connectionString = configuration.GetConnectionString("DefaultConnection");
         }
 
-        // PERBAIKAN: Menggunakan async Task agar proses antri di server web jauh lebih ringan
         public async Task<List<SAP_Sparepart>> GetAllSparepartsAsync()
         {
             var list = new List<SAP_Sparepart>();
-
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 string query = "SELECT * FROM tbl_SAP_Sparepart";
-
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
-                    await conn.OpenAsync(); // Membuka koneksi di latar belakang
-
-                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync()) // Membaca di latar belakang
+                    await conn.OpenAsync();
+                    using (SqlDataReader reader = await cmd.ExecuteReaderAsync())
                     {
                         while (await reader.ReadAsync())
                         {
                             list.Add(new SAP_Sparepart
                             {
-                                PlantCode = reader["PlantCode"] != DBNull.Value ? reader["PlantCode"].ToString() : null,
-                                MaterialNo = reader["MaterialNo"] != DBNull.Value ? reader["MaterialNo"].ToString() : null,
-                                MaterialNoDescription = reader["MaterialNoDescription"] != DBNull.Value ? reader["MaterialNoDescription"].ToString() : null,
-                                MatrGroupDescription = reader["MatrGroupDescription"] != DBNull.Value ? reader["MatrGroupDescription"].ToString() : null,
-                                StorBin = reader["StorBin"] != DBNull.Value ? reader["StorBin"].ToString() : null,
-                                BUn = reader["BUn"] != DBNull.Value ? reader["BUn"].ToString() : "PC",
-                                TotalQtyStock = reader["TotalQtyStock"] != DBNull.Value ? Convert.ToDouble(reader["TotalQtyStock"]) : 0,
+                                Plant = reader["Plant"] != DBNull.Value ? reader["Plant"].ToString() : "",
+                                Material = reader["Material"] != DBNull.Value ? reader["Material"].ToString() : "",
+                                MaterialDescription = reader["MaterialDescription"] != DBNull.Value ? reader["MaterialDescription"].ToString() : "",
+                                UoM = reader["UoM"] != DBNull.Value ? reader["UoM"].ToString() : "PC",
+                                MovingUnitPrice = reader["MovingUnitPrice"] != DBNull.Value ? Convert.ToDecimal(reader["MovingUnitPrice"]) : 0,
+                                CurrentStock = reader["CurrentStock"] != DBNull.Value ? Convert.ToDouble(reader["CurrentStock"]) : 0,
                                 SafetyStock = reader["SafetyStock"] != DBNull.Value ? Convert.ToInt32(reader["SafetyStock"]) : 0,
-                                LamaTdkBergerakDay = reader["LamaTdkBergerakDay"] != DBNull.Value ? Convert.ToInt32(reader["LamaTdkBergerakDay"]) : 0,
-                                MvgAvgPriceIDR = reader["MvgAvgPriceIDR"] != DBNull.Value ? Convert.ToDecimal(reader["MvgAvgPriceIDR"]) : 0,
+                                MatType = reader["MatType"] != DBNull.Value ? reader["MatType"].ToString() : "",
+                                StorLoct = reader["StorLoct"] != DBNull.Value ? reader["StorLoct"].ToString() : "",
                                 Priority = reader["Priority"] != DBNull.Value ? reader["Priority"].ToString() : null
                             });
                         }
@@ -63,20 +59,18 @@ namespace DashboardTeknikP1.Repositories
                 {
                     try
                     {
-                        // 1. Reset seluruh bendera prioritas menjadi kosong/NULL
                         string resetQuery = "UPDATE tbl_SAP_Sparepart SET Priority = NULL";
                         using (SqlCommand cmd = new SqlCommand(resetQuery, conn, trans))
                         {
                             await cmd.ExecuteNonQueryAsync();
                         }
 
-                        // 2. Set nilai 'Y' hanya untuk nomor material yang dikirim dari antarmuka
                         if (priorityMaterialNos != null && priorityMaterialNos.Any())
                         {
-                            string updateQuery = "UPDATE tbl_SAP_Sparepart SET Priority = 'Y' WHERE MaterialNo = @MatNo";
+                            string updateQuery = "UPDATE tbl_SAP_Sparepart SET Priority = 'Y' WHERE Material = @MatNo";
                             using (SqlCommand cmd = new SqlCommand(updateQuery, conn, trans))
                             {
-                                cmd.Parameters.Add("@MatNo", System.Data.SqlDbType.VarChar, 50);
+                                cmd.Parameters.Add("@MatNo", System.Data.SqlDbType.VarChar, 100);
                                 foreach (var matNo in priorityMaterialNos)
                                 {
                                     cmd.Parameters["@MatNo"].Value = matNo;
