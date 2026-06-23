@@ -32,9 +32,10 @@
         <select id="fltNotif" class="form-select form-select-sm" onchange="updateDashboard()">
             <option value="">Semua (NV & NT)</option>
             <option value="NV">NV - DT Lain Lain</option>
-            <option value="NT">NT - DT Mesin</option>
+            <option value="NT" selected>NT - DT Mesin</option>
         </select>
     </div>
+    
     <div class="col-md-2">
         <label class="form-label fw-bold small text-muted mb-1">Regu / Shift</label>
         <select id="fltShift" class="form-select form-select-sm" onchange="updateDashboard()">
@@ -47,7 +48,7 @@
 
     <div class="col-md-2 mb-1">
         <div class="form-check">
-            <input class="form-check-input border-danger" type="checkbox" id="chkSteam" checked onchange="updateDashboard()">
+            <input class="form-check-input border-danger" type="checkbox" id="chkSteam" onchange="updateDashboard()">
             <label class="form-check-label fw-bold small text-danger" for="chkSteam" style="font-size: 0.8rem;">
                 Include Steam Drop
             </label>

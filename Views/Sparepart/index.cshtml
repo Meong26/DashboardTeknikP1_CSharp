@@ -20,18 +20,22 @@
         <table class="table table-hover table-sm mb-0 align-middle font-monospace" style="font-size: 0.85rem;" id="ewsTable">
             <thead class="table-dark sticky-top text-uppercase" style="z-index: 2;">
                 <tr id="ewsTheadRow">
-                    <th>Material No</th>
-                    <th>Description</th>
-                    <th>Storage Loct</th>
-                    <th class="text-center">Safety</th>
-                    <th class="text-center">Actual</th>
-                    <th class="text-center">Status</th>
-                </tr>
+                    </tr>
             </thead>
             <tbody id="ewsTableBody" class="font-sans-serif">
                 <tr><td colspan="6" class="text-center py-4"><div class="spinner-border text-danger spinner-border-sm me-2"></div> Memuat data EWS...</td></tr>
             </tbody>
         </table>
+    </div>
+    <div class="card-footer bg-white border-top py-2 px-3 text-muted d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+        <span style="font-size: 0.8rem;">
+            Menampilkan <strong id="lblEwsStart" class="text-dark">0</strong> - <strong id="lblEwsEnd" class="text-dark">0</strong> 
+            dari <strong id="lblEwsTotal" class="text-danger">0</strong> item kritis SAP.
+        </span>
+        <nav aria-label="Navigasi Halaman EWS">
+            <ul class="pagination pagination-sm mb-0 shadow-sm" id="ewsPagination">
+                </ul>
+        </nav>
     </div>
 </div>
 
@@ -75,16 +79,27 @@
         </table>
     </div>
     
-    <div class="card-footer bg-white border-top py-1 px-3 text-muted small d-flex justify-content-between align-items-center">
-        <span style="font-size: 0.8rem;">Menampilkan <strong id="lblShowingCount">0</strong> dari <strong id="lblTotalCount">0</strong> baris material SAP.</span>
+    <div class="card-footer bg-white border-top py-2 px-3 text-muted d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+        <span style="font-size: 0.8rem;">
+            Menampilkan <strong id="lblShowingStart" class="text-dark">0</strong> - <strong id="lblShowingEnd" class="text-dark">0</strong> 
+            dari <strong id="lblTotalCount" class="text-primary">0</strong> baris material SAP.
+        </span>
+        <nav aria-label="Navigasi Halaman Data">
+            <ul class="pagination pagination-sm mb-0 shadow-sm" id="paginationControls">
+                </ul>
+        </nav>
     </div>
 </div>
 
 <script>
+    let ewsCurrentPage = 1;
+    const ewsItemsPerPage = 50;
+    let ewsCombinedListGlobal = [];
     let datasetSparepart = [];
     let currentTableData = [];
     let sortState = { col: -1, asc: true };
-    
+    let currentPage = 1;
+    const itemsPerPage = 100    
     let isPRModeActive = false;
     let isPriorityModeActive = false; 
     let prSelections = {}; 
@@ -235,7 +250,7 @@
     }
 
     function renderEWSContainer() {
-        savePRState();
+        savePRState(); // Amankan memori PR yang sedang diceklis
 
         let outOfStockList = datasetSparepart.filter(item => item.actualStock === 0);
         let criticalStockList = datasetSparepart.filter(item => item.actualStock > 0 && item.actualStock <= item.safetyStock);
@@ -257,9 +272,7 @@
             return 0; 
         });
         
-        const tbody = document.getElementById('ewsTableBody');
         const theadRow = document.getElementById("ewsTheadRow");
-        
         document.getElementById('ewsCount').innerText = `${ewsCombinedList.length} Item`;
 
         if (isPriorityModeActive) {
@@ -270,16 +283,39 @@
             theadRow.innerHTML = `<th>Material No</th><th>Description</th><th>Storage Loct</th><th class="text-center">Safety</th><th class="text-center">Actual</th><th class="text-center">Status</th>`;
         }
 
-        if (ewsCombinedList.length === 0) {
+        // SIMPAN KE MEMORI GLOBAL & PANGGIL RENDER HALAMAN 1
+        ewsCombinedListGlobal = ewsCombinedList;
+        ewsCurrentPage = 1;
+        renderEwsTableRows();
+    }
+    function renderEwsTableRows() {
+        const tbody = document.getElementById('ewsTableBody');
+        const totalItems = ewsCombinedListGlobal.length;
+        
+        if (totalItems === 0) {
             tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Kosong.</td></tr>`;
+            document.getElementById('lblEwsStart').innerText = 0;
+            document.getElementById('lblEwsEnd').innerText = 0;
+            document.getElementById('lblEwsTotal').innerText = 0; // Reset ke 0
+            document.getElementById('ewsPagination').innerHTML = "";
             return;
         }
 
+        // LOGIKA SLICING (MEMOTONG DATA SESUAI HALAMAN)
+        const totalPages = Math.ceil(totalItems / ewsItemsPerPage);
+        if (ewsCurrentPage > totalPages) ewsCurrentPage = totalPages;
+        if (ewsCurrentPage < 1) ewsCurrentPage = 1;
+
+        const startIndex = (ewsCurrentPage - 1) * ewsItemsPerPage;
+        const endIndex = Math.min(startIndex + ewsItemsPerPage, totalItems);
+        const paginatedData = ewsCombinedListGlobal.slice(startIndex, endIndex);
+
         let htmlGrid = "";
-        ewsCombinedList.forEach((item) => {
+        paginatedData.forEach((item) => {
             let isZero = item.actualStock === 0;
             let isItemPriority = item.priority === 'Y';
             let rowClass = isZero ? "table-danger" : "table-warning";
+            
             if (isItemPriority && !isPriorityModeActive && !isPRModeActive) {
                 rowClass = "table-light border-start border-4 border-warning";
             }
@@ -324,7 +360,40 @@
                 </tr>`;
             }
         });
+        
         tbody.innerHTML = htmlGrid;
+        
+        // =========================================================
+        // PERBAIKAN SINKRONISASI LABEL FOOTER EWS
+        // =========================================================
+        document.getElementById('lblEwsStart').innerText = startIndex + 1;
+        document.getElementById('lblEwsEnd').innerText = endIndex;
+        document.getElementById('lblEwsTotal').innerText = totalItems.toLocaleString('id-ID'); // Format ribuan ala Indonesia
+        
+        renderEwsPagination(totalPages);
+    }
+
+    function renderEwsPagination(totalPages) {
+        const ul = document.getElementById('ewsPagination');
+        let html = "";
+
+        // Tombol Mundur
+        html += `<li class="page-item ${ewsCurrentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link py-1 px-2 fw-bold" href="javascript:void(0)" onclick="changeEwsPage(${ewsCurrentPage - 1})">&laquo;</a>
+                 </li>`;
+
+        // Tombol Maju
+        html += `<li class="page-item ${ewsCurrentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link py-1 px-2 fw-bold" href="javascript:void(0)" onclick="changeEwsPage(${ewsCurrentPage + 1})">&raquo;</a>
+                 </li>`;
+
+        ul.innerHTML = html;
+    }
+
+    function changeEwsPage(pageNum) {
+        savePRState(); // Selamatkan centangan PR sebelum pindah halaman
+        ewsCurrentPage = pageNum;
+        renderEwsTableRows();
     }
 
     async function executeDownloadPR() {
@@ -397,6 +466,7 @@
         });
 
         currentTableData = filteredResult;
+        currentPage = 1;
         renderMainTableRows();
     }
 
@@ -418,6 +488,7 @@
             if (a.priority !== 'Y' && b.priority === 'Y') return 1;
             return 0;
         });
+        currentPage = 1;
         renderMainTableRows();
     }
 
@@ -443,15 +514,31 @@
 
     function renderMainTableRows() {
         const tbody = document.getElementById('sparepartTableBody');
-        document.getElementById('lblShowingCount').innerText = currentTableData.length;
         
+        // 1. Logika Jika Kosong
         if (currentTableData.length === 0) {
             tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted fs-6"><i class="bi bi-search me-2 fs-5"></i> Tidak ada material suku cadang yang cocok.</td></tr>`;
+            document.getElementById('lblShowingStart').innerText = 0;
+            document.getElementById('lblShowingEnd').innerText = 0;
+            document.getElementById('lblTotalCount').innerText = 0;
+            document.getElementById('paginationControls').innerHTML = "";
             return;
         }
 
+        // 2. Logika Paginasi (Slicing Array)
+        const totalItems = currentTableData.length;
+        const totalPages = Math.ceil(totalItems / itemsPerPage);
+        
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+        const paginatedData = currentTableData.slice(startIndex, endIndex);
+
+        // 3. Render HTML Hanya Untuk 100 Baris (Sangat Ringan!)
         let htmlBuffer = "";
-        currentTableData.forEach(item => {
+        paginatedData.forEach(item => {
             let isZero = item.actualStock === 0;
             let isCritical = item.actualStock > 0 && item.actualStock <= item.safetyStock;
             let isItemPriority = item.priority === 'Y';
@@ -489,6 +576,58 @@
         });
         
         tbody.innerHTML = htmlBuffer;
+
+        // 4. Perbarui Label Footer
+        document.getElementById('lblShowingStart').innerText = startIndex + 1;
+        document.getElementById('lblShowingEnd').innerText = endIndex;
+        document.getElementById('lblTotalCount').innerText = totalItems.toLocaleString('id-ID');
+
+        // 5. Gambar Tombol Navigasi Halaman
+        renderPaginationControls(totalPages);
+    }
+
+    function renderPaginationControls(totalPages) {
+        const ul = document.getElementById('paginationControls');
+        let html = "";
+
+        // Tombol Prev
+        html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:void(0)" onclick="changePage(${currentPage - 1})">Prev</a>
+                 </li>`;
+
+        // Logika Limit Tombol (Tampilkan max 5 tombol angka)
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, currentPage + 2);
+
+        if (startPage > 1) {
+            html += `<li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="changePage(1)">1</a></li>`;
+            if (startPage > 2) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        }
+
+        for (let i = startPage; i <= endPage; i++) {
+            html += `<li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="javascript:void(0)" onclick="changePage(${i})">${i}</a>
+                     </li>`;
+        }
+
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+            html += `<li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="changePage(${totalPages})">${totalPages}</a></li>`;
+        }
+
+        // Tombol Next
+        html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="javascript:void(0)" onclick="changePage(${currentPage + 1})">Next</a>
+                 </li>`;
+
+        ul.innerHTML = html;
+    }
+
+    function changePage(pageNum) {
+        currentPage = pageNum;
+        renderMainTableRows();
+        // Gulir kembali ke atas tabel secara halus saat ganti halaman
+        document.getElementById('statusFilter').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 </script>
 

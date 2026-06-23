@@ -22,7 +22,6 @@ namespace DashboardTeknikP1.Controllers
         [HttpGet]
         public IActionResult Login()
         {
-            // Jika pengguna sudah punya akses, langsung tendang ke Dasbor
             if (User.Identity != null && User.Identity.IsAuthenticated)
             {
                 return RedirectToAction("Index", "Home");
