@@ -206,7 +206,8 @@ namespace DashboardTeknikP1.Repositories
             var list = new List<string>();
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                string query = "SELECT Material FROM tbl_SAP_Sparepart WHERE Priority = 'Y'";
+                // PERBAIKAN: Baca dari tabel abadi yang kebal dari TRUNCATE
+                string query = "SELECT Material FROM tbl_Sparepart_Priority";
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     conn.Open();

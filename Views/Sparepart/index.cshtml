@@ -162,26 +162,36 @@
     }
 
     function togglePriorityMode() {
-        if (isPRModeActive) togglePRMode(); 
+        if (isPRModeActive) togglePRMode();
         isPriorityModeActive = !isPriorityModeActive;
         const btnToggle = document.getElementById("btnTogglePriority");
         const btnSave = document.getElementById("btnSavePriority");
+        const searchContainer = document.getElementById("ewsSearchContainer");
+        const searchInput = document.getElementById("ewsSearchInput");
 
         if (isPriorityModeActive) {
             btnToggle.innerHTML = `<i class="bi bi-x-circle me-1"></i> Batal Prioritas`;
             btnToggle.className = "btn btn-sm btn-danger fw-bold";
             btnSave.classList.remove("d-none");
+            searchContainer.classList.remove("d-none"); // Tampilkan pencarian khusus EWS
+            searchInput.focus();
         } else {
             btnToggle.innerHTML = `<i class="bi bi-star-fill me-1 text-warning"></i> Set Priority Mode`;
             btnToggle.className = "btn btn-sm btn-outline-warning fw-bold text-dark";
             btnSave.classList.add("d-none");
+            searchContainer.classList.add("d-none"); // Sembunyikan pencarian khusus EWS
+            searchInput.value = "";
         }
         renderEWSContainer();
     }
 
     async function executeSavePriorities() {
-        const checkBoxes = document.querySelectorAll(".chk-priority-flag:checked");
-        let listPriorityMaterialNos = Array.from(checkBoxes).map(cb => cb.getAttribute("data-matno"));
+        savePriorityState(); // Pastikan halaman terakhir yang sedang tampil ikut terekam
+
+        // Ambil semua nomor material yang status prioritasnya bernilai 'Y' dari memori global
+        let listPriorityMaterialNos = datasetSparepart
+            .filter(item => item.priority === 'Y')
+            .map(item => item.materialNo);
 
         if (!confirm(`Simpan ${listPriorityMaterialNos.length} item sebagai prioritas?`)) return;
 
@@ -249,15 +259,33 @@
         });
     }
 
+    function savePriorityState() {
+        if (!isPriorityModeActive) return;
+        const rows = document.querySelectorAll("#ewsTableBody tr");
+        rows.forEach(row => {
+            const chk = row.querySelector(".chk-priority-flag");
+            if (chk) {
+                const matNo = chk.getAttribute("data-matno");
+                // Cari data asli di memori global dan perbarui properti priority-nya secara real-time
+                const item = datasetSparepart.find(x => x.materialNo === matNo);
+                if (item) {
+                    item.priority = chk.checked ? "Y" : "";
+                }
+            }
+        });
+    }
+
     function renderEWSContainer() {
-        savePRState(); // Amankan memori PR yang sedang diceklis
+        savePRState();
+        savePriorityState(); // AMAN KAN CENTANGAN PRIORITAS SEBELUM FILTER BERJALAN
 
         let outOfStockList = datasetSparepart.filter(item => item.actualStock === 0);
         let criticalStockList = datasetSparepart.filter(item => item.actualStock > 0 && item.actualStock <= item.safetyStock);
         let ewsCombinedList = [...outOfStockList, ...criticalStockList];
 
         const searchInput = document.getElementById("ewsSearchInput");
-        if (isPRModeActive && searchInput && searchInput.value.trim() !== "") {
+        // PERBAIKAN: Aktifkan filter pencarian untuk Mode PR ATAU Mode Prioritas
+        if ((isPRModeActive || isPriorityModeActive) && searchInput && searchInput.value.trim() !== "") {
             const searchQuery = searchInput.value.toLowerCase().trim();
             let tokens = searchQuery.split(" ").filter(t => t !== "");
             ewsCombinedList = ewsCombinedList.filter(item => {
@@ -283,11 +311,11 @@
             theadRow.innerHTML = `<th>Material No</th><th>Description</th><th>Storage Loct</th><th class="text-center">Safety</th><th class="text-center">Actual</th><th class="text-center">Status</th>`;
         }
 
-        // SIMPAN KE MEMORI GLOBAL & PANGGIL RENDER HALAMAN 1
         ewsCombinedListGlobal = ewsCombinedList;
         ewsCurrentPage = 1;
         renderEwsTableRows();
     }
+
     function renderEwsTableRows() {
         const tbody = document.getElementById('ewsTableBody');
         const totalItems = ewsCombinedListGlobal.length;
@@ -391,7 +419,8 @@
     }
 
     function changeEwsPage(pageNum) {
-        savePRState(); // Selamatkan centangan PR sebelum pindah halaman
+        savePRState(); 
+        savePriorityState(); // AMAN KAN CENTANGAN SEBELUM PINDAH HALAMAN
         ewsCurrentPage = pageNum;
         renderEwsTableRows();
     }
