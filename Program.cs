@@ -11,6 +11,9 @@ builder.Services.AddScoped<DashboardTeknikP1.Repositories.TemuanRepository>();
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.SparepartRepository>();
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.PemakaianRepository>();
 
+// REGISTER SERVICE
+builder.Services.AddScoped<DashboardTeknikP1.Services.PemakaianService>();
+
 // ==========================================================
 // TAMBAHAN BARU: Mendaftarkan Sistem Keamanan (Cookie Auth)
 // ==========================================================

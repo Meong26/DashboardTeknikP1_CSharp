@@ -56,6 +56,31 @@
     </div>
 </div>
 
+<div class="row mb-3 g-3 d-print-none animate__animated animate__fadeIn">
+    <div class="col-md-6">
+        <div class="card bg-danger text-white shadow-sm border-0" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openMTTRDetails()" title="Klik untuk melihat Analitik Mendalam MTTR">
+            <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="small fw-bold text-uppercase opacity-75 mb-1" style="font-size: 0.7rem;"><i class="bi bi-tools me-1"></i> Mean Time To Repair (MTTR)</div>
+                    <h4 class="mb-0 fw-bold" id="lblMTTR">0 Menit</h4>
+                </div>
+                <i class="bi bi-stopwatch text-white opacity-50" style="font-size: 2rem;"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card bg-success text-white shadow-sm border-0" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openMTBFDetails()" title="Klik untuk melihat Analitik Mendalam MTBF">
+            <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="small fw-bold text-uppercase opacity-75 mb-1" style="font-size: 0.7rem;"><i class="bi bi-shield-check me-1"></i> Mean Time Between Failures (MTBF)</div>
+                    <h4 class="mb-0 fw-bold" id="lblMTBF">0 Menit</h4>
+                </div>
+                <i class="bi bi-activity text-white opacity-50" style="font-size: 2rem;"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row mb-3" style="height: 45vh;">
     <div class="col-12 h-100">
         <div class="card shadow-sm h-100 border-0">
@@ -135,7 +160,86 @@
     @@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     .bad-actor-card { transition: transform 0.2s; cursor: pointer; }
     .bad-actor-card:hover { transform: translateY(-2px); }
+    .drill-link { 
+        cursor: pointer; 
+        text-decoration: underline; 
+        text-decoration-style: dotted; 
+        transition: opacity 0.2s;
+    }
+    .drill-link:hover { opacity: 0.7; }
 </style>
+
+<div class="modal fade" id="modalMTTR" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-top border-4 border-danger">
+            <div class="modal-header bg-light py-2">
+                <h5 class="modal-title fw-bold text-danger"><i class="bi bi-tools me-2"></i> Deep Dive Analytics: MTTR (Kecepatan Perbaikan)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-body-tertiary">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white py-2 fw-bold small text-muted">Tren MTTR Historis (Bulanan)</div>
+                            <div class="card-body p-2" style="height: 250px;">
+                                <canvas id="chartMTTR"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white py-2 fw-bold small text-muted">Top 10 Breakdown Terlama (Menarik Nilai Rata-rata)</div>
+                            <div class="card-body p-0 table-responsive">
+                                <table class="table table-sm table-striped table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                                    <thead class="table-dark text-center">
+                                        <tr><th>No</th><th>Tanggal</th><th>Mesin</th><th>Deskripsi Masalah (Activity Text)</th><th>Durasi (Menit)</th></tr>
+                                    </thead>
+                                    <tbody id="tbodyMTTR"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalMTBF" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-top border-4 border-success">
+            <div class="modal-header bg-light py-2">
+                <h5 class="modal-title fw-bold text-success"><i class="bi bi-shield-check me-2"></i> Deep Dive Analytics: MTBF (Kehandalan Mesin)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-body-tertiary">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <div class="card shadow-sm border-0 h-100">
+                            <div class="card-header bg-white py-2 fw-bold small text-muted">ðŸ“ˆ Tren MTBF Historis (Bulanan)</div>
+                            <div class="card-body p-2" style="height: 250px;">
+                                <canvas id="chartMTBF"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white py-2 fw-bold small text-muted">ðŸ”§ Mesin Paling Sering Rusak (Frekuensi Tertinggi)</div>
+                            <div class="card-body p-0 table-responsive">
+                                <table class="table table-sm table-striped table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                                    <thead class="table-dark text-center">
+                                        <tr><th>Rank</th><th>Identitas Mesin & Line</th><th>Frekuensi Rusak</th><th>Total Kehilangan Waktu</th></tr>
+                                    </thead>
+                                    <tbody id="tbodyMTBF"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     Chart.register(ChartDataLabels);
@@ -144,16 +248,15 @@
     let ypDataRaw = [];
     let yrDataRaw = [];
 
+    let baseDataYP = [];
+    let baseDataYR = [];
+    let drillHistory = []; // Stack untuk navigasi 5 level
+
     let barChartInst = null;
     let pieChartInst = null;
     
-    let topLevelAgg = {}; 
-    let chartLevel = 0; 
-    let selectedTimeLabel = "";
-    let selectedTimeKey = "";
     let subDrillMode = "Line"; 
     let currentTableMode = "Raw";
-    let currentFilteredData = [];
     let currentDrillDownData = [];
     let sortState = { col: -1, asc: true };
 
@@ -175,31 +278,24 @@
     const getGridColor = () => document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
 
     document.addEventListener("DOMContentLoaded", () => {
-        // 1. Tampilkan animasi loading di area Bad Actors
         document.getElementById("rowBadActors").innerHTML = `
             <div class="col-12 text-center py-3">
                 <div class="spinner-border text-primary me-2 spinner-border-sm"></div> 
                 <span class="text-muted fw-bold">Memuat Analitik Performa dari Server...</span>
             </div>`;
             
-        // 2. Panggil data dari API
         fetchDashboardData();
     });
 
-    // FUNGSI BARU: Ambil data Asinkronus
     async function fetchDashboardData() {
         try {
             const response = await fetch('/Home/GetDashboardData');
             const data = await response.json();
-            
-            // Masukkan data ke variabel global
             ypDataRaw = data.ypData || [];
             yrDataRaw = data.yrData || [];
 
-            // Panggil fungsi render bawaan yang sudah ada
             populateDynamicDropdowns();
             handleModeChange(); 
-            
         } catch (error) {
             console.error("Gagal menarik data dasbor:", error);
             document.getElementById("rowBadActors").innerHTML = `
@@ -217,26 +313,57 @@
     }
 
     function getMachineName(funcLoc, activityText) {
-        if (!funcLoc) return "-";
-        let kodeMesin = funcLoc.slice(-3);
-        let txt = activityText ? activityText.toLowerCase() : "";
-        if (kodeMesin === "001") return "Alkali";
-        if (kodeMesin === "002") return "Mixer";
-        if (kodeMesin === "003") return "Feeder";
-        if (kodeMesin === "004") return "Press";
-        if (kodeMesin === "005") {
-            if (txt.includes("tekanan") || txt.includes("drop") || txt.includes("bar") || txt.includes("dibawah") || txt.includes("di bawah") || txt.includes("turun") || txt.includes("kurang")) return "Boiler";
-            return "Steambox";
-        }
-        if (kodeMesin === "006") return "Cutter & Distributor";
-        if (kodeMesin === "007") return "Fryer";
-        if (kodeMesin === "008") return "Cooler";
-        if (kodeMesin === "009") {
-            if (txt.includes("autoloader") || txt.includes("auto loader") || txt.includes("bumbu") || txt.includes("minyak")) return "Autoloader";
-            return "Wrapper";
-        }
-        return funcLoc; 
+    if (!funcLoc) return "-";
+    let kodeMesin = funcLoc.slice(-3);
+    let txt = activityText ? activityText.toLowerCase() : "";
+    
+    // Ekstrak nomor line secara dinamis dari Functional Location (Urutan ke-4)
+    let parts = funcLoc.split('-');
+    let lineNum = (parts.length >= 4) ? Number(parts[3]) : 0;
+
+    if (kodeMesin === "001") return "Alkali";
+    if (kodeMesin === "002") return "Mixer";
+    if (kodeMesin === "003") return "Feeder";
+    if (kodeMesin === "004") return "Press";
+    if (kodeMesin === "005") {
+        if (txt.includes("tekanan") || txt.includes("drop") || txt.includes("bar") || txt.includes("dibawah") || txt.includes("di bawah") || txt.includes("turun") || txt.includes("kurang")) return "Boiler";
+        return "Steambox";
     }
+    if (kodeMesin === "006") return "Cutter & Distributor";
+    if (kodeMesin === "007") return "Fryer";
+    if (kodeMesin === "008") return "Cooler";
+    
+    // Area Packing & End of Line
+    if (kodeMesin === "009") {
+        // 1. Validasi Syarat X-Ray
+        if (txt.includes("xray") || txt.includes("x-ray") || txt.includes("x ray")) {
+            return "X-Ray";
+        }
+        
+        // 2. Validasi Syarat Bandeed (Wajib di Line 8)
+        if (lineNum === 8 && (txt.includes("bandid") || txt.includes("bandeed") || txt.includes("banded") || txt.includes("5in1") || txt.includes("4in1"))) {
+            return "Bandeed";
+        }
+        
+        // 3. Validasi Syarat Cuploader (Wajib di Line 5 atau Line 6)
+        if ((lineNum === 5 || lineNum === 6) && 
+            (txt.includes("cuploader") || txt.includes("cup loader") || txt.includes("suplai cup") || txt.includes("supplycup") || 
+             txt.includes("heater cup seal") || txt.includes("heater seal") || txt.includes("preheater") || txt.includes("pre heater") || 
+             txt.includes("pallet") || txt.includes("palet"))) {
+            return "Cuploader";
+        }
+        
+        // 4. Validasi Syarat Autoloader (Kondisi Eksisting)
+        if (txt.includes("autoloader") || txt.includes("auto loader") || txt.includes("bumbu") || txt.includes("minyak")) {
+            return "Autoloader";
+        }
+        
+        // Jika tidak memenuhi semua kondisi spesifik di atas, default kembali ke Wrapper
+        return "Wrapper";
+    }
+    
+    return funcLoc;
+}
 
     function populateDynamicDropdowns() {
         const ddlBulan = document.getElementById("fltBulan");
@@ -249,7 +376,10 @@
             }
             if (item.WeekKalendarIndofood) mingguSet.add(item.WeekKalendarIndofood);
         });
+        ddlBulan.innerHTML = `<option value="ALL">Semua Bulan</option>`; 
         Array.from(bulanSet).map(x => JSON.parse(x)).sort((a, b) => b.val.localeCompare(a.val)).forEach(item => ddlBulan.innerHTML += `<option value="${item.val}">${item.text}</option>`);
+
+        ddlMinggu.innerHTML = "";
         Array.from(mingguSet).sort((a, b) => b.localeCompare(a)).forEach(w => ddlMinggu.innerHTML += `<option value="${w}">Week ${w}</option>`);
     }
 
@@ -260,19 +390,14 @@
         updateDashboard(); 
     }
 
-    function goBackToMainChart() {
-        chartLevel = 0;
-        document.getElementById('drillControls').classList.add('d-none');
-        document.getElementById('paretoToggleContainer').classList.remove('d-none');
-        document.getElementById('mainChartTitle').innerText = "📊 Analitik Downtime vs Jam Terencana";
-        document.getElementById('lblDetail').innerText = "Pilih Batang Grafik";
-        document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Klik salah satu batang grafik di atas untuk melihat detail.</td></tr>`;
-        updateDashboard(true); 
-    }
-
     function changeSubDrillGroup(mode) {
         subDrillMode = mode;
-        renderSubChart();
+        if (drillHistory.length > 0) {
+            let state = drillHistory[drillHistory.length - 1];
+            if (state.type === 'Pareto') {
+                renderCurrentState(); 
+            }
+        }
     }
 
     function changeTableMode(mode) {
@@ -280,13 +405,35 @@
         renderTableRows();
     }
 
+    // --- DEEP DRILL DOWN LOGIC ---
+
+    function getGroupingKey(d, mode, sapWeekStr) {
+        if (mode === "Year") return monthNames[d.getMonth()]; 
+        if (mode === "Month") {
+            if (sapWeekStr && sapWeekStr.length >= 6) {
+                let weekNum = parseInt(sapWeekStr.slice(-2), 10);
+                return "Week " + weekNum;
+            }
+            return "Minggu Ke-" + Math.ceil(d.getDate() / 7); 
+        }
+        if (mode === "Week") {
+            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        }
+        return "Lainnya";
+    }
+
+    function formatLabel(key, mode) {
+        if (mode === "Week") {
+            let d = new Date(key);
+            if (isNaN(d)) return key;
+            return `${dayNames[d.getDay()]}, ${d.toLocaleDateString('id-ID', {day:'2-digit', month:'short'})}`;
+        }
+        return key;
+    }
+
     function updateDashboard(isBackwards = false) {
-        if(!isBackwards && chartLevel === 1) {
-            chartLevel = 0;
-            document.getElementById('drillControls').classList.add('d-none');
-            document.getElementById('paretoToggleContainer').classList.remove('d-none');
-            document.getElementById('mainChartTitle').innerText = "📊 Analitik Downtime vs Jam Terencana";
-            document.getElementById('lblDetail').innerText = "Pilih Batang Grafik";
+        if (!isBackwards) {
+            drillHistory = [];
         }
 
         const mode = document.getElementById("dimMode").value;
@@ -295,87 +442,151 @@
         const selMonth = document.getElementById("fltBulan").value;
         const selWeek = document.getElementById("fltMinggu").value;
         const isSteamIncluded = document.getElementById("chkSteam").checked;
-        const isParetoMode = document.getElementById("chkPareto").checked;
 
         const isTimeMatch = (dateObj, weekStr) => {
-            if (mode === "Month") return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}` === selMonth;
+            if (mode === "Month") {
+                if (selMonth === "ALL") return true; 
+                return `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, '0')}` === selMonth;
+            }
             if (mode === "Week") return weekStr === selWeek;
             return true;
         };
 
-        const ypFiltered = ypDataRaw.filter(item => {
+        baseDataYP = ypDataRaw.filter(item => {
             let mNotif = !fltNotif || (item.NotificationType && item.NotificationType.includes(fltNotif));
             let mShift = !fltShift || (item.WageGroup_GroupShift && item.WageGroup_GroupShift.includes(fltShift));
             let mTime = isTimeMatch(new Date(item.NotificationDate), item.WeekKalendarIndofood);
             let mBoiler = !(getMachineName(item.FunctionLocation, item.ActivityText) === "Boiler" && !isSteamIncluded);
             return mNotif && mShift && mTime && mBoiler;
         });
-        currentFilteredData = ypFiltered;
 
-        calculateTopBadActors(ypFiltered);
-
-        let yrAgg = {};
-        yrDataRaw.forEach(item => {
-            let d = new Date(item.PostingDate);
-            if (fltShift && (!item.WageGroup || !item.WageGroup.includes(fltShift))) return;
-            if (!isTimeMatch(d, item.WeekOfBasicFinishedDate)) return;
-            
-            // PERBAIKAN: Masukkan item.WeekOfBasicFinishedDate
-            let key = getGroupingKey(d, mode, item.WeekOfBasicFinishedDate);
-            
-            if (!yrAgg[key]) yrAgg[key] = 0;
-            yrAgg[key] += (item.PlannedHour * 60); 
+        baseDataYR = yrDataRaw.filter(item => {
+            if (fltShift && (!item.WageGroup || !item.WageGroup.includes(fltShift))) return false;
+            if (!isTimeMatch(new Date(item.PostingDate), item.WeekOfBasicFinishedDate)) return false;
+            return true;
         });
 
-        let ypAgg = {};
-        ypFiltered.forEach(item => {
-            // PERBAIKAN: Masukkan item.WeekKalendarIndofood
-            let key = getGroupingKey(new Date(item.NotificationDate), mode, item.WeekKalendarIndofood);
+        // ==========================================
+        // KALKULASI MTTR & MTBF DARI DATA TERSARING
+        // ==========================================
+        let freqBreakdown = baseDataYP.length;
+        let totalDowntimeMins = baseDataYP.reduce((sum, item) => sum + item.TotalDownTimeInMinutes, 0);
+        let totalPlannedMins = baseDataYR.reduce((sum, item) => sum + (item.PlannedHour * 60), 0);
+
+        let mttr = freqBreakdown > 0 ? (totalDowntimeMins / freqBreakdown) : 0;
+        let uptimeMins = totalPlannedMins - totalDowntimeMins;
+        let mtbf = freqBreakdown > 0 ? (uptimeMins / freqBreakdown) : (uptimeMins > 0 ? uptimeMins : 0);
+
+        // Update UI HTML
+        document.getElementById('lblMTTR').innerText = mttr.toFixed(1) + " Menit";
+        document.getElementById('lblMTBF').innerText = mtbf.toFixed(1) + " Menit";
+        // ==========================================
+
+        calculateTopBadActors(baseDataYP);
+        updatePieChart(baseDataYP);
+
+        if (drillHistory.length === 0) {
+            document.getElementById('drillControls').classList.add('d-none');
+            document.getElementById('paretoToggleContainer').classList.remove('d-none');
+            document.getElementById('mainChartTitle').innerText = "📊 Analitik Downtime vs Jam Terencana";
+            document.getElementById('lblDetail').innerText = "Pilih Batang Grafik";
+            document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Klik salah satu titik grafik di atas untuk melihat detail.</td></tr>`;
+            renderLevel0();
+        } else {
+            renderCurrentState();
+        }
+    }
+
+    function goBackToMainChart() {
+        drillHistory.pop();
+        updateDashboard(true);
+    }
+
+    function drillToTrend() {
+        if (drillHistory.length === 0) return;
+        let state = drillHistory[drillHistory.length - 1];
+        if (state.type === 'Pareto') {
+            drillHistory.push({
+                type: 'Trend',
+                mode: state.mode,
+                label: state.label,
+                dataYP: state.dataYP,
+                dataYR: state.dataYR
+            });
+            renderCurrentState();
+        }
+    }
+
+    function renderCurrentState() {
+        document.getElementById('drillControls').classList.remove('d-none');
+        document.getElementById('paretoToggleContainer').classList.add('d-none');
+
+        let state = drillHistory[drillHistory.length - 1];
+        
+        if (state.type === 'Pareto') {
+            let titleLink = state.mode !== 'Day' 
+                ? `<span class="text-primary drill-link" onclick="drillToTrend()" title="Klik untuk melihat tren waktu khusus ${state.label}">${state.label} 📈</span>` 
+                : `<span class="text-primary">${state.label}</span>`;
+            document.getElementById('mainChartTitle').innerHTML = `📊 Rincian Periode: ${titleLink}`;
             
+            renderParetoSubChart(state.dataYP, state.label);
+            loadDrillDownTable(`Periode: ${state.label}`, state.dataYP);
+        } 
+        else if (state.type === 'Trend') {
+            let titleText = state.mode === 'Month' ? 'Mingguan' : 'Harian';
+            document.getElementById('mainChartTitle').innerHTML = `📊 Tren ${titleText}: <span class="text-primary">${state.label}</span>`;
+            
+            renderTrendChart(state.dataYP, state.dataYR, state.mode, state.label);
+            loadDrillDownTable(`Tren: ${state.label}`, state.dataYP);
+        }
+
+        // Sinkronisasi Pie Chart dan Bad Actor dengan data drill-down saat ini
+        updatePieChart(state.dataYP);
+        calculateTopBadActors(state.dataYP);
+    }
+
+    function renderLevel0() {
+        const mode = document.getElementById("dimMode").value;
+        const isParetoMode = document.getElementById("chkPareto").checked;
+
+        let ypAgg = {};
+        baseDataYP.forEach(item => {
+            let key = getGroupingKey(new Date(item.NotificationDate), mode, item.WeekKalendarIndofood);
             if (!ypAgg[key]) ypAgg[key] = { mins: 0, items: [] };
             ypAgg[key].mins += item.TotalDownTimeInMinutes;
             ypAgg[key].items.push(item);
         });
-
-        topLevelAgg = ypAgg;
-        let rawKeys = Object.keys(ypAgg);
         
+        let yrAgg = {};
+        baseDataYR.forEach(item => {
+            let key = getGroupingKey(new Date(item.PostingDate), mode, item.WeekOfBasicFinishedDate);
+            if (!yrAgg[key]) yrAgg[key] = 0;
+            yrAgg[key] += (item.PlannedHour * 60); 
+        });
+
+        let rawKeys = Object.keys(ypAgg);
         if (isParetoMode) {
             rawKeys.sort((a, b) => ypAgg[b].mins - ypAgg[a].mins);
         } else {
             rawKeys.sort((a, b) => {
                 if (mode === "Year") return monthNames.indexOf(a) - monthNames.indexOf(b);
-                if (mode === "Week") return a.localeCompare(b);
-                
-                // PERBAIKAN: Logika khusus untuk mode Bulan (Week 1, Week 2, dst)
                 if (mode === "Month") {
-                    // Ekstrak angka dari teks (misal "Week 12" menjadi angka 12)
                     let numA = parseInt(a.replace(/\D/g, '')) || 0;
                     let numB = parseInt(b.replace(/\D/g, '')) || 0;
                     return numA - numB;
                 }
-                
                 return a.localeCompare(b);
             });
         }
 
-        let labels = [], percentData = [], minuteData = [], targetLine = [];
+        let labels = [], percentData = [], minuteData = [], targetLine = [], actualKeys = [], paretoLineData = [];
         let totalMinsAll = rawKeys.reduce((sum, k) => sum + ypAgg[k].mins, 0);
         let cumulativeMins = 0;
-        let paretoLineData = [];
-        let actualKeys = []; // Array kunci asli
 
         rawKeys.forEach(k => {
             actualKeys.push(k);
+            labels.push(formatLabel(k, mode));
             
-            // PERBAIKAN: Memoles nama label menjadi tanggal cantik untuk sumbu X
-            if (mode === "Week") {
-                let dTemp = new Date(k);
-                labels.push(`${dayNames[dTemp.getDay()]}, ${dTemp.toLocaleDateString('id-ID', {day: '2-digit', month: 'short'})}`);
-            } else {
-                labels.push(k);
-            }
-
             let dtMins = ypAgg[k].mins;            
             let plannedMins = yrAgg[k] || 0;       
             minuteData.push(dtMins);
@@ -383,39 +594,199 @@
             targetLine.push(1.5);
 
             cumulativeMins += dtMins;
-            let cumPercent = totalMinsAll > 0 ? (cumulativeMins / totalMinsAll) * 100 : 0;
-            paretoLineData.push(cumPercent.toFixed(1));
+            paretoLineData.push(totalMinsAll > 0 ? ((cumulativeMins / totalMinsAll) * 100).toFixed(1) : 0);
         });
 
+        const onClickHandler = (e, elements) => {
+            if (elements.length > 0) {
+                const idx = elements[0].index;
+                const clickedKey = actualKeys[idx];
+                const clickedLabel = labels[idx];
+                
+                let nextMode = mode === 'Year' ? 'Month' : (mode === 'Month' ? 'Week' : 'Day');
+                
+                let subYP = baseDataYP.filter(item => getGroupingKey(new Date(item.NotificationDate), mode, item.WeekKalendarIndofood) === clickedKey);
+                let subYR = baseDataYR.filter(item => getGroupingKey(new Date(item.PostingDate), mode, item.WeekOfBasicFinishedDate) === clickedKey);
+                
+                drillHistory.push({ type: 'Pareto', mode: nextMode, label: clickedLabel, dataYP: subYP, dataYR: subYR });
+                renderCurrentState();
+            }
+        };
+
         if (isParetoMode) {
-            renderParetoChart(labels, minuteData, paretoLineData, actualKeys);
+            renderBaseParetoChart(labels, minuteData, paretoLineData, onClickHandler);
         } else {
-            renderTopChart(labels, percentData, minuteData, targetLine, actualKeys);
+            renderBaseTopChart(labels, percentData, minuteData, targetLine, onClickHandler);
         }
-        
-        updatePieChart(ypFiltered);
     }
 
-    // PERBAIKAN FUNGSI GROUPING KEY
-    function getGroupingKey(d, mode, sapWeekStr) {
-        if (mode === "Year") return monthNames[d.getMonth()]; 
-        
-        if (mode === "Month") {
-            // Jika data SAP mengirimkan kode minggu (misal: "202601" atau "202612")
-            if (sapWeekStr && sapWeekStr.length >= 6) {
-                // Ambil 2 digit terakhir dan jadikan angka (agar "01" jadi "1")
-                let weekNum = parseInt(sapWeekStr.slice(-2), 10);
-                return "Week " + weekNum;
+    function renderBaseTopChart(labels, pctData, minData, targetLine, clickHandler) {
+        const ctx = document.getElementById('barChart').getContext('2d');
+        if (barChartInst) barChartInst.destroy();
+
+        barChartInst = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { type: 'line', label: 'Standar (1.5%)', data: targetLine, borderColor: 'rgba(220, 53, 69, 1)', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, datalabels: { display: false } },
+                    { 
+                        type: 'line', label: 'Downtime (%)', data: pctData, backgroundColor: 'rgba(54, 162, 235, 0.2)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 2, 
+                        pointBackgroundColor: 'rgba(54, 162, 235, 1)', pointBorderColor: '#fff', pointBorderWidth: 1, pointRadius: 4, pointHoverRadius: 6,
+                        fill: true, tension: 0.1, customMinutes: minData 
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    datalabels: { anchor: 'end', align: 'top', offset: 4, color: getChartLabelColor, font: { weight: 'bold', size: 10 }, formatter: function(v, ctx) { return ctx.dataset.label === 'Standar (1.5%)' ? null : `${v}% \n(${ctx.dataset.customMinutes[ctx.dataIndex]} m)`; }, textAlign: 'center' }
+                },
+                scales: { y: { beginAtZero: true, suggestedMax: 3, title: { display: true, text: 'Persentase Downtime (%)' } } },
+                onClick: clickHandler
             }
-            // Fallback aman jika data SAP kosong
-            return "Minggu Ke-" + Math.ceil(d.getDate() / 7); 
-        }
-        
-        if (mode === "Week") {
-            return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-        }
-        return "Lainnya";
+        });
     }
+
+    function renderBaseParetoChart(labels, minData, cumPctData, clickHandler) {
+        const ctx = document.getElementById('barChart').getContext('2d');
+        if (barChartInst) barChartInst.destroy();
+
+        barChartInst = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [
+                    { type: 'line', label: '% Kumulatif', data: cumPctData, borderColor: 'rgba(220, 53, 69, 1)', backgroundColor: 'rgba(220, 53, 69, 0.1)', borderWidth: 2, pointRadius: 4, yAxisID: 'yPareto', fill: false, datalabels: { anchor: 'bottom', align: 'top', formatter: v => `${v}%`, color: getChartLabelColor, font: { size: 9 } } },
+                    { type: 'bar', label: 'Downtime (Menit)', data: minData, backgroundColor: 'rgba(153, 102, 255, 0.7)', borderColor: 'rgba(153, 102, 255, 1)', borderWidth: 1, borderRadius: 4, yAxisID: 'yMins', customMinutes: minData }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { datalabels: { formatter: (v, c) => c.dataset.type === 'line' ? `${v}%` : `${v}m`, font: { weight: 'bold', size: 10 } } },
+                scales: { 
+                    yMins: { type: 'linear', position: 'left', title: { display: true, text: 'Durasi (Menit)' }, beginAtZero: true },
+                    yPareto: { type: 'linear', position: 'right', title: { display: true, text: 'Persentase Kumulatif (%)' }, min: 0, max: 105, grid: { drawOnChartArea: false }, ticks: { callback: v => `${v}%` } }
+                },
+                onClick: clickHandler
+            }
+        });
+    }
+
+    function renderParetoSubChart(dataYP, labelTitle) {
+        let subAgg = {};
+        dataYP.forEach(item => {
+            let key = subDrillMode === "Line" ? getLineName(item.FunctionLocation) : getMachineName(item.FunctionLocation, item.ActivityText);
+            if(!subAgg[key]) subAgg[key] = { mins: 0, items: [] };
+            subAgg[key].mins += item.TotalDownTimeInMinutes;
+            subAgg[key].items.push(item);
+        });
+
+        let labels = Object.keys(subAgg).sort((a,b) => subAgg[b].mins - subAgg[a].mins); 
+        let dataMins = labels.map(k => subAgg[k].mins);
+
+        const ctx = document.getElementById('barChart').getContext('2d');
+        if (barChartInst) barChartInst.destroy();
+
+        barChartInst = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: labels, datasets: [{ label: `Total Downtime (Menit) - ${labelTitle}`, data: dataMins, backgroundColor: 'rgba(255, 159, 64, 0.85)', borderColor: 'rgba(255, 159, 64, 1)', borderWidth: 1, borderRadius: 4 }] },
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { datalabels: { anchor: 'end', align: 'top', color: getChartLabelColor, font: { weight: 'bold', size: 11 }, formatter: val => `${val} m` } }, 
+                scales: { y: { beginAtZero: true, suggestedMax: dataMins.length > 0 ? Math.max(...dataMins) * 1.2 : 10 } }, 
+                onClick: (e, elements) => { 
+                    if (elements.length > 0) { 
+                        const idx = elements[0].index; 
+                        const key = labels[idx]; 
+                        loadDrillDownTable(`${labelTitle} ➔ ${key}`, subAgg[key].items); 
+                    } 
+                } 
+            }
+        });
+    }
+
+    function renderTrendChart(dataYP, dataYR, mode, labelTitle) {
+        let ypAgg = {};
+        dataYP.forEach(item => {
+            let key = getGroupingKey(new Date(item.NotificationDate), mode, item.WeekKalendarIndofood);
+            if (!ypAgg[key]) ypAgg[key] = { mins: 0, items: [] };
+            ypAgg[key].mins += item.TotalDownTimeInMinutes;
+            ypAgg[key].items.push(item);
+        });
+        
+        let yrAgg = {};
+        dataYR.forEach(item => {
+            let key = getGroupingKey(new Date(item.PostingDate), mode, item.WeekOfBasicFinishedDate);
+            if (!yrAgg[key]) yrAgg[key] = 0;
+            yrAgg[key] += (item.PlannedHour * 60); 
+        });
+
+        let rawKeys = Object.keys(ypAgg);
+        rawKeys.sort((a, b) => {
+            if (mode === "Month") {
+                let numA = parseInt(a.replace(/\D/g, '')) || 0;
+                let numB = parseInt(b.replace(/\D/g, '')) || 0;
+                return numA - numB;
+            }
+            return a.localeCompare(b);
+        });
+
+        let labels = [], percentData = [], minuteData = [], targetLine = [], actualKeys = [];
+        rawKeys.forEach(k => {
+            actualKeys.push(k);
+            labels.push(formatLabel(k, mode));
+            
+            let dtMins = ypAgg[k].mins;            
+            let plannedMins = yrAgg[k] || 0;       
+            minuteData.push(dtMins);
+            percentData.push(plannedMins > 0 ? ((dtMins / plannedMins) * 100).toFixed(2) : 0);
+            targetLine.push(1.5);
+        });
+
+        const ctx = document.getElementById('barChart').getContext('2d');
+        if (barChartInst) barChartInst.destroy();
+
+        barChartInst = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    { type: 'line', label: 'Standar (1.5%)', data: targetLine, borderColor: 'rgba(220, 53, 69, 1)', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, datalabels: { display: false } },
+                    { 
+                        type: 'line', label: 'Downtime (%)', data: percentData, backgroundColor: 'rgba(54, 162, 235, 0.2)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 2, 
+                        pointBackgroundColor: 'rgba(54, 162, 235, 1)', pointBorderColor: '#fff', pointBorderWidth: 1, pointRadius: 4, pointHoverRadius: 6,
+                        fill: true, tension: 0.1, customMinutes: minuteData 
+                    }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    datalabels: { anchor: 'end', align: 'top', offset: 4, color: getChartLabelColor, font: { weight: 'bold', size: 10 }, formatter: function(v, ctx) { return ctx.dataset.label === 'Standar (1.5%)' ? null : `${v}% \n(${ctx.dataset.customMinutes[ctx.dataIndex]} m)`; }, textAlign: 'center' }
+                },
+                scales: { y: { beginAtZero: true, suggestedMax: 3, title: { display: true, text: 'Persentase Downtime (%)' } } },
+                onClick: (e, elements) => { 
+                    if (elements.length > 0) { 
+                        const idx = elements[0].index; 
+                        const clickedKey = actualKeys[idx];
+                        const clickedLabel = labels[idx];
+                        
+                        let nextMode = mode === 'Month' ? 'Week' : (mode === 'Week' ? 'Day' : 'None');
+                        if (nextMode === 'None') return;
+
+                        let subYP = dataYP.filter(item => getGroupingKey(new Date(item.NotificationDate), mode, item.WeekKalendarIndofood) === clickedKey);
+                        let subYR = dataYR.filter(item => getGroupingKey(new Date(item.PostingDate), mode, item.WeekOfBasicFinishedDate) === clickedKey);
+
+                        drillHistory.push({ type: 'Pareto', mode: nextMode, label: clickedLabel, dataYP: subYP, dataYR: subYR });
+                        renderCurrentState();
+                    } 
+                }
+            }
+        });
+    }
+
+    // --- SISANYA ADALAH FUNGSI BAWAAN YANG TETAP SAMA ---
 
     function calculateTopBadActors(filteredData) {
         let machineMap = {};
@@ -427,9 +798,7 @@
             machineMap[nameKey] += item.TotalDownTimeInMinutes;
         });
 
-        let sortedActors = Object.keys(machineMap).map(k => ({ name: k, mins: machineMap[k] }))
-                                 .sort((a,b) => b.mins - a.mins).slice(0, 5);
-
+        let sortedActors = Object.keys(machineMap).map(k => ({ name: k, mins: machineMap[k] })).sort((a,b) => b.mins - a.mins).slice(0, 5);
         const container = document.getElementById("rowBadActors");
         if(sortedActors.length === 0) {
             container.innerHTML = `<div class="col-12"><div class="alert alert-info py-2 small mb-0 text-center">💡 Tidak ada data downtime pada filter periode ini.</div></div>`;
@@ -456,168 +825,14 @@
     }
 
     function filterTableByBadActor(actorName) {
-        // Saring data dari memori global khusus untuk mesin yang diklik
-        let specificItems = currentFilteredData.filter(item => {
+        let specificItems = baseDataYP.filter(item => {
             let line = getLineName(item.FunctionLocation);
             let machine = getMachineName(item.FunctionLocation, item.ActivityText);
             let currentName = `${line} - ${machine}`;
             return currentName === actorName;
         });
-
-        // Lempar datanya ke tabel bawah
         loadDrillDownTable(`🚨 Investigasi Bad Actor ➔ ${actorName}`, specificItems);
-
-        // UX Ekstra: Gulir otomatis layar ke arah tabel secara halus
         document.getElementById('lblDetail').scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    // PERBAIKAN: Menambahkan parameter actualKeys ke Chart
-    function renderTopChart(labels, pctData, minData, targetLine, actualKeys) {
-        const ctx = document.getElementById('barChart').getContext('2d');
-        if (barChartInst) barChartInst.destroy();
-
-        barChartInst = new Chart(ctx, {
-            // PERUBAHAN UTAMA: Ubah dasar grafik menjadi 'line'
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    { 
-                        type: 'line', 
-                        label: 'Standar (1.5%)', 
-                        data: targetLine, 
-                        borderColor: 'rgba(220, 53, 69, 1)', 
-                        borderWidth: 2, 
-                        borderDash: [5, 5], 
-                        pointRadius: 0, 
-                        fill: false, 
-                        datalabels: { display: false } 
-                    },
-                    { 
-                        // PERUBAHAN TAMPILAN: Run Chart dengan efek Area Fill
-                        type: 'line', 
-                        label: 'Downtime (%)', 
-                        data: pctData, 
-                        backgroundColor: 'rgba(54, 162, 235, 0.2)', // Biru transparan untuk area bawah garis
-                        borderColor: 'rgba(54, 162, 235, 1)', 
-                        borderWidth: 2, 
-                        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: 1,
-                        pointRadius: 4, 
-                        pointHoverRadius: 6,
-                        fill: true, // Memicu efek Area Chart
-                        tension: 0.1, // Sedikit melengkungkan garis agar terlihat luwes tapi tetap akurat
-                        customMinutes: minData 
-                    }
-                ]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: {
-                    datalabels: { 
-                        anchor: 'end', 
-                        align: 'top', 
-                        offset: 4, // Jarak teks dari titik agar tidak menabrak garis
-                        color: getChartLabelColor, 
-                        font: { weight: 'bold', size: 10 }, 
-                        formatter: function(v, ctx) { 
-                            return ctx.dataset.label === 'Standar (1.5%)' ? null : `${v}% \n(${ctx.dataset.customMinutes[ctx.dataIndex]} m)`; 
-                        }, 
-                        textAlign: 'center' 
-                    }
-                },
-                scales: { 
-                    y: { 
-                        beginAtZero: true, 
-                        suggestedMax: 3,
-                        title: { display: true, text: 'Persentase Downtime (%)' }
-                    } 
-                },
-                onClick: (e, elements) => { 
-                    if (elements.length > 0) { 
-                        const idx = elements[0].index; 
-                        
-                        selectedTimeLabel = labels[idx]; 
-                        selectedTimeKey = actualKeys[idx]; 
-                        
-                        chartLevel = 1; 
-                        document.getElementById('drillControls').classList.remove('d-none'); 
-                        document.getElementById('paretoToggleContainer').classList.add('d-none'); 
-                        document.getElementById('mainChartTitle').innerHTML = `📊 Rincian Periode: <span class="text-primary">${selectedTimeLabel}</span>`; 
-                        
-                        renderSubChart(); 
-                        loadDrillDownTable(`Periode: ${selectedTimeLabel}`, topLevelAgg[selectedTimeKey].items); 
-                    } 
-                }
-            }
-        });
-    }
-
-    // PERBAIKAN: Menambahkan parameter actualKeys ke Chart
-    function renderParetoChart(labels, minData, cumPctData, actualKeys) {
-        const ctx = document.getElementById('barChart').getContext('2d');
-        if (barChartInst) barChartInst.destroy();
-
-        barChartInst = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [
-                    { type: 'line', label: '% Kumulatif', data: cumPctData, borderColor: 'rgba(220, 53, 69, 1)', backgroundColor: 'rgba(220, 53, 69, 0.1)', borderWidth: 2, pointRadius: 4, yAxisID: 'yPareto', fill: false, datalabels: { anchor: 'bottom', align: 'top', formatter: v => `${v}%`, color: getChartLabelColor, font: { size: 9 } } },
-                    { type: 'bar', label: 'Downtime (Menit)', data: minData, backgroundColor: 'rgba(153, 102, 255, 0.7)', borderColor: 'rgba(153, 102, 255, 1)', borderWidth: 1, borderRadius: 4, yAxisID: 'yMins', customMinutes: minData }
-                ]
-            },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: {
-                    datalabels: { formatter: (v, c) => c.dataset.type === 'line' ? `${v}%` : `${v}m`, font: { weight: 'bold', size: 10 } }
-                },
-                scales: { 
-                    yMins: { type: 'linear', position: 'left', title: { display: true, text: 'Durasi (Menit)' }, beginAtZero: true },
-                    yPareto: { type: 'linear', position: 'right', title: { display: true, text: 'Persentase Kumulatif (%)' }, min: 0, max: 105, grid: { drawOnChartArea: false }, ticks: { callback: v => `${v}%` } }
-                },
-                onClick: (e, elements) => { 
-                    if (elements.length > 0) { 
-                        const idx = elements[0].index; 
-                        selectedTimeLabel = labels[idx]; 
-                        selectedTimeKey = actualKeys[idx]; 
-                        
-                        chartLevel = 1; 
-                        document.getElementById('drillControls').classList.remove('d-none'); 
-                        document.getElementById('paretoToggleContainer').classList.add('d-none'); 
-                        document.getElementById('mainChartTitle').innerHTML = `📊 Rincian Periode: <span class="text-primary">${selectedTimeLabel}</span>`; 
-                        
-                        renderSubChart(); 
-                        loadDrillDownTable(`Periode: ${selectedTimeLabel}`, topLevelAgg[selectedTimeKey].items); 
-                    } 
-                }
-            }
-        });
-    }
-
-    function renderSubChart() {
-        // PERBAIKAN: Menarik data menggunakan selectedTimeKey (YYYY-MM-DD), bukan label
-        let items = topLevelAgg[selectedTimeKey].items;
-        let subAgg = {};
-        items.forEach(item => {
-            let key = subDrillMode === "Line" ? getLineName(item.FunctionLocation) : getMachineName(item.FunctionLocation, item.ActivityText);
-            if(!subAgg[key]) subAgg[key] = { mins: 0, items: [] };
-            subAgg[key].mins += item.TotalDownTimeInMinutes;
-            subAgg[key].items.push(item);
-        });
-
-        let labels = Object.keys(subAgg).sort((a,b) => subAgg[b].mins - subAgg[a].mins); 
-        let dataMins = labels.map(k => subAgg[k].mins);
-
-        const ctx = document.getElementById('barChart').getContext('2d');
-        if (barChartInst) barChartInst.destroy();
-
-        barChartInst = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: labels, datasets: [{ label: `Total Downtime (Menit) - ${selectedTimeLabel}`, data: dataMins, backgroundColor: 'rgba(255, 159, 64, 0.85)', borderColor: 'rgba(255, 159, 64, 1)', borderWidth: 1, borderRadius: 4 }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { anchor: 'end', align: 'top', color: getChartLabelColor, font: { weight: 'bold', size: 11 }, formatter: val => `${val} m` } }, scales: { y: { beginAtZero: true, suggestedMax: Math.max(...dataMins) * 1.2 } }, onClick: (e, elements) => { if (elements.length > 0) { const idx = elements[0].index; const key = labels[idx]; loadDrillDownTable(`${selectedTimeLabel} ➔ ${key}`, subAgg[key].items); } } }
-        });
     }
 
     function updatePieChart(filteredData) {
@@ -629,7 +844,6 @@
             else if (shift.includes("C")) reguAgg["Regu C"] += item.TotalDownTimeInMinutes;
             else reguAgg["Lainnya"] += item.TotalDownTimeInMinutes;
         });
-
         const ctx = document.getElementById('pieChart').getContext('2d');
         if (pieChartInst) pieChartInst.destroy();
         pieChartInst = new Chart(ctx, { type: 'pie', data: { labels: Object.keys(reguAgg), datasets: [{ data: Object.values(reguAgg), backgroundColor: ['rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)', 'rgba(201, 203, 207, 0.8)'], borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { color: getChartLabelColor, font: { weight: 'bold', size: 11 }, formatter: (val) => val > 0 ? `${val}m` : null } } } });
@@ -693,7 +907,6 @@
                 </tr>`;
             });
             tbody.innerHTML = html;
-
         } else {
             thead.innerHTML = `
                 <tr>
@@ -710,16 +923,11 @@
                 let machine = getMachineName(item.FunctionLocation, item.ActivityText);
                 let txt = item.ActivityText ? item.ActivityText.trim() : (item.NotificationDesc || '-');
                 let groupKey = `${line}||${machine}||${txt}`;
-
-                if (!aggMap[groupKey]) {
-                    aggMap[groupKey] = { line: line, machine: machine, text: txt, count: 0, duration: 0 };
-                }
+                if (!aggMap[groupKey]) aggMap[groupKey] = { line: line, machine: machine, text: txt, count: 0, duration: 0 };
                 aggMap[groupKey].count += 1;
                 aggMap[groupKey].duration += item.TotalDownTimeInMinutes;
             });
-
             let sortedAgg = Object.values(aggMap).sort((a, b) => b.count - a.count);
-
             let html = "";
             sortedAgg.forEach(row => {
                 html += `<tr>
@@ -733,4 +941,171 @@
             tbody.innerHTML = html;
         }
     }
+
+    // ==========================================
+    // LOGIKA DEEP-DIVE MODAL MTTR & MTBF
+    // ==========================================
+    let chartInstMTTR = null;
+    let chartInstMTBF = null;
+
+    function openMTTRDetails() {
+        const modal = new bootstrap.Modal(document.getElementById('modalMTTR'));
+        modal.show();
+
+        // 1. Render Tabel: Top 10 Breakdown Terlama dari data filter saat ini
+        let sortedYP = [...baseDataYP].sort((a, b) => b.TotalDownTimeInMinutes - a.TotalDownTimeInMinutes).slice(0, 10);
+        let tbody = document.getElementById('tbodyMTTR');
+        let htmlTable = '';
+        
+        if(sortedYP.length === 0) {
+            htmlTable = '<tr><td colspan="5" class="text-center py-4 text-muted">Tidak ada data breakdown pada periode ini.</td></tr>';
+        } else {
+            sortedYP.forEach((item, index) => {
+                let dateStr = new Date(item.NotificationDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
+                let machine = getMachineName(item.FunctionLocation, item.ActivityText);
+                let line = getLineName(item.FunctionLocation);
+                htmlTable += `<tr>
+                    <td class="text-center fw-bold">${index + 1}</td>
+                    <td class="text-center">${dateStr}</td>
+                    <td class="fw-bold text-primary">${line} - ${machine}</td>
+                    <td class="text-truncate" style="max-width: 350px;" title="${item.ActivityText || item.NotificationDesc}">${item.ActivityText || item.NotificationDesc || '-'}</td>
+                    <td class="text-danger fw-bold text-end pe-3">${item.TotalDownTimeInMinutes} Menit</td>
+                </tr>`;
+            });
+        }
+        tbody.innerHTML = htmlTable;
+
+        // 2. Render Grafik Historis Bulanan (Dari data mentah keseluruhan)
+        renderTrendChartMTTR();
+    }
+
+    function renderTrendChartMTTR() {
+        let aggYP = {};
+        ypDataRaw.forEach(item => {
+            let monthIdx = new Date(item.NotificationDate).getMonth();
+            if(isNaN(monthIdx)) return;
+            let monthKey = monthNames[monthIdx];
+            if(!aggYP[monthKey]) aggYP[monthKey] = { mins: 0, freq: 0 };
+            aggYP[monthKey].mins += item.TotalDownTimeInMinutes;
+            aggYP[monthKey].freq += 1;
+        });
+
+        let labels = [], mttrData = [];
+        monthNames.forEach(m => {
+            if(aggYP[m]) {
+                labels.push(m);
+                mttrData.push(+(aggYP[m].mins / aggYP[m].freq).toFixed(1));
+            }
+        });
+
+        const ctx = document.getElementById('chartMTTR').getContext('2d');
+        if (chartInstMTTR) chartInstMTTR.destroy();
+        chartInstMTTR = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Rata-rata Menit Perbaikan',
+                    data: mttrData,
+                    borderColor: 'rgba(220, 53, 69, 1)', backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    borderWidth: 2, pointRadius: 4, fill: true, tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { datalabels: { align: 'top', color: getChartLabelColor, font: {weight:'bold'}, formatter: v => v + 'm' } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+
+    function openMTBFDetails() {
+        const modal = new bootstrap.Modal(document.getElementById('modalMTBF'));
+        modal.show();
+
+        // 1. Render Tabel: Mesin Paling Sering Rusak dari data filter saat ini
+        let freqMap = {};
+        baseDataYP.forEach(item => {
+            let machine = getMachineName(item.FunctionLocation, item.ActivityText);
+            let line = getLineName(item.FunctionLocation);
+            let key = `${line} - ${machine}`;
+            if(!freqMap[key]) freqMap[key] = { count: 0, totalMins: 0 };
+            freqMap[key].count += 1;
+            freqMap[key].totalMins += item.TotalDownTimeInMinutes;
+        });
+
+        let sortedFreq = Object.keys(freqMap).map(k => ({ name: k, count: freqMap[k].count, mins: freqMap[k].totalMins }))
+                                             .sort((a,b) => b.count - a.count).slice(0, 10);
+
+        let tbody = document.getElementById('tbodyMTBF');
+        let htmlTable = '';
+        if(sortedFreq.length === 0) {
+            htmlTable = '<tr><td colspan="4" class="text-center py-4 text-muted">Tidak ada data breakdown pada periode ini.</td></tr>';
+        } else {
+            sortedFreq.forEach((item, index) => {
+                htmlTable += `<tr>
+                    <td class="text-center fw-bold">${index + 1}</td>
+                    <td class="fw-bold text-success ps-3">${item.name}</td>
+                    <td class="text-warning text-center fw-bold fs-6">${item.count} Kali</td>
+                    <td class="text-danger text-end fw-bold pe-3">${item.mins} Menit</td>
+                </tr>`;
+            });
+        }
+        tbody.innerHTML = htmlTable;
+
+        // 2. Render Grafik Historis Bulanan
+        renderTrendChartMTBF();
+    }
+
+    function renderTrendChartMTBF() {
+        let aggYP = {}, aggYR = {};
+        
+        ypDataRaw.forEach(item => {
+            let monthIdx = new Date(item.NotificationDate).getMonth();
+            if(isNaN(monthIdx)) return;
+            let monthKey = monthNames[monthIdx];
+            if(!aggYP[monthKey]) aggYP[monthKey] = { mins: 0, freq: 0 };
+            aggYP[monthKey].mins += item.TotalDownTimeInMinutes;
+            aggYP[monthKey].freq += 1;
+        });
+
+        yrDataRaw.forEach(item => {
+            let monthIdx = new Date(item.PostingDate).getMonth();
+            if(isNaN(monthIdx)) return;
+            let monthKey = monthNames[monthIdx];
+            if(!aggYR[monthKey]) aggYR[monthKey] = 0;
+            aggYR[monthKey] += (item.PlannedHour * 60);
+        });
+
+        let labels = [], mtbfData = [];
+        monthNames.forEach(m => {
+            if(aggYP[m] && aggYR[m]) {
+                labels.push(m);
+                let uptime = aggYR[m] - aggYP[m].mins;
+                let val = aggYP[m].freq > 0 ? (uptime / aggYP[m].freq) : uptime;
+                mtbfData.push(+(val).toFixed(0));
+            }
+        });
+
+        const ctx = document.getElementById('chartMTBF').getContext('2d');
+        if (chartInstMTBF) chartInstMTBF.destroy();
+        chartInstMTBF = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Rata-rata Uptime Antar Kerusakan (Menit)',
+                    data: mtbfData,
+                    borderColor: 'rgba(25, 135, 84, 1)', backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                    borderWidth: 2, pointRadius: 4, fill: true, tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { datalabels: { align: 'top', color: getChartLabelColor, font: {weight:'bold'}, formatter: v => v + 'm' } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+    
 </script>

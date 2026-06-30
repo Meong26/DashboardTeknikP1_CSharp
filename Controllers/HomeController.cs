@@ -26,9 +26,10 @@ namespace DashboardTeknikP1.Controllers
         [HttpGet]
         public async Task<IActionResult> GetDashboardData()
         {
+            int currentYear = System.DateTime.Now.Year;
             // Menarik kedua data secara paralel (opsional, tapi ditunggu berurutan di sini)
-            var detailsYP = await _repository.GetDowntimeDetailsAsync();
-            var detailsYR = await _repository.GetProduksiDetailsAsync();
+            var detailsYP = await _repository.GetDowntimeDetailsAsync(currentYear);
+            var detailsYR = await _repository.GetProduksiDetailsAsync(currentYear);
 
             // Menggabungkan dua data ke dalam satu objek JSON (ypData dan yrData)
             var resultData = new

@@ -151,6 +151,7 @@
         </div>
     </div>
 </div>
+<div id="autoCompleteDropdown" class="list-group shadow-lg position-absolute d-none" style="z-index: 9999; max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px;"></div>
 
 <script>
     // DEKLARASI VARIABEL GLOBAL
@@ -540,7 +541,18 @@
         const tbody = document.getElementById('inputBody');
         const tr = document.createElement('tr');
         const today = new Date().toISOString().split('T')[0];
-        tr.innerHTML = `<td><input type="date" class="form-control form-control-sm border-0 bg-transparent inp-tgl" value="${today}"></td><td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-matno font-monospace fw-bold" placeholder="Ketik/Scan..." onblur="lookupMaterial(this)"></td><td><input type="text" class="form-control form-control-sm border-0 bg-light text-muted inp-desc" readonly tabindex="-1"></td><td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-tujuan" placeholder="Lokasi mesin/line..."></td><td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-nama" placeholder="Nama teknisi"></td><td><input type="number" class="form-control form-control-sm border-0 bg-transparent inp-qty text-center fw-bold" placeholder="0" onkeydown="handleExcelTab(event, this)"></td><td class="p-0"><input type="text" class="form-control form-control-sm border-0 text-center fw-bold inp-stok h-100 bg-light" readonly tabindex="-1" style="border-radius: 0;"></td><td class="text-center"><button class="btn btn-sm text-danger border-0 p-0" onclick="removeRow(this)" tabindex="-1"><i class="bi bi-trash"></i></button><input type="hidden" class="inp-harga" value="0"></td>`;
+        
+        tr.innerHTML = `
+            <td><input type="date" class="form-control form-control-sm border-0 bg-transparent inp-tgl" value="${today}"></td>
+            <td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-matno font-monospace fw-bold" placeholder="Ketik/Scan..." onblur="lookupMaterial(this)"></td>
+            
+            <td><input type="text" class="form-control form-control-sm border-0 bg-transparent text-primary fw-bold inp-desc" placeholder="Ketik deskripsi part..." autocomplete="off" oninput="handleDescSearch(this)" onfocus="handleDescSearch(this)"></td>
+            
+            <td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-tujuan" placeholder="Lokasi mesin/line..."></td>
+            <td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-nama" placeholder="Nama teknisi"></td>
+            <td><input type="number" class="form-control form-control-sm border-0 bg-transparent inp-qty text-center fw-bold" placeholder="0" onkeydown="handleExcelTab(event, this)"></td>
+            <td class="p-0"><input type="text" class="form-control form-control-sm border-0 text-center fw-bold inp-stok h-100 bg-light" readonly tabindex="-1" style="border-radius: 0;"></td>
+            <td class="text-center"><button class="btn btn-sm text-danger border-0 p-0" onclick="removeRow(this)" tabindex="-1"><i class="bi bi-trash"></i></button><input type="hidden" class="inp-harga" value="0"></td>`;
         tbody.appendChild(tr);
     }
     
@@ -580,6 +592,88 @@
             inpStok.className = "form-control form-control-sm border-0 text-center bg-secondary text-white fw-bold inp-stok h-100"; 
         } 
     }
+
+    // =========================================================
+    // LOGIKA AUTOCOMPLETE DESKRIPSI SPAREPART
+    // =========================================================
+    let activeAutoCompleteRow = null;
+
+    function handleDescSearch(inputElement) {
+        const row = inputElement.closest('tr');
+        const query = inputElement.value.toLowerCase().trim();
+        const dropdown = document.getElementById('autoCompleteDropdown');
+
+        // Jangan lakukan pencarian jika ketikan kurang dari 2 huruf
+        if (query.length < 2) {
+            dropdown.classList.add('d-none');
+            return;
+        }
+
+        // Pecah kata agar pencarian tidak peduli urutan (misal: "bearing 6204" atau "6204 bearing")
+        let tokens = query.split(" ").filter(t => t !== "");
+
+        // Saring data dari database masterSparepart
+        let filtered = masterSparepart.filter(item => {
+            let textToSearch = `${item.Material} ${item.MaterialDescription}`.toLowerCase();
+            return tokens.every(token => textToSearch.includes(token));
+        }).slice(0, 15); // Batasi maksimal 15 hasil agar tidak membebani browser
+
+        // Rakit UI Dropdown
+        if (filtered.length === 0) {
+            dropdown.innerHTML = `<div class="list-group-item text-muted small py-2"><i class="bi bi-info-circle me-1"></i> Part tidak ditemukan di SAP...</div>`;
+        } else {
+            let html = "";
+            filtered.forEach(part => {
+                let sisaStok = part.CurrentStock || 0;
+                let badgeClass = sisaStok > 0 ? 'bg-success' : 'bg-danger';
+                let stokTeks = sisaStok > 0 ? `${sisaStok} ${part.UoM || 'PC'}` : 'KOSONG';
+                
+                html += `
+                <button type="button" class="list-group-item list-group-item-action p-2 border-bottom" onmousedown="selectMaterialFromDropdown(this, '${part.Material}')">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold font-monospace text-primary small">${part.Material}</span>
+                        <span class="badge ${badgeClass} shadow-sm" style="font-size: 0.7rem;">${stokTeks}</span>
+                    </div>
+                    <div class="small text-truncate text-uppercase text-dark" style="max-width: 380px;">${part.MaterialDescription}</div>
+                </button>`;
+            });
+            dropdown.innerHTML = html;
+        }
+
+        // Pasang Koordinat Jendela Melayang (Berada pas di bawah input box yang sedang diketik)
+        const rect = inputElement.getBoundingClientRect();
+        dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+        dropdown.style.left = (rect.left + window.scrollX) + 'px';
+        dropdown.style.width = rect.width >= 400 ? rect.width + 'px' : '400px'; // Minimal lebar 400px agar tulisan tidak terpotong
+        
+        dropdown.classList.remove('d-none');
+        activeAutoCompleteRow = row;
+    }
+
+    function selectMaterialFromDropdown(btn, matNo) {
+        if (!activeAutoCompleteRow) return;
+        
+        // 1. Tembak Nomor Material ke Kolom 'No Material'
+        const inpMatNo = activeAutoCompleteRow.querySelector('.inp-matno');
+        inpMatNo.value = matNo;
+        
+        // 2. Tutup Jendela Melayang
+        document.getElementById('autoCompleteDropdown').classList.add('d-none');
+        
+        // 3. Picu Trigger `lookupMaterial` seolah-olah user men-scan barcode
+        lookupMaterial(inpMatNo);
+        
+        // 4. Fokuskan kursor langsung ke kolom QTY (Siap ketik jumlah)
+        activeAutoCompleteRow.querySelector('.inp-qty').focus();
+    }
+
+    // Fungsi Pengaman: Tutup dropdown jika user klik di sembarang tempat di luar layar
+    document.addEventListener('mousedown', function(e) {
+        const dropdown = document.getElementById('autoCompleteDropdown');
+        if (dropdown && !dropdown.contains(e.target) && !e.target.classList.contains('inp-desc')) {
+            dropdown.classList.add('d-none');
+        }
+    });
     
     function handleExcelTab(e, inputElement) { 
         if (e.key === 'Tab' || e.key === 'Enter') { 
