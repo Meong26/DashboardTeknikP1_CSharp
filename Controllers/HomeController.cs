@@ -22,6 +22,12 @@ namespace DashboardTeknikP1.Controllers
             return View();
         }
 
+        // Halaman TV Dashboard Mode
+        public IActionResult TvDashboard()
+        {
+            return View();
+        }
+
         // 2. Jalur API khusus untuk menyuplai data ke Dashboard
         [HttpGet]
         public async Task<IActionResult> GetDashboardData()
