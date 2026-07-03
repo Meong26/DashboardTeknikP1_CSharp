@@ -5,12 +5,13 @@
 <div class="row mb-3 g-2" id="rowBadActors">
     </div>
 
+
 <div class="row mb-3 g-2 align-items-end">
     <div class="col-md-2">
         <label class="form-label fw-bold small text-muted mb-1">Mode Dimensi Tren</label>
         <select id="dimMode" class="form-select form-select-sm border-primary" onchange="handleModeChange()">
             <option value="Year">Berdasarkan Tahun</option>
-            <option value="Month">Berdasarkan Bulan</option>
+            <option value="Month" selected >Berdasarkan Bulan</option>
             <option value="Week">Berdasarkan Minggu</option>
         </select>
     </div>
@@ -88,18 +89,22 @@
                 <span class="fw-bold fs-6" id="mainChartTitle">📊 Analitik Downtime vs Jam Terencana</span>
                 
                 <div class="d-flex align-items-center">
+                    <button id="btnZoomChart" class="btn btn-sm btn-outline-info fw-bold me-3 shadow-sm" onclick="toggleChartZoom()">
+                        <i class="bi bi-arrows-angle-expand me-1"></i> Zoom & Scroll
+                    </button>
+
                     <div class="form-check form-switch me-4 mb-0" id="paretoToggleContainer">
                         <input class="form-check-input border-warning" type="checkbox" role="switch" id="chkPareto" onchange="updateDashboard()">
-                        <label class="form-check-label fw-bold small text-warning" for="chkPareto">⚠️ Mode Pareto (80/20)</label>
+                        <label class="form-check-label fw-bold small text-warning" for="chkPareto">⚠️ Mode Pareto</label>
                     </div>
 
                     <div id="drillControls" class="d-none animate__animated animate__fadeIn">
                         <div class="btn-group btn-group-sm me-3 shadow-sm" role="group">
                             <input type="radio" class="btn-check" name="drillGroup" id="dgLine" autocomplete="off" checked onchange="changeSubDrillGroup('Line')">
-                            <label class="btn btn-outline-primary fw-bold" for="dgLine">Berdasarkan Line</label>
+                            <label class="btn btn-outline-primary fw-bold" for="dgLine">Line</label>
                             
                             <input type="radio" class="btn-check" name="drillGroup" id="dgMachine" autocomplete="off" onchange="changeSubDrillGroup('Machine')">
-                            <label class="btn btn-outline-primary fw-bold" for="dgMachine">Berdasarkan Mesin</label>
+                            <label class="btn btn-outline-primary fw-bold" for="dgMachine">Mesin</label>
                         </div>
                         <button class="btn btn-sm btn-secondary fw-bold shadow-sm" onclick="goBackToMainChart()">
                             <i class="bi bi-arrow-left me-1"></i> Kembali
@@ -108,8 +113,10 @@
                 </div>
             </div>
             
-            <div class="card-body p-2 position-relative">
-                <canvas id="barChart"></canvas>
+            <div class="card-body p-2 position-relative" style="overflow-x: auto; overflow-y: hidden;">
+                <div id="chartCanvasWrapper" style="min-width: 100%; height: 100%; transition: min-width 0.3s ease;">
+                    <canvas id="barChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -180,7 +187,7 @@
                 <div class="row g-3">
                     <div class="col-md-12">
                         <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-white py-2 fw-bold small text-muted">Tren MTTR Historis (Bulanan)</div>
+                            <div class="card-header bg-white py-2 fw-bold small text-muted" id="headerChartMTTR">Tren MTTR Historis</div>
                             <div class="card-body p-2" style="height: 250px;">
                                 <canvas id="chartMTTR"></canvas>
                             </div>
@@ -216,7 +223,7 @@
                 <div class="row g-3">
                     <div class="col-md-12">
                         <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-white py-2 fw-bold small text-muted">ðŸ“ˆ Tren MTBF Historis (Bulanan)</div>
+                            <div class="card-header bg-white py-2 fw-bold small text-muted" id="headerChartMTBF">📈 Tren MTBF Historis</div>
                             <div class="card-body p-2" style="height: 250px;">
                                 <canvas id="chartMTBF"></canvas>
                             </div>
@@ -254,6 +261,7 @@
 
     let barChartInst = null;
     let pieChartInst = null;
+    let isChartZoomed = false;
     
     let subDrillMode = "Line"; 
     let currentTableMode = "Raw";
@@ -469,17 +477,7 @@
         // ==========================================
         // KALKULASI MTTR & MTBF DARI DATA TERSARING
         // ==========================================
-        let freqBreakdown = baseDataYP.length;
-        let totalDowntimeMins = baseDataYP.reduce((sum, item) => sum + item.TotalDownTimeInMinutes, 0);
-        let totalPlannedMins = baseDataYR.reduce((sum, item) => sum + (item.PlannedHour * 60), 0);
-
-        let mttr = freqBreakdown > 0 ? (totalDowntimeMins / freqBreakdown) : 0;
-        let uptimeMins = totalPlannedMins - totalDowntimeMins;
-        let mtbf = freqBreakdown > 0 ? (uptimeMins / freqBreakdown) : (uptimeMins > 0 ? uptimeMins : 0);
-
-        // Update UI HTML
-        document.getElementById('lblMTTR').innerText = mttr.toFixed(1) + " Menit";
-        document.getElementById('lblMTBF').innerText = mtbf.toFixed(1) + " Menit";
+        updateMTTRAndMTBF(baseDataYP, baseDataYR);
         // ==========================================
 
         calculateTopBadActors(baseDataYP);
@@ -495,6 +493,38 @@
         } else {
             renderCurrentState();
         }
+    }
+    
+
+    function toggleChartZoom() {
+        if (!barChartInst) return;
+        
+        isChartZoomed = !isChartZoomed;
+        const btn = document.getElementById('btnZoomChart');
+        const wrapper = document.getElementById('chartCanvasWrapper');
+        
+        let dataCount = barChartInst.data.labels.length;
+
+        if (isChartZoomed) {
+            // MODE ZOOM: Perlebar layar dan munculkan label
+            btn.innerHTML = `<i class="bi bi-arrows-angle-contract me-1"></i> Fit ke Layar`;
+            btn.classList.replace('btn-outline-info', 'btn-info');
+            btn.classList.add('text-white');
+            
+            // Rumus Dinamis: Setiap titik data diberi ruang 60px (Minimal selebar layar)
+            let calculatedWidth = Math.max(100, (dataCount * 60) / wrapper.parentElement.clientWidth * 100);
+            wrapper.style.minWidth = calculatedWidth + '%';
+        } else {
+            // MODE FIT: Kembalikan ukuran pas layar dan sembunyikan label
+            btn.innerHTML = `<i class="bi bi-arrows-angle-expand me-1"></i> Zoom & Scroll`;
+            btn.classList.replace('btn-info', 'btn-outline-info');
+            btn.classList.remove('text-white');
+            
+            wrapper.style.minWidth = '100%';
+        }
+        
+        // Render ulang chart agar aturan Datalabels yang baru langsung aktif
+        barChartInst.update();
     }
 
     function goBackToMainChart() {
@@ -543,6 +573,7 @@
         // Sinkronisasi Pie Chart dan Bad Actor dengan data drill-down saat ini
         updatePieChart(state.dataYP);
         calculateTopBadActors(state.dataYP);
+        updateMTTRAndMTBF(state.dataYP, state.dataYR);
     }
 
     function renderLevel0() {
@@ -786,6 +817,20 @@
         });
     }
 
+    function updateMTTRAndMTBF(dataYP, dataYR) {
+        let freqBreakdown = dataYP.length;
+        let totalDowntimeMins = dataYP.reduce((sum, item) => sum + item.TotalDownTimeInMinutes, 0);
+        let totalPlannedMins = dataYR.reduce((sum, item) => sum + (item.PlannedHour * 60), 0);
+
+        let mttr = freqBreakdown > 0 ? (totalDowntimeMins / freqBreakdown) : 0;
+        let uptimeMins = totalPlannedMins - totalDowntimeMins;
+        let mtbf = freqBreakdown > 0 ? (uptimeMins / freqBreakdown) : (uptimeMins > 0 ? uptimeMins : 0);
+
+        // Update UI HTML
+        document.getElementById('lblMTTR').innerText = mttr.toFixed(1) + " Menit";
+        document.getElementById('lblMTBF').innerText = mtbf.toFixed(1) + " Menit";
+    }
+
     // --- SISANYA ADALAH FUNGSI BAWAAN YANG TETAP SAMA ---
 
     function calculateTopBadActors(filteredData) {
@@ -953,7 +998,8 @@
         modal.show();
 
         // 1. Render Tabel: Top 10 Breakdown Terlama dari data filter saat ini
-        let sortedYP = [...baseDataYP].sort((a, b) => b.TotalDownTimeInMinutes - a.TotalDownTimeInMinutes).slice(0, 10);
+        let activeDataYP = drillHistory.length > 0 ? drillHistory[drillHistory.length - 1].dataYP : baseDataYP;
+        let sortedYP = [...activeDataYP].sort((a, b) => b.TotalDownTimeInMinutes - a.TotalDownTimeInMinutes).slice(0, 10);
         let tbody = document.getElementById('tbodyMTTR');
         let htmlTable = '';
         
@@ -975,28 +1021,39 @@
         }
         tbody.innerHTML = htmlTable;
 
-        // 2. Render Grafik Historis Bulanan (Dari data mentah keseluruhan)
-        renderTrendChartMTTR();
+        // 2. Render Grafik Historis 
+        let activeMode = drillHistory.length > 0 ? drillHistory[drillHistory.length - 1].mode : document.getElementById("dimMode").value;
+        renderTrendChartMTTR(activeDataYP, activeMode);
     }
 
-    function renderTrendChartMTTR() {
+    function renderTrendChartMTTR(activeDataYP, activeMode) {
         let aggYP = {};
-        ypDataRaw.forEach(item => {
-            let monthIdx = new Date(item.NotificationDate).getMonth();
-            if(isNaN(monthIdx)) return;
-            let monthKey = monthNames[monthIdx];
-            if(!aggYP[monthKey]) aggYP[monthKey] = { mins: 0, freq: 0 };
-            aggYP[monthKey].mins += item.TotalDownTimeInMinutes;
-            aggYP[monthKey].freq += 1;
+        activeDataYP.forEach(item => {
+            let key = getGroupingKey(new Date(item.NotificationDate), activeMode, item.WeekKalendarIndofood);
+            if(!aggYP[key]) aggYP[key] = { mins: 0, freq: 0 };
+            aggYP[key].mins += item.TotalDownTimeInMinutes;
+            aggYP[key].freq += 1;
+        });
+
+        let rawKeys = Object.keys(aggYP);
+        rawKeys.sort((a, b) => {
+            if (activeMode === "Year") return monthNames.indexOf(a) - monthNames.indexOf(b);
+            if (activeMode === "Month") {
+                let numA = parseInt(a.replace(/\D/g, '')) || 0;
+                let numB = parseInt(b.replace(/\D/g, '')) || 0;
+                return numA - numB;
+            }
+            return a.localeCompare(b);
         });
 
         let labels = [], mttrData = [];
-        monthNames.forEach(m => {
-            if(aggYP[m]) {
-                labels.push(m);
-                mttrData.push(+(aggYP[m].mins / aggYP[m].freq).toFixed(1));
-            }
+        rawKeys.forEach(k => {
+            labels.push(formatLabel(k, activeMode));
+            mttrData.push(+(aggYP[k].mins / aggYP[k].freq).toFixed(1));
         });
+
+        let periodText = activeMode === "Year" ? "Bulanan" : (activeMode === "Month" ? "Mingguan" : (activeMode === "Week" ? "Harian" : "Historis"));
+        document.getElementById('headerChartMTTR').innerText = `Tren MTTR Historis (${periodText})`;
 
         const ctx = document.getElementById('chartMTTR').getContext('2d');
         if (chartInstMTTR) chartInstMTTR.destroy();
@@ -1024,8 +1081,9 @@
         modal.show();
 
         // 1. Render Tabel: Mesin Paling Sering Rusak dari data filter saat ini
+        let activeDataYP = drillHistory.length > 0 ? drillHistory[drillHistory.length - 1].dataYP : baseDataYP;
         let freqMap = {};
-        baseDataYP.forEach(item => {
+        activeDataYP.forEach(item => {
             let machine = getMachineName(item.FunctionLocation, item.ActivityText);
             let line = getLineName(item.FunctionLocation);
             let key = `${line} - ${machine}`;
@@ -1053,39 +1111,52 @@
         }
         tbody.innerHTML = htmlTable;
 
-        // 2. Render Grafik Historis Bulanan
-        renderTrendChartMTBF();
+        // 2. Render Grafik Historis 
+        let activeDataYR = drillHistory.length > 0 ? drillHistory[drillHistory.length - 1].dataYR : baseDataYR;
+        let activeMode = drillHistory.length > 0 ? drillHistory[drillHistory.length - 1].mode : document.getElementById("dimMode").value;
+        renderTrendChartMTBF(activeDataYP, activeDataYR, activeMode);
     }
 
-    function renderTrendChartMTBF() {
+    function renderTrendChartMTBF(activeDataYP, activeDataYR, activeMode) {
         let aggYP = {}, aggYR = {};
         
-        ypDataRaw.forEach(item => {
-            let monthIdx = new Date(item.NotificationDate).getMonth();
-            if(isNaN(monthIdx)) return;
-            let monthKey = monthNames[monthIdx];
-            if(!aggYP[monthKey]) aggYP[monthKey] = { mins: 0, freq: 0 };
-            aggYP[monthKey].mins += item.TotalDownTimeInMinutes;
-            aggYP[monthKey].freq += 1;
+        activeDataYP.forEach(item => {
+            let key = getGroupingKey(new Date(item.NotificationDate), activeMode, item.WeekKalendarIndofood);
+            if(!aggYP[key]) aggYP[key] = { mins: 0, freq: 0 };
+            aggYP[key].mins += item.TotalDownTimeInMinutes;
+            aggYP[key].freq += 1;
         });
 
-        yrDataRaw.forEach(item => {
-            let monthIdx = new Date(item.PostingDate).getMonth();
-            if(isNaN(monthIdx)) return;
-            let monthKey = monthNames[monthIdx];
-            if(!aggYR[monthKey]) aggYR[monthKey] = 0;
-            aggYR[monthKey] += (item.PlannedHour * 60);
+        activeDataYR.forEach(item => {
+            let key = getGroupingKey(new Date(item.PostingDate), activeMode, item.WeekOfBasicFinishedDate);
+            if(!aggYR[key]) aggYR[key] = 0;
+            aggYR[key] += (item.PlannedHour * 60);
+        });
+
+        let rawKeys = new Set([...Object.keys(aggYP), ...Object.keys(aggYR)]);
+        let sortedKeys = Array.from(rawKeys).sort((a, b) => {
+            if (activeMode === "Year") return monthNames.indexOf(a) - monthNames.indexOf(b);
+            if (activeMode === "Month") {
+                let numA = parseInt(a.replace(/\D/g, '')) || 0;
+                let numB = parseInt(b.replace(/\D/g, '')) || 0;
+                return numA - numB;
+            }
+            return a.localeCompare(b);
         });
 
         let labels = [], mtbfData = [];
-        monthNames.forEach(m => {
-            if(aggYP[m] && aggYR[m]) {
-                labels.push(m);
-                let uptime = aggYR[m] - aggYP[m].mins;
-                let val = aggYP[m].freq > 0 ? (uptime / aggYP[m].freq) : uptime;
-                mtbfData.push(+(val).toFixed(0));
-            }
+        sortedKeys.forEach(k => {
+            labels.push(formatLabel(k, activeMode));
+            let mins = aggYP[k] ? aggYP[k].mins : 0;
+            let freq = aggYP[k] ? aggYP[k].freq : 0;
+            let planned = aggYR[k] ? aggYR[k] : 0;
+            let uptime = planned - mins;
+            let val = freq > 0 ? (uptime / freq) : (uptime > 0 ? uptime : 0);
+            mtbfData.push(+(val).toFixed(0));
         });
+
+        let periodText = activeMode === "Year" ? "Bulanan" : (activeMode === "Month" ? "Mingguan" : (activeMode === "Week" ? "Harian" : "Historis"));
+        document.getElementById('headerChartMTBF').innerText = `📈 Tren MTBF Historis (${periodText})`;
 
         const ctx = document.getElementById('chartMTBF').getContext('2d');
         if (chartInstMTBF) chartInstMTBF.destroy();

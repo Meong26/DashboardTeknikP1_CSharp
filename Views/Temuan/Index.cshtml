@@ -20,6 +20,7 @@
         <table class="table table-bordered table-sm align-middle mb-0" style="font-size: 0.85rem;" id="tblInputTemuan">
             <thead class="table-light sticky-top">
                 <tr class="text-center">
+                    <th style="width: 15%;">Line</th>
                     <th style="width: 25%;">Kode / Nama Mesin</th>
                     <th style="width: 45%;">Deskripsi Masalah / Kendala</th>
                     <th style="width: 25%;">Tindakan Awal (Opsional)</th>
@@ -53,6 +54,7 @@
                     <th class="px-3" style="width: 8%;">ID</th>
                     <th style="width: 15%;">Waktu Laporan</th>
                     <th style="width: 8%;">Pelapor</th>
+                    <th style="width: 10%;">Line</th>
                     <th style="width: 20%;">Mesin Bermasalah</th>
                     <th style="width: 25%;">Deskripsi Kendala</th>
                     <th>Tindakan / Status</th>
@@ -113,6 +115,9 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
+                <input type="text" class="form-control form-control-sm border-0 bg-transparent fw-bold text-success inp-line" placeholder="Cth: Line 1" onkeydown="handleEnter(event, this, '.inp-mesin')">
+            </td>
+            <td>
                 <input list="listMasterMesin" class="form-control form-control-sm border-0 bg-transparent fw-bold text-primary inp-mesin" placeholder="Ketik/Pilih Mesin..." onchange="validateMesin(this)" onkeydown="handleEnter(event, this, '.inp-desc')">
             </td>
             <td>
@@ -126,9 +131,7 @@
             </td>
         `;
         tbody.appendChild(tr);
-        
-        // Auto-focus ke baris baru
-        tr.querySelector('.inp-mesin').focus();
+        tr.querySelector('.inp-line').focus(); // Auto-focus pindah ke Line
     }
 
     function removeRow(btn) { 
@@ -181,16 +184,19 @@
         let hasError = false;
 
         rows.forEach((row, index) => {
+            const lineData = row.querySelector('.inp-line').value.trim();
             const mesin = row.querySelector('.inp-mesin').value.trim();
             const desc = row.querySelector('.inp-desc').value.trim();
             const tindakan = row.querySelector('.inp-tindakan').value.trim();
 
-            if (mesin === "" && desc === "") return; // Abaikan baris kosong
+            if (mesin === "" && desc === "" && lineData === "") return; 
 
+            if (lineData === "") { alert(`Baris ke-${index + 1}: Line belum diisi.`); hasError = true; return; }
             if (mesin === "") { alert(`Baris ke-${index + 1}: Kode Mesin belum diisi.`); hasError = true; return; }
             if (desc === "") { alert(`Baris ke-${index + 1}: Deskripsi masalah wajib diisi.`); hasError = true; return; }
 
             payload.push({
+                Line: lineData, // TAMBAHAN BARU
                 KodeMesin: mesin,
                 DeskripsiAbnormal: desc,
                 TindakanKorektif: tindakan
@@ -256,6 +262,9 @@
                     <td class="px-3 fw-bold text-secondary">#${item.TemuanID}</td>
                     <td>${item.TanggalFormated}</td>
                     <td><span class="badge bg-secondary font-monospace">${item.Pelapor}</span></td>
+                    
+                    <td class="fw-bold text-success">${item.Line}</td>
+                    
                     <td>
                         <div class="fw-bold text-dark text-nowrap">${item.KodeMesin}</div>
                         <small class="text-muted d-block text-truncate" style="max-width: 180px;">${item.NamaMesin}</small>

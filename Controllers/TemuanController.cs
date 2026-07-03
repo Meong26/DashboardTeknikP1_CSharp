@@ -122,6 +122,7 @@ namespace DashboardTeknikP1.Controllers
                 t.TemuanID,
                 TanggalFormated = t.TanggalInput.ToString("dd MMM yyyy HH:mm"),
                 Pelapor = t.UserID,
+                Line = t.Line ?? "-", // TAMBAHAN BARU
                 t.KodeMesin,
                 NamaMesin = t.NamaMesin ?? "Mesin Tidak Dikenal",
                 t.DeskripsiAbnormal,

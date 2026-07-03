@@ -25,14 +25,15 @@ namespace DashboardTeknikP1.Repositories
             {
                 // Query SQL disesuaikan dengan struktur baru (menggunakan KodeMesin)
                 string query = @"INSERT INTO tbl_TemuanAbnormal 
-                                (TanggalInput, UserID, KodeMesin, DeskripsiAbnormal, TindakanKorektif, StatusTemuan) 
-                                VALUES (@TanggalInput, @UserID, @KodeMesin, @Deskripsi, @Tindakan, @StatusTemuan)";
+                                (TanggalInput, UserID, Line, KodeMesin, DeskripsiAbnormal, TindakanKorektif, StatusTemuan) 
+                                VALUES (@TanggalInput, @UserID, @Line, @KodeMesin, @Deskripsi, @Tindakan, @StatusTemuan)";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     // Pemetaan parameter untuk mencegah SQL Injection
                     cmd.Parameters.AddWithValue("@TanggalInput", temuan.TanggalInput);
                     cmd.Parameters.AddWithValue("@UserID", temuan.UserID);
+                    cmd.Parameters.AddWithValue("@Line", temuan.Line ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@KodeMesin", temuan.KodeMesin);
                     cmd.Parameters.AddWithValue("@Deskripsi", temuan.DeskripsiAbnormal);
 
@@ -77,6 +78,7 @@ namespace DashboardTeknikP1.Repositories
                                 TemuanID = Convert.ToInt32(reader["TemuanID"]),
                                 TanggalInput = Convert.ToDateTime(reader["TanggalInput"]),
                                 UserID = reader["UserID"] != DBNull.Value ? reader["UserID"].ToString() : "-",
+                                Line = reader["Line"] != DBNull.Value ? reader["Line"].ToString() : "-",
                                 KodeMesin = reader["KodeMesin"] != DBNull.Value ? reader["KodeMesin"].ToString() : "-",
                                 NamaMesin = reader["NamaMesin"] != DBNull.Value ? reader["NamaMesin"].ToString() : "Mesin Tidak Dikenal",
                                 DeskripsiAbnormal = reader["DeskripsiAbnormal"] != DBNull.Value ? reader["DeskripsiAbnormal"].ToString() : "-",
@@ -149,6 +151,7 @@ namespace DashboardTeknikP1.Repositories
                                 TemuanID = Convert.ToInt32(reader["TemuanID"]),
                                 TanggalInput = Convert.ToDateTime(reader["TanggalInput"]),
                                 UserID = reader["UserID"].ToString(),
+                                Line = reader["Line"] != DBNull.Value ? reader["Line"].ToString() : "-",
                                 KodeMesin = reader["KodeMesin"].ToString(),
                                 NamaMesin = reader["NamaMesin"] != DBNull.Value ? reader["NamaMesin"].ToString() : "Mesin Tidak Dikenal",
                                 DeskripsiAbnormal = reader["DeskripsiAbnormal"].ToString(),
