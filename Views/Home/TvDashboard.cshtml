@@ -66,7 +66,7 @@
     </div>
 
     <div class="carousel-container">
-        <div id="tvCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="10000">
+        <div id="tvCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="@ViewBag.TvModeDuration">
             <div class="carousel-inner" id="carouselInner">
                 <!-- Slides will be injected here -->
             </div>
@@ -264,10 +264,9 @@
             
             // Agar chart menyesuaikan ulang jika ukuran rusak saat di-hide
             let myCarousel = document.getElementById('tvCarousel');
-            let carouselInst = new bootstrap.Carousel(myCarousel, {
-                interval: 10000,
-                ride: 'carousel',
-                pause: false // Force it to NOT pause when hovered/clicked
+            var carousel = new bootstrap.Carousel(document.getElementById('tvCarousel'), {
+                interval: @ViewBag.TvModeDuration,
+                pause: false
             });
 
             let cycleCount = 0;
@@ -322,7 +321,7 @@
                 let plannedMins = yrAgg[k] || 0;       
                 minuteData.push(dtMins);
                 percentData.push(plannedMins > 0 ? ((dtMins / plannedMins) * 100).toFixed(2) : 0);
-                targetLine.push(1.5);
+                targetLine.push(@ViewBag.TargetDowntime);
             });
 
             new Chart(document.getElementById(canvasId).getContext('2d'), {
@@ -330,7 +329,7 @@
                 data: { 
                     labels: labels, 
                     datasets: [
-                        { type: 'line', label: 'Standar', data: targetLine, borderColor: '#dc3545', borderWidth: 3, borderDash: [5, 5], pointRadius: 0, fill: false, datalabels: { display: false } },
+                        { type: 'line', label: 'Standar (' + @ViewBag.TargetDowntime + '%)', data: targetLine, borderColor: 'rgba(220, 53, 69, 1)', borderWidth: 3, borderDash: [5, 5], pointRadius: 0, fill: false, datalabels: { display: false } },
                         { type: 'line', label: 'Downtime', data: percentData, backgroundColor: 'rgba(13, 110, 253, 0.2)', borderColor: '#0d6efd', borderWidth: 4, pointRadius: 6, fill: true, customMinutes: minuteData }
                     ]
                 },
@@ -364,7 +363,13 @@
                 data: { labels: sortedKeys, datasets: [{ data: values, backgroundColor: groupBy === 'LINE' ? '#0dcaf0' : '#ffc107' }] },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, datalabels: { color: '#000', anchor: 'end', align: 'top', font: {weight: 'bold', size: 16}, formatter: v => v > 0 ? v + 'm' : null } },
+                    plugins: { 
+                        legend: { display: false }, 
+                        datalabels: { 
+                            anchor: 'end', align: 'top', offset: 8, color: '#000', font: { weight: 'bold', size: 16 }, 
+                            formatter: function(v, ctx) { return v > 0 ? `${v}m` : null; } 
+                        } 
+                    },
                     scales: { 
                         y: { beginAtZero: true, grace: '20%', ticks: { font: { size: 16 } } },
                         x: { ticks: { autoSkip: false, font: {size: 14} } }

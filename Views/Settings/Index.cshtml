@@ -1,0 +1,89 @@
+@model DashboardTeknikP1.Models.SettingsViewModel
+@{
+    ViewData["Title"] = "Pengaturan Sistem";
+}
+
+<div class="container-fluid py-3">
+    <!-- Header Page -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h4 mb-1 fw-bold"><i class="bi bi-gear-fill me-2 text-primary"></i>Pengaturan Sistem</h2>
+            <p class="text-muted mb-0" style="font-size: 0.9rem;">Kelola preferensi dan nilai target dari Dashboard Teknik.</p>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-left: 5px solid #198754;">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <form asp-controller="Settings" asp-action="Save" method="post">
+        <div class="row g-4">
+            <!-- Kolom 1: Target KPI -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100" style="border-top: 4px solid #0d6efd !important; transition: transform 0.2s;">
+                    <div class="card-body p-4">
+                        <h5 class="card-title fw-bold mb-3"><i class="bi bi-bullseye me-2 text-primary"></i>Target KPI & Toleransi</h5>
+                        <p class="text-muted small mb-4">Nilai ini digunakan sebagai garis batas target pada grafik Pareto dan Run Chart.</p>
+
+                        <div class="mb-3">
+                            <label asp-for="TargetDowntime" class="form-label fw-semibold"></label>
+                            <div class="input-group">
+                                <input asp-for="TargetDowntime" class="form-control" type="number" step="0.1" placeholder="Contoh: 1.5" />
+                                <span class="input-group-text bg-light">%</span>
+                            </div>
+                            <span asp-validation-for="TargetDowntime" class="text-danger small"></span>
+                            <div class="form-text">Batas maksimum persentase downtime per mesin/area.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kolom 2: Mode TV -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100" style="border-top: 4px solid #ffc107 !important; transition: transform 0.2s;">
+                    <div class="card-body p-4">
+                        <h5 class="card-title fw-bold mb-3"><i class="bi bi-tv me-2 text-warning"></i>Tampilan TV Dashboard</h5>
+                        <p class="text-muted small mb-4">Konfigurasi perilaku tampilan otomatis saat mode layar lebar (TV) diaktifkan.</p>
+
+                        <div class="mb-3">
+                            <label asp-for="TvModeDuration" class="form-label fw-semibold"></label>
+                            <div class="input-group">
+                                <input asp-for="TvModeDuration" class="form-control" type="number" step="1000" placeholder="Contoh: 10000" />
+                                <span class="input-group-text bg-light">ms</span>
+                            </div>
+                            <span asp-validation-for="TvModeDuration" class="text-danger small"></span>
+                            <div class="form-text">Durasi perpindahan antar slide modul (1 detik = 1000 ms).</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tombol Aksi -->
+        <div class="mt-4 text-end">
+            <a href="/" class="btn btn-light border shadow-sm px-4 me-2">Batal</a>
+            <button type="submit" class="btn btn-primary shadow-sm px-4 fw-bold">
+                <i class="bi bi-save me-1"></i> Simpan Perubahan
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        // Micro-animation untuk card hover
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-5px)';
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+}

@@ -10,6 +10,8 @@ builder.Services.AddScoped<DashboardTeknikP1.Repositories.UploadRepository>();
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.TemuanRepository>();
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.SparepartRepository>();
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.PemakaianRepository>();
+builder.Services.AddScoped<DashboardTeknikP1.Repositories.SettingRepository>();
+builder.Services.AddScoped<DashboardTeknikP1.Repositories.UserRepository>();
 
 // REGISTER SERVICE
 builder.Services.AddScoped<DashboardTeknikP1.Services.PemakaianService>();

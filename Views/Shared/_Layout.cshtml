@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" id="html-root" data-bs-theme="light">
 <head>
     <meta charset="utf-8" />
@@ -184,10 +184,14 @@
                             var role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
                             <li><span class="dropdown-item-text text-warning fw-bold pb-0" style="font-size: 0.8rem;">Akses: @role</span></li>
                             <li><hr class="dropdown-divider border-secondary mt-2"></li>
+                            
+                            if (role == "Administrator")
+                            {
+                                <li><a class="dropdown-item py-2" href="/Settings"><i class="bi bi-gear me-3"></i>Pengaturan Admin</a></li>
+                                <li><a class="dropdown-item py-2" href="/Users"><i class="bi bi-people me-3"></i>Manajemen Pengguna</a></li>
+                                <li><hr class="dropdown-divider border-secondary"></li>
+                            }
                         }
-
-                        <li><a class="dropdown-item py-2" href="#"><i class="bi bi-gear me-3"></i>Pengaturan</a></li>
-                        <li><hr class="dropdown-divider border-secondary"></li>
                         
                         <li><a class="dropdown-item text-danger py-2" href="/Auth/Logout"><i class="bi bi-box-arrow-right me-3"></i>Keluar</a></li>
                     </ul>
@@ -281,5 +285,7 @@
             });
         });
     </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

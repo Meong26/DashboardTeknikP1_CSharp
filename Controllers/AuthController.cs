@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using DashboardTeknikP1.Models;
+using DashboardTeknikP1.Helpers;
 
 namespace DashboardTeknikP1.Controllers
 {
@@ -34,28 +35,24 @@ namespace DashboardTeknikP1.Controllers
         {
             if (!ModelState.IsValid) return View(model);
 
-            // Bypass password khusus untuk fase POC (karena hash di DB masih dummy)
-            if (model.Password != "indofood123")
-            {
-                ModelState.AddModelError("", "Kata sandi salah. (Petunjuk: gunakan 'indofood123')");
-                return View(model);
-            }
-
             bool isUserValid = false;
             string namaLengkap = "";
             string roleName = "";
+            string hashedPassword = HashHelper.ComputeSha256Hash(model.Password);
 
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 // Tarik data NIK sekaligus menempelkan nama Jabatannya (JOIN)
+                // Hanya izinkan user yang aktif (IsActive = 1)
                 string query = @"SELECT u.NamaLengkap, r.RoleName 
                                  FROM tbl_Users u
                                  INNER JOIN tbl_Roles r ON u.RoleID = r.RoleID
-                                 WHERE u.UserID = @UserID";
+                                 WHERE u.UserID = @UserID AND u.PasswordHash = @PasswordHash AND u.IsActive = 1";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@UserID", model.UserID);
+                    cmd.Parameters.AddWithValue("@PasswordHash", hashedPassword);
                     
                     await conn.OpenAsync();
                     using (var reader = await cmd.ExecuteReaderAsync())

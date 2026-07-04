@@ -1,0 +1,78 @@
+@model IEnumerable<DashboardTeknikP1.Models.User>
+@{
+    ViewData["Title"] = "Manajemen Pengguna";
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h4 mb-1 fw-bold"><i class="bi bi-people-fill me-2 text-primary"></i>Manajemen Pengguna</h2>
+            <p class="text-muted mb-0" style="font-size: 0.9rem;">Kelola hak akses dan akun pengguna sistem.</p>
+        </div>
+        <div>
+            <a asp-action="Create" class="btn btn-primary shadow-sm fw-bold">
+                <i class="bi bi-person-plus-fill me-1"></i> Tambah Pengguna
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-left: 5px solid #198754;">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm" style="border-top: 4px solid #0d6efd !important;">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="table-light text-muted">
+                        <tr>
+                            <th class="ps-4">NIK / User ID</th>
+                            <th>Nama Lengkap</th>
+                            <th>Jabatan / Akses</th>
+                            <th class="text-center pe-4" style="width: 250px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="ps-4 fw-semibold text-dark">@item.UserID</td>
+                                <td>@item.NamaLengkap</td>
+                                <td>
+                                    <span class="badge @(item.RoleName == "Administrator" ? "bg-danger" : "bg-primary") px-3 py-2 rounded-pill">
+                                        @item.RoleName
+                                    </span>
+                                </td>
+                                <td class="text-center pe-4">
+                                    <a asp-action="Edit" asp-route-id="@item.UserID" class="btn btn-sm btn-outline-secondary me-1" title="Edit Akun">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                    <a asp-action="ChangePassword" asp-route-id="@item.UserID" class="btn btn-sm btn-outline-warning me-1" title="Ubah Sandi">
+                                        <i class="bi bi-key-fill"></i>
+                                    </a>
+                                    
+                                    <!-- Form untuk Delete via POST -->
+                                    <form asp-action="Delete" asp-route-id="@item.UserID" method="post" style="display:inline;" onsubmit="return confirm('Apakah Anda yakin ingin menonaktifkan akun @item.NamaLengkap?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Nonaktifkan Akun">
+                                            <i class="bi bi-trash-fill"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.Any())
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">Belum ada data pengguna aktif.</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Analitik Performa";
 }
 
@@ -833,7 +833,7 @@
             let plannedMins = yrAgg[k] || 0;       
             minuteData.push(dtMins);
             percentData.push(plannedMins > 0 ? ((dtMins / plannedMins) * 100).toFixed(2) : 0);
-            targetLine.push(1.5);
+            targetLine.push(@ViewBag.TargetDowntime);
 
             cumulativeMins += dtMins;
             paretoLineData.push(totalMinsAll > 0 ? ((cumulativeMins / totalMinsAll) * 100).toFixed(1) : 0);
@@ -871,7 +871,7 @@
             data: {
                 labels: labels,
                 datasets: [
-                    { type: 'line', label: 'Standar (1.5%)', data: targetLine, borderColor: 'rgba(220, 53, 69, 1)', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, datalabels: { display: false } },
+                    { type: 'line', label: 'Standar (' + @ViewBag.TargetDowntime + '%)', data: targetLine, borderColor: 'rgba(220, 53, 69, 1)', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, datalabels: { display: false } },
                     { 
                         type: 'line', label: 'Downtime (%)', data: pctData, backgroundColor: 'rgba(54, 162, 235, 0.2)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 2, 
                         pointBackgroundColor: 'rgba(54, 162, 235, 1)', pointBorderColor: '#fff', pointBorderWidth: 1, pointRadius: 4, pointHoverRadius: 6,
@@ -882,7 +882,7 @@
             options: {
                 responsive: true, maintainAspectRatio: false,
                 plugins: {
-                    datalabels: { anchor: 'end', align: 'top', offset: 4, color: getChartLabelColor, font: { weight: 'bold', size: 10 }, formatter: function(v, ctx) { return ctx.dataset.label === 'Standar (1.5%)' ? null : `${v}% \n(${ctx.dataset.customMinutes[ctx.dataIndex]} m)`; }, textAlign: 'center' }
+                    datalabels: { anchor: 'end', align: 'top', offset: 4, color: getChartLabelColor, font: { weight: 'bold', size: 10 }, formatter: function(v, ctx) { return ctx.dataset.label === 'Standar (' + @ViewBag.TargetDowntime + '%)' ? null : `${v}% \n(${ctx.dataset.customMinutes[ctx.dataIndex]} m)`; }, textAlign: 'center' }
                 },
                 scales: { y: { beginAtZero: true, suggestedMax: 3, title: { display: true, text: 'Persentase Downtime (%)' } } },
                 onClick: clickHandler
@@ -983,7 +983,7 @@
             let plannedMins = yrAgg[k] || 0;       
             minuteData.push(dtMins);
             percentData.push(plannedMins > 0 ? ((dtMins / plannedMins) * 100).toFixed(2) : 0);
-            targetLine.push(1.5);
+            targetLine.push(@ViewBag.TargetDowntime);
         });
 
         const ctx = document.getElementById('barChart').getContext('2d');
@@ -994,7 +994,7 @@
             data: {
                 labels: labels,
                 datasets: [
-                    { type: 'line', label: 'Standar (1.5%)', data: targetLine, borderColor: 'rgba(220, 53, 69, 1)', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, datalabels: { display: false } },
+                    { type: 'line', label: 'Standar (' + @ViewBag.TargetDowntime + '%)', data: targetLine, borderColor: 'rgba(220, 53, 69, 1)', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, datalabels: { display: false } },
                     { 
                         type: 'line', label: 'Downtime (%)', data: percentData, backgroundColor: 'rgba(54, 162, 235, 0.2)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 2, 
                         pointBackgroundColor: 'rgba(54, 162, 235, 1)', pointBorderColor: '#fff', pointBorderWidth: 1, pointRadius: 4, pointHoverRadius: 6,
@@ -1005,7 +1005,7 @@
             options: {
                 responsive: true, maintainAspectRatio: false,
                 plugins: {
-                    datalabels: { anchor: 'end', align: 'top', offset: 4, color: getChartLabelColor, font: { weight: 'bold', size: 10 }, formatter: function(v, ctx) { return ctx.dataset.label === 'Standar (1.5%)' ? null : `${v}% \n(${ctx.dataset.customMinutes[ctx.dataIndex]} m)`; }, textAlign: 'center' }
+                    datalabels: { anchor: 'end', align: 'top', offset: 4, color: getChartLabelColor, font: { weight: 'bold', size: 10 }, formatter: function(v, ctx) { return ctx.dataset.label === 'Standar (' + @ViewBag.TargetDowntime + '%)' ? null : `${v}% \n(${ctx.dataset.customMinutes[ctx.dataIndex]} m)`; }, textAlign: 'center' }
                 },
                 scales: { y: { beginAtZero: true, suggestedMax: 3, title: { display: true, text: 'Persentase Downtime (%)' } } },
                 onClick: (e, elements) => { 
@@ -1923,7 +1923,7 @@
             let plannedMins = yrAgg[k] || 0;       
             minuteData.push(dtMins);
             percentData.push(plannedMins > 0 ? ((dtMins / plannedMins) * 100).toFixed(2) : 0);
-            targetLine.push(1.5);
+            targetLine.push(@ViewBag.TargetDowntime);
         });
 
         const canvas = document.createElement('canvas');
@@ -1942,7 +1942,7 @@
             data: { 
                 labels: labels, 
                 datasets: [
-                    { type: 'line', label: 'Standar (1.5%)', data: targetLine, borderColor: 'rgba(220, 53, 69, 1)', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, datalabels: { display: false } },
+                    { type: 'line', label: 'Standar (' + @ViewBag.TargetDowntime + '%)', data: targetLine, borderColor: 'rgba(220, 53, 69, 1)', borderWidth: 2, borderDash: [5, 5], pointRadius: 0, fill: false, datalabels: { display: false } },
                     { 
                         type: 'line', label: 'Downtime (%)', data: percentData, backgroundColor: 'rgba(54, 162, 235, 0.2)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 2, 
                         pointBackgroundColor: 'rgba(54, 162, 235, 1)', pointBorderColor: '#fff', pointBorderWidth: 1, pointRadius: 4, fill: true, tension: 0.1, customMinutes: minuteData 
@@ -1954,7 +1954,7 @@
                 animation: false, responsive: false,
                 plugins: {
                     legend: { position: 'bottom', labels: { boxWidth: 12 } },
-                    datalabels: { anchor: 'end', align: 'top', offset: 4, color: '#000', font: { weight: 'bold', size: 10 }, formatter: function(v, ctx) { return ctx.dataset.label === 'Standar (1.5%)' ? null : (v == 0 ? null : `${v}% \n(${ctx.dataset.customMinutes[ctx.dataIndex]} m)`); }, textAlign: 'center' }
+                    datalabels: { anchor: 'end', align: 'top', offset: 4, color: '#000', font: { weight: 'bold', size: 10 }, formatter: function(v, ctx) { return ctx.dataset.label === 'Standar (' + @ViewBag.TargetDowntime + '%)' ? null : (v == 0 ? null : `${v}% \n(${ctx.dataset.customMinutes[ctx.dataIndex]} m)`); }, textAlign: 'center' }
                 },
                 scales: { 
                     y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Persentase Downtime (%)' }, beginAtZero: true, suggestedMax: 3 }

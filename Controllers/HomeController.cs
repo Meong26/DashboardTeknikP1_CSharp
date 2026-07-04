@@ -10,21 +10,27 @@ namespace DashboardTeknikP1.Controllers
     public class HomeController : Controller
     {
         private readonly HomeRepository _repository;
+        private readonly SettingRepository _settingRepo;
 
-        public HomeController(HomeRepository repository)
+        public HomeController(HomeRepository repository, SettingRepository settingRepo)
         {
             _repository = repository;
+            _settingRepo = settingRepo;
         }
 
         // 1. Luncurkan kerangka HTML kosong secepat kilat
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
+            ViewBag.TargetDowntime = await _settingRepo.GetSettingValueAsync("TargetDowntime", "1.5");
+            ViewBag.TvModeDuration = await _settingRepo.GetSettingValueAsync("TvModeDuration", "10000");
             return View();
         }
 
         // Halaman TV Dashboard Mode
-        public IActionResult TvDashboard()
+        public async Task<IActionResult> TvDashboard()
         {
+            ViewBag.TargetDowntime = await _settingRepo.GetSettingValueAsync("TargetDowntime", "1.5");
+            ViewBag.TvModeDuration = await _settingRepo.GetSettingValueAsync("TvModeDuration", "10000");
             return View();
         }
 

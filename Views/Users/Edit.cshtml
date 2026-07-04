@@ -1,0 +1,51 @@
+@model DashboardTeknikP1.Models.UserEditViewModel
+@{
+    ViewData["Title"] = "Edit Pengguna";
+}
+
+<div class="container-fluid py-3">
+    <div class="mb-4">
+        <h2 class="h4 mb-1 fw-bold"><i class="bi bi-pencil-square me-2 text-primary"></i>Edit Pengguna</h2>
+        <p class="text-muted mb-0" style="font-size: 0.9rem;">Perbarui informasi profil atau hak akses akun.</p>
+    </div>
+
+    <div class="card border-0 shadow-sm mx-auto" style="max-width: 600px; border-top: 4px solid #0d6efd !important;">
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="UserID" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">NIK / User ID</label>
+                    <input class="form-control bg-light" value="@Model.UserID" readonly disabled />
+                    <div class="form-text">NIK tidak dapat diubah.</div>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="NamaLengkap" class="form-label fw-semibold"></label>
+                    <input asp-for="NamaLengkap" class="form-control" />
+                    <span asp-validation-for="NamaLengkap" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label asp-for="RoleID" class="form-label fw-semibold"></label>
+                    <select asp-for="RoleID" class="form-select">
+                        @foreach (var role in Model.AvailableRoles)
+                        {
+                            <option value="@role.RoleID">@role.RoleName</option>
+                        }
+                    </select>
+                    <span asp-validation-for="RoleID" class="text-danger small"></span>
+                </div>
+
+                <div class="text-end border-top pt-3">
+                    <a asp-action="Index" class="btn btn-light border me-2">Batal</a>
+                    <button type="submit" class="btn btn-primary fw-bold"><i class="bi bi-save me-1"></i> Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
