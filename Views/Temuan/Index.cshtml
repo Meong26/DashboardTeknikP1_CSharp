@@ -9,35 +9,38 @@
     </div>
 </div>
 
-<div class="card shadow-sm border-0 border-top border-4 border-primary mb-4">
-    <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
-        <span class="fw-bold text-primary" style="font-size: 0.9rem;">
-            <i class="bi bi-pencil-square me-1"></i> Form Input Cepat (Bisa input lebih dari 1 mesin)
-        </span>
-        <div class="spinner-border spinner-border-sm text-primary d-none" id="loadingForm"></div>
+@if (!User.IsInRole("Supervisor"))
+{
+    <div class="card shadow-sm border-0 border-top border-4 border-primary mb-4">
+        <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
+            <span class="fw-bold text-primary" style="font-size: 0.9rem;">
+                <i class="bi bi-pencil-square me-1"></i> Form Input Cepat (Bisa input lebih dari 1 mesin)
+            </span>
+            <div class="spinner-border spinner-border-sm text-primary d-none" id="loadingForm"></div>
+        </div>
+        <div class="card-body p-0 table-responsive" style="max-height: 30vh; overflow-y: auto;">
+            <table class="table table-bordered table-sm align-middle mb-0" style="font-size: 0.85rem;" id="tblInputTemuan">
+                <thead class="table-light sticky-top">
+                    <tr class="text-center">
+                        <th style="width: 15%;">Line</th>
+                        <th style="width: 25%;">Kode / Nama Mesin</th>
+                        <th style="width: 45%;">Deskripsi Masalah / Kendala</th>
+                        <th style="width: 25%;">Tindakan Awal (Opsional)</th>
+                        <th style="width: 5%;">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="inputBody">
+                    </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white py-2 d-flex justify-content-between align-items-center">
+            <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="addNewRow()">+ Tambah Baris Masalah</button>
+            <button class="btn btn-sm btn-primary fw-bold px-4 shadow-sm" onclick="saveDataTemuan()">
+                <i class="bi bi-send-fill me-1"></i> Kirim Laporan
+            </button>
+        </div>
     </div>
-    <div class="card-body p-0 table-responsive" style="max-height: 30vh; overflow-y: auto;">
-        <table class="table table-bordered table-sm align-middle mb-0" style="font-size: 0.85rem;" id="tblInputTemuan">
-            <thead class="table-light sticky-top">
-                <tr class="text-center">
-                    <th style="width: 15%;">Line</th>
-                    <th style="width: 25%;">Kode / Nama Mesin</th>
-                    <th style="width: 45%;">Deskripsi Masalah / Kendala</th>
-                    <th style="width: 25%;">Tindakan Awal (Opsional)</th>
-                    <th style="width: 5%;">Aksi</th>
-                </tr>
-            </thead>
-            <tbody id="inputBody">
-                </tbody>
-        </table>
-    </div>
-    <div class="card-footer bg-white py-2 d-flex justify-content-between align-items-center">
-        <button class="btn btn-sm btn-outline-secondary fw-bold" onclick="addNewRow()">+ Tambah Baris Masalah</button>
-        <button class="btn btn-sm btn-primary fw-bold px-4 shadow-sm" onclick="saveDataTemuan()">
-            <i class="bi bi-send-fill me-1"></i> Kirim Laporan
-        </button>
-    </div>
-</div>
+}
 
 <datalist id="listMasterMesin"></datalist>
 
@@ -68,6 +71,7 @@
 </div>
 
 <script>
+    const canCloseLaporan = @((!User.IsInRole("Supervisor") && !User.IsInRole("Teknisi")).ToString().ToLower());
     let masterMesin = [];
     let historyTemuan = [];
 
@@ -87,8 +91,8 @@
             populateDatalist();
             renderHistoryTable();
             
-            // Pastikan minimal ada 1 baris kosong di form
-            if (document.getElementById('inputBody').children.length === 0) {
+            // Pastikan minimal ada 1 baris kosong di form jika form ada
+            if (document.getElementById('inputBody') && document.getElementById('inputBody').children.length === 0) {
                 addNewRow();
             }
         } catch (error) {
@@ -244,12 +248,14 @@
             // Logika pewarnaan status dan tombol aksi
             let statusBadge = "";
             if (item.Status === "OPEN") {
+                let closeBtn = canCloseLaporan ? `
+                        <a href="/Temuan/Close/${item.TemuanID}" class="btn btn-sm btn-outline-danger py-0 px-2 fw-bold" style="font-size: 0.75rem; transition: transform 0.2s;" onmouseover="this.style.transform='translateX(3px)'" onmouseout="this.style.transform='translateX(0)'">
+                            Tutup Laporan &rarr;
+                        </a>` : '';
                 statusBadge = `
                     <div class="d-flex align-items-center gap-2">
                         <span class="badge bg-danger shadow-sm">OPEN</span>
-                        <a href="/Temuan/Close/${item.TemuanID}" class="btn btn-sm btn-outline-danger py-0 px-2 fw-bold" style="font-size: 0.75rem; transition: transform 0.2s;" onmouseover="this.style.transform='translateX(3px)'" onmouseout="this.style.transform='translateX(0)'">
-                            Tutup Laporan &rarr;
-                        </a>
+                        ${closeBtn}
                     </div>`;
             } else if (item.Status === "CLOSED") {
                 statusBadge = `<span class="badge bg-success shadow-sm"><i class="bi bi-check2-all me-1"></i>CLOSED</span>`;

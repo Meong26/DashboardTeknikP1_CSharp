@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrator,Supervisor,Section,Teknisi")]
     public class TemuanController : Controller
     {
         private readonly TemuanRepository _repository;
@@ -30,6 +30,7 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         // 2. HALAMAN FORM INPUT BARU (CREATE - GET)
         // ====================================================================
+        [Authorize(Roles = "Administrator,Section,Teknisi")]
         [HttpGet]
         public IActionResult Create()
         {
@@ -46,6 +47,7 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         // 3. PROSES SIMPAN DATA FORM (CREATE - POST)
         // ====================================================================
+        [Authorize(Roles = "Administrator,Section,Teknisi")]
         [HttpPost]
         public IActionResult Create(TemuanAbnormal model)
         {
@@ -77,6 +79,7 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         // 4. HALAMAN TUTUP LAPORAN (CLOSE - GET)
         // ====================================================================
+        [Authorize(Roles = "Administrator,Section")]
         [HttpGet]
         public IActionResult Close(int id)
         {
@@ -98,6 +101,7 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         // 5. PROSES EKSEKUSI TUTUP LAPORAN (CLOSE - POST)
         // ====================================================================
+        [Authorize(Roles = "Administrator,Section")]
         [HttpPost]
         public IActionResult Close(int TemuanID, string TindakanKorektif)
         {

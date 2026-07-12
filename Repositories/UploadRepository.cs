@@ -99,7 +99,7 @@ namespace DashboardTeknikP1.Repositories
                     bulkCopy.DestinationTableName = "tbl_SAP_YP14";
                     var table = dataList.ToDataTable();
                     
-                    var columnsToMap = new[] { "OrderType", "OrderNo", "Description", "DocumentDate", "MaterialNo", "MaterialDescription", "Qty", "PricePerUnit", "UoM", "MaterialCost", "WorkCenter", "EquipmentDescription", "CostCenter" };
+                    var columnsToMap = new[] { "OrderType", "OrderNo", "Description", "DocumentDate", "MaterialNo", "MaterialDescription", "Qty", "PricePerUnit", "UoM", "MaterialCost", "WorkCenter", "EquipmentDescription", "CostCenter", "FuncLoc" };
                     foreach(var col in columnsToMap) bulkCopy.ColumnMappings.Add(col, col);
 
                     bulkCopy.WriteToServer(table);

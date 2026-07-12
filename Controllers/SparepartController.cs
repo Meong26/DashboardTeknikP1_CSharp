@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrator,Supervisor,Section,Teknisi,WHS.SP")]
     public class SparepartController : Controller
     {
         private readonly SparepartRepository _sparepartRepo;
@@ -48,6 +48,7 @@ namespace DashboardTeknikP1.Controllers
             public List<PRItemInput> Items { get; set; } = new List<PRItemInput>();
         }
 
+        [Authorize(Roles = "Administrator,Supervisor,Section")]
         [HttpPost]
         public async Task<IActionResult> ExportPR([FromBody] PRRequestModel request)
         {
@@ -138,6 +139,7 @@ namespace DashboardTeknikP1.Controllers
             }
         }
         
+        [Authorize(Roles = "Administrator,Supervisor,Section")]
         [HttpPost]
         public async Task<IActionResult> UpdatePriorities([FromBody] List<string> priorityMaterials)
         {

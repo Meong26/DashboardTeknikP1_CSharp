@@ -10,21 +10,37 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrator,Supervisor,Section,WHS.SP")]
     public class PemakaianController : Controller
     {
         private readonly PemakaianRepository _pemakaianRepo;
         private readonly PemakaianService _pemakaianService;
+        private readonly TeknisiRepository _teknisiRepo;
 
-        public PemakaianController(PemakaianRepository pemakaianRepo, PemakaianService pemakaianService)
+        public PemakaianController(PemakaianRepository pemakaianRepo, PemakaianService pemakaianService, TeknisiRepository teknisiRepo)
         {
             _pemakaianRepo = pemakaianRepo;
             _pemakaianService = pemakaianService;
+            _teknisiRepo = teknisiRepo;
         }
 
         public IActionResult Index()
         {
             return View();
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetTeknisi()
+        {
+            try
+            {
+                var teknisiList = await _teknisiRepo.GetAllTeknisiAsync();
+                return Json(teknisiList, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = null });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ex.Message);
+            }
         }
 
         [HttpPost]
@@ -61,6 +77,7 @@ namespace DashboardTeknikP1.Controllers
             catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
 
+        [Authorize(Roles = "Administrator,Supervisor,Section")]
         [HttpPost]
         public async Task<IActionResult> QuarantineItems([FromBody] List<int> ids)
         {
@@ -69,6 +86,7 @@ namespace DashboardTeknikP1.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Administrator,Supervisor,Section")]
         [HttpPost]
         public async Task<IActionResult> RestoreItem(int id)
         {
@@ -83,6 +101,7 @@ namespace DashboardTeknikP1.Controllers
             }
         }
 
+        [Authorize(Roles = "Administrator,Supervisor,Section")]
         [HttpPost]
         public async Task<IActionResult> ReturItem(int id)
         {
@@ -90,6 +109,7 @@ namespace DashboardTeknikP1.Controllers
             return Ok();
         }
 
+        [Authorize(Roles = "Administrator,Supervisor,Section")]
         [HttpPost]
         public async Task<IActionResult> ShiftToNextWeek(int id)
         {

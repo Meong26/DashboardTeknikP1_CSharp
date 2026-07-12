@@ -11,5 +11,7 @@ namespace DashboardTeknikP1.Models
         [Required(ErrorMessage = "Durasi TV Mode harus diisi")]
         [Display(Name = "Durasi Slide Mode TV (milidetik)")]
         public string TvModeDuration { get; set; }
+
+        public System.Collections.Generic.List<Teknisi> TeknisiList { get; set; } = new System.Collections.Generic.List<Teknisi>();
     }
 }

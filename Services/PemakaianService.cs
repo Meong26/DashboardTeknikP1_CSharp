@@ -52,6 +52,48 @@ namespace DashboardTeknikP1.Services
                 return weekKey + suffix;
             }
 
+            string GetPlantFromFuncLoc(string funcLoc)
+            {
+                if (string.IsNullOrEmpty(funcLoc) || funcLoc.Length < 7) return "";
+                string prefix = funcLoc.Substring(0, 7);
+                if (prefix == "2808-P1") return "Plant 1";
+                if (prefix == "2808-P2") return "Plant 2";
+                if (prefix == "2808-P3") return "Plant 3";
+                return "";
+            }
+
+            string GetPlantFromResourceName(string resourceName)
+            {
+                if (string.IsNullOrEmpty(resourceName)) return "";
+                
+                string prefix = resourceName.TrimStart();
+                if (prefix.Length >= 5)
+                {
+                    string firstFive = prefix.Substring(0, 5);
+                    var p1 = new[] { "L. 01", "L. 02", "L. 03", "L. 04", "L. 05", "L. 06", "L. 07", "L. 08", "L. 09" };
+                    if (p1.Contains(firstFive)) return "Plant 1";
+
+                    if (firstFive.StartsWith("L. ") && int.TryParse(firstFive.Substring(3, 2), out int num5))
+                    {
+                        if (num5 >= 10 && num5 <= 30) return "Plant 2";
+                        if (num5 >= 31 && num5 <= 33) return "Plant 3";
+                    }
+                }
+
+                // Fallback super aman jika format spasi berantakan (misal "L.01" atau "L.  01")
+                var match = System.Text.RegularExpressions.Regex.Match(resourceName, @"L\.?\s*0*(\d+)");
+                if (match.Success)
+                {
+                    if (int.TryParse(match.Groups[1].Value, out int num))
+                    {
+                        if (num >= 1 && num <= 9) return "Plant 1";
+                        if (num >= 10 && num <= 30) return "Plant 2";
+                        if (num >= 31 && num <= 33) return "Plant 3";
+                    }
+                }
+                return "";
+            }
+
             // 2. TERAPKAN KAMUS
             string currentWeekStr = GetIndofoodWeekString(DateTime.Now);
 
@@ -63,6 +105,11 @@ namespace DashboardTeknikP1.Services
                 .Where(x => !string.IsNullOrEmpty(x.WeekOfBasicFinishedDate) && x.WeekOfBasicFinishedDate.Length >= 6)
                 .GroupBy(x => GetIndofoodWeekString(x.PostingDate))
                 .ToDictionary(g => g.Key, g => g.Sum(x => x.DelivQtyPcs));
+
+            var outputPerWeekPlant = listYr21
+                .Where(x => !string.IsNullOrEmpty(x.WeekOfBasicFinishedDate) && x.WeekOfBasicFinishedDate.Length >= 6)
+                .GroupBy(x => new { Week = GetIndofoodWeekString(x.PostingDate), Plant = GetPlantFromResourceName(x.ResourceName) })
+                .ToDictionary(g => $"{g.Key.Week}|{g.Key.Plant}", g => g.Sum(x => x.DelivQtyPcs));
 
             var listEstimasi = allHistory.Where(x => x.Status.ToUpper() == "ESTIMASI").ToList();
             var listKarantina = allHistory.Where(x => x.Status.ToUpper() == "KARANTINA").ToList();
@@ -80,6 +127,7 @@ namespace DashboardTeknikP1.Services
                     HargaSatuanFormated = x.HargaSatuanSaatIni.ToString("N0"),
                     TotalHargaNumeric = (double)x.TotalHarga,
                     TotalHargaFormated = x.TotalHarga.ToString("N0"),
+                    Plant = x.Plant,
                     WeekYearKey = weekKey,
                     WeekDisplay = GetDisplayWeek(weekKey)
                 };
@@ -93,6 +141,7 @@ namespace DashboardTeknikP1.Services
                 x.TujuanPengambilan,
                 x.NamaPengambil,
                 x.JumlahPengambilan,
+                x.Plant,
                 TotalHargaFormated = x.TotalHarga.ToString("N0")
             }).ToList();
 
@@ -109,6 +158,7 @@ namespace DashboardTeknikP1.Services
                     HargaSatuanFormated = x.PricePerUnit.ToString("N0"),
                     TotalHargaNumeric = (double)x.MaterialCost,
                     TotalHargaFormated = x.MaterialCost.ToString("N0"),
+                    Plant = GetPlantFromFuncLoc(x.FuncLoc),
                     WeekYearKey = weekKey,
                     WeekDisplay = GetDisplayWeek(weekKey, " Aktual")
                 };
@@ -121,7 +171,8 @@ namespace DashboardTeknikP1.Services
                 dataFix = resultFix,
                 costLastWeek = costTotal,
                 ratioLastWeek = ratioTotal,
-                outputPerWeek = outputPerWeek
+                outputPerWeek = outputPerWeek,
+                outputPerWeekPlant = outputPerWeekPlant
             };
         }
     }

@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize]
+    [Authorize(Roles = "Administrator")]
     public class UploadController : Controller
     {
         private readonly UploadRepository _repository;
@@ -199,7 +199,8 @@ namespace DashboardTeknikP1.Controllers
                                 MaterialCost = ParseDecimal(worksheet.Cells[row, 10]),
                                 WorkCenter = worksheet.Cells[row, 11].Text,
                                 EquipmentDescription = worksheet.Cells[row, 12].Text,
-                                CostCenter = worksheet.Cells[row, 13].Text
+                                CostCenter = worksheet.Cells[row, 13].Text,
+                                FuncLoc = worksheet.Cells[row, 14].Text
                             };
                             listData.Add(data);
                         }

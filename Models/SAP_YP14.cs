@@ -18,5 +18,6 @@ namespace DashboardTeknikP1.Models
         public string WorkCenter { get; set; } = string.Empty;
         public string EquipmentDescription { get; set; } = string.Empty;
         public string CostCenter { get; set; } = string.Empty;
+        public string FuncLoc { get; set; } = string.Empty;
     }
 }

@@ -12,6 +12,7 @@ builder.Services.AddScoped<DashboardTeknikP1.Repositories.SparepartRepository>()
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.PemakaianRepository>();
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.SettingRepository>();
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.UserRepository>();
+builder.Services.AddScoped<DashboardTeknikP1.Repositories.TeknisiRepository>();
 
 // REGISTER SERVICE
 builder.Services.AddScoped<DashboardTeknikP1.Services.PemakaianService>();

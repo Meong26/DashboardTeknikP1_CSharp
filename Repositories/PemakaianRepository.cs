@@ -30,7 +30,7 @@ namespace DashboardTeknikP1.Repositories
                     bulkCopy.DestinationTableName = "tbl_PengambilanSparepart";
                     var table = dataList.ToDataTable();
                     
-                    var columnsToMap = new[] { "TanggalPengambilan", "MaterialNo", "JumlahPengambilan", "TujuanPengambilan", "NamaPengambil", "HargaSatuanSaatIni", "TotalHarga", "Status" };
+                    var columnsToMap = new[] { "TanggalPengambilan", "MaterialNo", "JumlahPengambilan", "TujuanPengambilan", "NamaPengambil", "HargaSatuanSaatIni", "TotalHarga", "Status", "Plant" };
                     foreach(var col in columnsToMap) bulkCopy.ColumnMappings.Add(col, col);
 
                     bulkCopy.WriteToServer(table);
@@ -42,7 +42,7 @@ namespace DashboardTeknikP1.Repositories
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                string query = @"SELECT p.*, s.MaterialDescription AS MaterialDesc 
+                string query = @"SELECT p.*, s.MaterialDescription AS MaterialDesc, p.Plant 
                                  FROM tbl_PengambilanSparepart p
                                  LEFT JOIN tbl_SAP_Sparepart s ON p.MaterialNo = s.Material
                                  WHERE YEAR(p.TanggalPengambilan) = @Year
@@ -59,7 +59,7 @@ namespace DashboardTeknikP1.Repositories
                 string qYp14 = "SELECT * FROM tbl_SAP_YP14 WHERE YEAR(DocumentDate) = @Year ORDER BY DocumentDate DESC";
                 var listYp14 = await conn.QueryAsync<SAP_YP14>(qYp14, new { Year = year });
 
-                string qYr21 = "SELECT PostingDate, DelivQtyPcs, WeekOfBasicFinishedDate FROM tbl_SAP_YR21 WHERE YEAR(PostingDate) = @Year";
+                string qYr21 = "SELECT PostingDate, DelivQtyPcs, WeekOfBasicFinishedDate, ResourceName FROM tbl_SAP_YR21 WHERE YEAR(PostingDate) = @Year";
                 var listYr21 = await conn.QueryAsync<SAP_YR21>(qYr21, new { Year = year });
 
                 return new Tuple<List<SAP_YP14>, List<SAP_YR21>>(listYp14.ToList(), listYr21.ToList());

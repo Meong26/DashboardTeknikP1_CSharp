@@ -81,8 +81,8 @@
     </div>
 
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="~/lib/chartjs/chart.min.js"></script>
+    <script src="~/lib/chartjs/chartjs-plugin-datalabels.min.js"></script>
     
     <script>
         Chart.register(ChartDataLabels);
@@ -326,6 +326,7 @@
 
             new Chart(document.getElementById(canvasId).getContext('2d'), {
                 type: 'line',
+                
                 data: { 
                     labels: labels, 
                     datasets: [

@@ -83,6 +83,10 @@ namespace DashboardTeknikP1.Controllers
                 // Masukkan KTP ke dalam Cookie Browser
                 await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
+                if (roleName == "Dashboard")
+                {
+                    return RedirectToAction("TvDashboard", "Home");
+                }
                 return RedirectToAction("Index", "Home");
             }
 

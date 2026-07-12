@@ -19,6 +19,13 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert" style="border-left: 5px solid #dc3545;">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
     <form asp-controller="Settings" asp-action="Save" method="post">
         <div class="row g-4">
@@ -71,6 +78,138 @@
             </button>
         </div>
     </form>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="border-top: 4px solid #198754 !important;">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="card-title fw-bold mb-1"><i class="bi bi-people-fill me-2 text-success"></i>Daftar Teknisi</h5>
+                            <p class="text-muted small mb-0">Kelola master data teknisi untuk auto-fill pada halaman pemakaian sparepart.</p>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-success shadow-sm fw-bold" data-bs-toggle="modal" data-bs-target="#modalAddTeknisi">
+                            <i class="bi bi-plus-lg me-1"></i> Tambah Teknisi
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle table-sm" style="font-size: 0.9rem;">
+                            <thead class="table-light text-center">
+                                <tr>
+                                    <th style="width: 15%;">NIK</th>
+                                    <th>Nama Teknisi</th>
+                                    <th style="width: 20%;">Plant</th>
+                                    <th style="width: 15%;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if(Model.TeknisiList != null && Model.TeknisiList.Any())
+                                {
+                                    foreach(var t in Model.TeknisiList)
+                                    {
+                                        <tr>
+                                            <td class="text-center font-monospace">@t.NIK</td>
+                                            <td class="fw-semibold">@t.Nama</td>
+                                            <td class="text-center"><span class="badge bg-secondary">@t.Plant</span></td>
+                                            <td class="text-center">
+                                                <button class="btn btn-sm btn-outline-primary" onclick="editTeknisi('@t.NIK', '@t.Nama', '@t.Plant')"><i class="bi bi-pencil-square"></i></button>
+                                                <form asp-action="DeleteTeknisi" method="post" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus teknisi ini?');">
+                                                    <input type="hidden" name="nik" value="@t.NIK" />
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center py-3 text-muted">Belum ada data teknisi.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Add Teknisi -->
+<div class="modal fade" id="modalAddTeknisi" tabindex="-1" aria-labelledby="modalAddTeknisiLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form asp-action="AddTeknisi" method="post">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="modalAddTeknisiLabel"><i class="bi bi-person-plus-fill me-2"></i>Tambah Teknisi Baru</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">NIK</label>
+                        <input type="text" name="NIK" class="form-control" required maxlength="10" pattern="[0-9]+" title="Hanya angka, maksimal 10 digit" placeholder="Contoh: 12345678" />
+                        <div class="form-text">Maksimal 10 digit angka.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nama Teknisi</label>
+                        <input type="text" name="Nama" class="form-control" required maxlength="100" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Plant</label>
+                        <select name="Plant" class="form-select" required>
+                            <option value="">Pilih Plant...</option>
+                            <option value="Plant 1">Plant 1</option>
+                            <option value="Plant 2">Plant 2</option>
+                            <option value="Plant 3">Plant 3</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-success fw-bold">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Teknisi -->
+<div class="modal fade" id="modalEditTeknisi" tabindex="-1" aria-labelledby="modalEditTeknisiLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <form asp-action="UpdateTeknisi" method="post">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="modalEditTeknisiLabel"><i class="bi bi-pencil-square me-2"></i>Edit Teknisi</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">NIK</label>
+                        <input type="text" id="editNIK" name="NIK" class="form-control" readonly />
+                        <div class="form-text">NIK tidak dapat diubah.</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Nama Teknisi</label>
+                        <input type="text" id="editNama" name="Nama" class="form-control" required maxlength="100" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Plant</label>
+                        <select id="editPlant" name="Plant" class="form-select" required>
+                            <option value="Plant 1">Plant 1</option>
+                            <option value="Plant 2">Plant 2</option>
+                            <option value="Plant 3">Plant 3</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -85,5 +224,13 @@
                 card.style.transform = 'translateY(0)';
             });
         });
+
+        function editTeknisi(nik, nama, plant) {
+            document.getElementById('editNIK').value = nik;
+            document.getElementById('editNama').value = nama;
+            document.getElementById('editPlant').value = plant;
+            var editModal = new bootstrap.Modal(document.getElementById('modalEditTeknisi'));
+            editModal.show();
+        }
     </script>
 }

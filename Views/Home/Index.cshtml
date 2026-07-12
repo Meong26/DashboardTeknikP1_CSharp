@@ -303,9 +303,37 @@
                     <div class="list-group-item px-0 py-2">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="form-check mb-0">
-                                <input class="form-check-input" type="checkbox" id="chkRepTopBadActor">
+                                <input class="form-check-input" type="checkbox" id="chkRepTopBadActor" onchange="toggleRepFilter('RepTopBadActor')">
                                 <label class="form-check-label" for="chkRepTopBadActor">Tabel Top 5 Bad Actor (Downtime Tertinggi)</label>
                             </div>
+                        </div>
+                        <div id="fltRepTopBadActorWrapper" class="ms-4 mt-2 d-none">
+                            <select id="fltRepTopBadActorMode" class="form-select form-select-sm mb-1" style="font-size: 0.75rem;" onchange="updateRepFilterDdl('RepTopBadActor')">
+                                <option value="SYNC">Sesuai Filter Dashboard (Sync)</option>
+                                <option value="ALL">Semua Waktu (All Time)</option>
+                                <option value="MONTH">Pilih Bulan Khusus</option>
+                                <option value="WEEK">Pilih Minggu Khusus</option>
+                            </select>
+                            <select id="fltRepTopBadActorMonth" class="form-select form-select-sm mb-1 d-none" style="font-size: 0.75rem;"></select>
+                            <select id="fltRepTopBadActorWeek" class="form-select form-select-sm d-none" style="font-size: 0.75rem;"></select>
+                        </div>
+                    </div>
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="chkRepActivity" onchange="toggleRepFilter('RepActivity')">
+                                <label class="form-check-label" for="chkRepActivity">Tabel Rincian Aktifitas Downtime</label>
+                            </div>
+                        </div>
+                        <div id="fltRepActivityWrapper" class="ms-4 mt-2 d-none">
+                            <select id="fltRepActivityMode" class="form-select form-select-sm mb-1" style="font-size: 0.75rem;" onchange="updateRepFilterDdl('RepActivity')">
+                                <option value="SYNC">Sesuai Filter Dashboard (Sync)</option>
+                                <option value="ALL">Semua Waktu (All Time)</option>
+                                <option value="MONTH">Pilih Bulan Khusus</option>
+                                <option value="WEEK">Pilih Minggu Khusus</option>
+                            </select>
+                            <select id="fltRepActivityMonth" class="form-select form-select-sm mb-1 d-none" style="font-size: 0.75rem;"></select>
+                            <select id="fltRepActivityWeek" class="form-select form-select-sm d-none" style="font-size: 0.75rem;"></select>
                         </div>
                     </div>
                     <div class="list-group-item px-0 py-2">
@@ -907,7 +935,7 @@
                 responsive: true, maintainAspectRatio: false,
                 plugins: { datalabels: { formatter: (v, c) => c.dataset.type === 'line' ? `${v}%` : `${v}m`, font: { weight: 'bold', size: 10 } } },
                 scales: { 
-                    yMins: { type: 'linear', position: 'left', title: { display: true, text: 'Durasi (Menit)' }, beginAtZero: true },
+                    yMins: { type: 'linear', position: 'left', title: { display: true, text: 'Durasi (Menit)' }, beginAtZero: true, suggestedMax: minData.length > 0 ? Math.max(...minData) * 1.2 : 10 },
                     yPareto: { type: 'linear', position: 'right', title: { display: true, text: 'Persentase Kumulatif (%)' }, min: 0, max: 105, grid: { drawOnChartArea: false }, ticks: { callback: v => `${v}%` } }
                 },
                 onClick: clickHandler
@@ -1528,7 +1556,7 @@
         let optionsHtml = ddlBulan.innerHTML;
         let weekHtml = ddlMinggu.innerHTML;
         
-        ['RepTrend', 'RepPie', 'RepLine', 'RepMachine', 'RepMTTRBF'].forEach(k => {
+        ['RepTrend', 'RepPie', 'RepLine', 'RepMachine', 'RepMTTRBF', 'RepTopBadActor', 'RepActivity'].forEach(k => {
             const m = document.getElementById(`flt${k}Month`);
             const w = document.getElementById(`flt${k}Week`);
             if(m) m.innerHTML = optionsHtml;
@@ -1668,13 +1696,82 @@
             
             // 7. TOP 5 BAD ACTORS
             if(document.getElementById('chkRepTopBadActor').checked) {
-                const html = generateOfflineTopBadActors('SYNC', 'ALL'); // Selalu mengikuti filter aktif
+                const mode = document.getElementById('fltRepTopBadActorMode').value;
+                const timeVal = getTimeVal('RepTopBadActor', mode);
+                const html = generateOfflineTopBadActors(mode, timeVal);
                 const div = document.createElement('div');
                 div.style.marginBottom = '20px';
                 div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px;">Top 5 Bad Actor (Downtime Tertinggi)</h3>
-                                 <p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 10px; font-style: italic;">${getFilterSubtitle('SYNC', 'ALL')}</p>
+                                 <p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 10px; font-style: italic;">${getFilterSubtitle(mode, timeVal)}</p>
                                  ${html}`;
                 container.appendChild(div);
+            }
+
+
+            // 7.5. TABEL RINCIAN AKTIFITAS
+            if(document.getElementById('chkRepActivity').checked) {
+                const mode = document.getElementById('fltRepActivityMode').value;
+                const timeVal = getTimeVal('RepActivity', mode);
+                const offlineData = filterDataForReport(mode, timeVal);
+                
+                // Urutkan data dari yang terlama ke terbaru (Ascending)
+                let activities = [...offlineData.fYP].sort((a, b) => new Date(a.NotificationDate) - new Date(b.NotificationDate));
+
+                if (activities.length === 0) {
+                    const div = document.createElement('div');
+                    div.style.marginBottom = '20px';
+                    div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px;">Rincian Aktifitas Downtime</h3>
+                                     <p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 10px; font-style: italic;">${getFilterSubtitle(mode, timeVal)}</p>
+                                     <table style="width: 100%; border-collapse: collapse; font-size: 10px;"><tr><td style="text-align:center; padding:10px; border: 1px solid #ddd;">Tidak ada aktifitas pada periode ini.</td></tr></table>`;
+                    container.appendChild(div);
+                } else {
+                    const CHUNK_SIZE = 35; // Bagi tabel menjadi beberapa bagian agar tidak terpotong saat ganti halaman PDF
+                    for (let i = 0; i < activities.length; i += CHUNK_SIZE) {
+                        const chunk = activities.slice(i, i + CHUNK_SIZE);
+                        let tableRows = '';
+                        chunk.forEach((item, idx) => {
+                            const fDate = new Date(item.NotificationDate).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+                            let txtAktivitas = item.ActivityText ? item.ActivityText : (item.NotificationDesc || '-');
+                            let namaLine = getLineName(item.FunctionLocation);
+                            let namaMesin = getMachineName(item.FunctionLocation, item.ActivityText);
+                            tableRows += `<tr>
+                                <td style="border: 1px solid #ddd; padding: 4px; text-align: center;">${i + idx + 1}</td>
+                                <td style="border: 1px solid #ddd; padding: 4px; text-align: center;">${fDate}</td>
+                                <td style="border: 1px solid #ddd; padding: 4px; color: #198754; font-weight: bold;">${namaLine}</td>
+                                <td style="border: 1px solid #ddd; padding: 4px; color: #0d6efd; font-weight: bold;">${namaMesin}</td>
+                                <td style="border: 1px solid #ddd; padding: 4px;">${txtAktivitas}</td>
+                                <td style="border: 1px solid #ddd; padding: 4px; text-align: center; color: #dc3545; font-weight: bold;">${item.TotalDownTimeInMinutes}</td>
+                                <td style="border: 1px solid #ddd; padding: 4px; text-align: center;">${item.WageGroup_GroupShift || '-'}</td>
+                            </tr>`;
+                        });
+                        
+                        let html = `<table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 20px;">
+                            <thead style="background-color: #343a40; color: white;">
+                                <tr>
+                                    <th style="padding: 6px; border: 1px solid #ddd; width: 5%;">No</th>
+                                    <th style="padding: 6px; border: 1px solid #ddd; width: 10%;">Tanggal</th>
+                                    <th style="padding: 6px; border: 1px solid #ddd; width: 15%;">Line</th>
+                                    <th style="padding: 6px; border: 1px solid #ddd; width: 15%;">Mesin</th>
+                                    <th style="padding: 6px; border: 1px solid #ddd; width: 35%;">Aktivitas Perbaikan</th>
+                                    <th style="padding: 6px; border: 1px solid #ddd; width: 10%;">Menit</th>
+                                    <th style="padding: 6px; border: 1px solid #ddd; width: 10%;">Regu</th>
+                                </tr>
+                            </thead>
+                            <tbody>${tableRows}</tbody>
+                        </table>`;
+
+                        const div = document.createElement('div');
+                        div.style.marginBottom = '20px';
+                        if (i === 0) {
+                            div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px;">Rincian Aktifitas Downtime</h3>
+                                             <p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 10px; font-style: italic;">${getFilterSubtitle(mode, timeVal)}</p>
+                                             ${html}`;
+                        } else {
+                            div.innerHTML = `<p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 5px; font-style: italic;">(Lanjutan) Rincian Aktifitas Downtime</p>${html}`;
+                        }
+                        container.appendChild(div);
+                    }
+                }
             }
 
             // 8. TEMUAN OPEN (FETCH API)
@@ -2060,7 +2157,7 @@
                     datalabels: { color: '#000', anchor: 'end', align: 'top', font: {weight: 'bold'}, formatter: v => v > 0 ? v + 'm' : null }
                 },
                 scales: { 
-                    y: { beginAtZero: true },
+                    y: { beginAtZero: true, suggestedMax: values.length > 0 ? Math.max(...values) * 1.2 : 10 },
                     x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 45, font: {size: 10} } }
                 }
             }

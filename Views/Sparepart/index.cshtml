@@ -92,6 +92,7 @@
 </div>
 
 <script>
+    const canManagePRAndPriority = @((!User.IsInRole("Teknisi") && !User.IsInRole("WHS.SP")).ToString().ToLower());
     let ewsCurrentPage = 1;
     const ewsItemsPerPage = 50;
     let ewsCombinedListGlobal = [];
@@ -115,11 +116,15 @@
             const btnContainer = document.createElement("div");
             btnContainer.className = "float-end d-flex gap-2 align-items-center";
             
-            btnContainer.innerHTML = `
+            let buttonsHtml = `
                 <div class="input-group input-group-sm d-none shadow-sm" id="ewsSearchContainer" style="max-width: 220px;">
                     <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
                     <input type="text" id="ewsSearchInput" class="form-control border-start-0 ps-0" placeholder="Cari Part di EWS..." oninput="renderEWSContainer()">
                 </div>
+            `;
+            
+            if (canManagePRAndPriority) {
+                buttonsHtml += `
                 <button id="btnTogglePriority" class="btn btn-sm btn-outline-warning fw-bold text-dark" onclick="togglePriorityMode()">
                     <i class="bi bi-star-fill me-1 text-warning"></i> Set Priority Mode
                 </button>
@@ -132,7 +137,10 @@
                 <button id="btnDownloadPR" class="btn btn-sm btn-success fw-bold d-none" onclick="executeDownloadPR()">
                     <i class="bi bi-download me-1"></i> Unduh PR Excel
                 </button>
-            `;
+                `;
+            }
+            
+            btnContainer.innerHTML = buttonsHtml;
             ewsCardHeader.appendChild(btnContainer);
         }
     }

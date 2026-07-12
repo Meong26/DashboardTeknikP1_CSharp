@@ -15,6 +15,7 @@ namespace DashboardTeknikP1.Models
         public decimal TotalHarga { get; set; }
         public DateTime TanggalInput { get; set; }
         public string Status { get; set; } = "ESTIMASI"; // Nilai: ESTIMASI, KARANTINA
+        public string Plant { get; set; } = string.Empty;
 
         [NotMapped]
         public string MaterialDesc { get; set; } = string.Empty;

@@ -9,31 +9,77 @@
     </div>
 </div>
 
-<div class="row mb-3 g-3">
-    <div class="col-md-4">
-        <div class="card bg-primary text-white shadow-sm border-0" onclick="toggleHistoryMode('ESTIMASI')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
-            <div class="card-body py-3">
-                <div class="small fw-bold text-uppercase opacity-75 mb-1">Total Pengeluaran (Estimasi)</div>
-                <h3 class="mb-0 fw-bold">Rp <span id="lblCostThisWeek">0</span></h3>
+<ul class="nav nav-tabs mb-3 shadow-sm" id="monitoringTabs" role="tablist">
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active fw-bold text-primary" id="estimasi-tab" data-bs-toggle="tab" data-bs-target="#estimasi-tab-pane" type="button" role="tab" aria-controls="estimasi-tab-pane" aria-selected="true" onclick="toggleHistoryMode('ESTIMASI')">Total Pengeluaran Estimasi</button>
+  </li>
+  <li class="nav-item" role="presentation">
+    <button class="nav-link fw-bold text-success" id="goodsissue-tab" data-bs-toggle="tab" data-bs-target="#goodsissue-tab-pane" type="button" role="tab" aria-controls="goodsissue-tab-pane" aria-selected="false" onclick="toggleHistoryMode('FIX')">Total Pengeluaran Goods Issue</button>
+  </li>
+</ul>
+
+<div class="tab-content mb-4" id="monitoringTabsContent">
+  <!-- TAB 1: ESTIMASI -->
+  <div class="tab-pane fade show active" id="estimasi-tab-pane" role="tabpanel" aria-labelledby="estimasi-tab" tabindex="0">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white shadow-sm border-0" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div class="card-body py-3">
+                    <div class="small fw-bold text-uppercase opacity-75 mb-1">Total Pengeluaran Sparepart</div>
+                    <h3 class="mb-0 fw-bold">Rp <span id="lblCostThisWeek">0</span></h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white shadow-sm border-0" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div class="card-body py-3">
+                    <div class="small fw-bold text-uppercase opacity-75 mb-1">Output Produksi</div>
+                    <h3 class="mb-0 fw-bold"><span id="lblOutputThisWeek">0</span> <span class="fs-6 fw-normal">Pcs</span></h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white shadow-sm border-0" id="cardRatioThisWeek" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div class="card-body py-3">
+                    <div class="small fw-bold text-uppercase opacity-75 mb-1">RM Cost</div>
+                    <h3 class="mb-0 fw-bold"><span id="lblRatioThisWeek">0.00</span> <span class="fs-6 fw-normal">Rp/Pcs</span></h3>
+                    <div class="small fw-bold opacity-75 mt-1">Standar: Rp 1,75/Pcs</div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card bg-success text-white shadow-sm border-0" onclick="toggleHistoryMode('FIX')" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" title="Klik untuk melihat Detail Data SAP YP14">
-            <div class="card-body py-3">
-                <div class="small fw-bold text-uppercase opacity-75 mb-1">Biaya Aktual SAP (Minggu Lalu)</div>
-                <h3 class="mb-0 fw-bold">Rp <span id="lblCostLastWeek">0</span></h3>
+  </div>
+
+  <!-- TAB 2: GOODS ISSUE -->
+  <div class="tab-pane fade" id="goodsissue-tab-pane" role="tabpanel" aria-labelledby="goodsissue-tab" tabindex="0">
+    <div class="row g-3">
+        <div class="col-md-4">
+            <div class="card bg-success text-white shadow-sm border-0" title="Klik untuk melihat Detail Data SAP YP14" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div class="card-body py-3">
+                    <div class="small fw-bold text-uppercase opacity-75 mb-1">Total Pengeluaran Sparepart</div>
+                    <h3 class="mb-0 fw-bold">Rp <span id="lblCostLastWeek">0</span></h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-info text-white shadow-sm border-0" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div class="card-body py-3">
+                    <div class="small fw-bold text-uppercase opacity-75 mb-1">Output Produksi</div>
+                    <h3 class="mb-0 fw-bold"><span id="lblOutputLastWeek">0</span> <span class="fs-6 fw-normal">Pcs</span></h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white shadow-sm border-0" id="cardRatioLastWeek" style="transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'">
+                <div class="card-body py-3">
+                    <div class="small fw-bold text-uppercase opacity-75 mb-1">RM Cost</div>
+                    <h3 class="mb-0 fw-bold"><span id="lblRatioLastWeek">0.00</span> <span class="fs-6 fw-normal">Rp/Pcs</span></h3>
+                    <div class="small fw-bold opacity-75 mt-1">Standar: Rp 1,75/Pcs</div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-4">
-        <div class="card bg-warning text-dark shadow-sm border-0">
-            <div class="card-body py-3">
-                <div class="small fw-bold text-uppercase opacity-75 mb-1">Rasio Cost / Output (Minggu Lalu)</div>
-                <h3 class="mb-0 fw-bold"><span id="lblRatio">0.00</span> <span class="fs-6 fw-normal">Rp/Pcs</span></h3>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
 
 <div class="card shadow-sm border-0 border-top border-4 border-success mb-4 d-print-none">
@@ -45,14 +91,15 @@
         <table class="table table-bordered table-sm align-middle mb-0" style="font-size: 0.85rem;" id="tblInput">
             <thead class="table-light sticky-top">
                 <tr class="text-center">
-                    <th style="width: 12%;">Tgl Ambil</th>
-                    <th style="width: 14%;">No Material</th>
-                    <th style="width: 25%;">Material Desc</th>
-                    <th style="width: 18%;">Tujuan Pengambilan</th>
+                    <th style="width: 11%;">Tgl Ambil</th>
+                    <th style="width: 13%;">No Material</th>
+                    <th style="width: 22%;">Material Desc</th>
+                    <th style="width: 15%;">Tujuan Pengambilan</th>
                     <th style="width: 14%;">Nama Pengambil</th>
-                    <th style="width: 7%;">Qty</th>
-                    <th style="width: 10%;">Sisa Stok</th>
-                    <th style="width: 4%;"></th>
+                    <th style="width: 10%;">Plant</th>
+                    <th style="width: 6%;">Qty</th>
+                    <th style="width: 6%;">Sisa Stok</th>
+                    <th style="width: 3%;"></th>
                 </tr>
             </thead>
             <tbody id="inputBody"></tbody>
@@ -73,29 +120,38 @@
         </span>
         <div class="d-flex align-items-center gap-2">
             
-            <button id="btnModePR" class="btn btn-sm btn-outline-info fw-bold shadow-sm" onclick="toggleModePRUI()">
-                <i class="bi bi-cart-plus me-1"></i> Mode Order PR
-            </button>
-            <button id="btnExecutePR" class="btn btn-sm btn-info fw-bold shadow-sm d-none text-white" onclick="submitOrderPR()">
-                <i class="bi bi-file-earmark-spreadsheet me-1"></i> Buat Dokumen PR
-            </button>
+            @if (!User.IsInRole("WHS.SP"))
+            {
+                <button id="btnModePR" class="btn btn-sm btn-outline-info fw-bold shadow-sm" onclick="toggleModePRUI()">
+                    <i class="bi bi-cart-plus me-1"></i> Mode Order PR
+                </button>
+                <button id="btnExecutePR" class="btn btn-sm btn-info fw-bold shadow-sm d-none text-white" onclick="submitOrderPR()">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Buat Dokumen PR
+                </button>
 
-            <button id="btnModeKarantina" class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="toggleModeKarantinaUI()">
-                <i class="bi bi-pencil-square me-1"></i> Karantina / Edit
-            </button>
-            <button id="btnExecuteKarantina" class="btn btn-sm btn-danger fw-bold shadow-sm d-none" onclick="submitKarantinaBulk()">
-                <i class="bi bi-exclamation-octagon-fill me-1"></i> Simpan ke Karantina
-            </button>
+                <button id="btnModeKarantina" class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="toggleModeKarantinaUI()">
+                    <i class="bi bi-pencil-square me-1"></i> Karantina / Edit
+                </button>
+                <button id="btnExecuteKarantina" class="btn btn-sm btn-danger fw-bold shadow-sm d-none" onclick="submitKarantinaBulk()">
+                    <i class="bi bi-exclamation-octagon-fill me-1"></i> Simpan ke Karantina
+                </button>
 
-            <button id="btnPrintReport" class="btn btn-sm btn-dark fw-bold shadow-sm" onclick="printLaporanLolos()">
-                <i class="bi bi-printer me-1"></i> Cetak Lap. Lolos
-            </button>
-            <button class="btn btn-sm btn-warning fw-bold shadow-sm border border-warning-subtle position-relative me-2" data-bs-toggle="modal" data-bs-target="#modalKarantina">
-                <i class="bi bi-shield-exclamation me-1"></i> Data Karantina
-                <span id="badgeKarantinaCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
-            </button>
+                <button id="btnPrintReport" class="btn btn-sm btn-dark fw-bold shadow-sm" onclick="printLaporanLolos()">
+                    <i class="bi bi-printer me-1"></i> Cetak Lap. Lolos
+                </button>
+                <button class="btn btn-sm btn-warning fw-bold shadow-sm border border-warning-subtle position-relative me-2" data-bs-toggle="modal" data-bs-target="#modalKarantina">
+                    <i class="bi bi-shield-exclamation me-1"></i> Data Karantina
+                    <span id="badgeKarantinaCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+                </button>
+            }
 
             <select id="historyWeekFilter" class="form-select form-select-sm border-primary shadow-sm" onchange="renderHistoryTable()" style="width: auto; min-width: 150px;">
+            </select>
+            <select id="historyPlantFilter" class="form-select form-select-sm border-secondary shadow-sm" onchange="renderHistoryTable()" style="width: auto; min-width: 120px;">
+                <option value="">Semua Plant</option>
+                <option value="Plant 1">Plant 1</option>
+                <option value="Plant 2">Plant 2</option>
+                <option value="Plant 3">Plant 3</option>
             </select>
         </div>
     </div>
@@ -152,15 +208,18 @@
     </div>
 </div>
 <div id="autoCompleteDropdown" class="list-group shadow-lg position-absolute d-none" style="z-index: 9999; max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px;"></div>
+<div id="autoCompleteTeknisiDropdown" class="list-group shadow-lg position-absolute d-none" style="z-index: 9999; max-height: 250px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px;"></div>
 
 <script>
     // DEKLARASI VARIABEL GLOBAL
     let masterSparepart = [];
+    let masterTeknisi = [];
     let historyDatasetEstimasi = [];
     let historyDatasetFix = [];
     let historyDatasetKarantina = [];
     let serverCurrentWeek = "";
-    let yr21OutputPerWeek = {}; // Variabel baru penampung output produksi
+    let yr21OutputPerWeek = {}; 
+    let yr21OutputPerWeekPlant = {};
     
     let currentHistoryMode = 'ESTIMASI'; 
     let isQuarantineEditModeActive = false; 
@@ -168,8 +227,16 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
         await fetchMasterData();
+        await fetchTeknisiData();
         await loadHistoryFromServer();
     });
+
+    async function fetchTeknisiData() {
+        try {
+            const response = await fetch('/Pemakaian/GetTeknisi');
+            masterTeknisi = await response.json();
+        } catch (error) { console.error(error); }
+    }
 
     async function fetchMasterData() {
         document.getElementById('loadingMaster').classList.remove('d-none');
@@ -190,7 +257,8 @@
             historyDatasetFix = resJson.dataFix;
             historyDatasetKarantina = resJson.dataKarantina;
             serverCurrentWeek = resJson.currentWeek;
-            yr21OutputPerWeek = resJson.outputPerWeek || {}; // Ambil data dari server
+            yr21OutputPerWeek = resJson.outputPerWeek || {}; 
+            yr21OutputPerWeekPlant = resJson.outputPerWeekPlant || {};
 
             document.getElementById("badgeKarantinaCount").innerText = historyDatasetKarantina.length;
 
@@ -211,16 +279,23 @@
         const ddlFilter = document.getElementById("historyWeekFilter");
         const btnEditKarantina = document.getElementById("btnModeKarantina");
         const btnEditPR = document.getElementById("btnModePR");
+        const btnKarantinaData = document.querySelector("[data-bs-target='#modalKarantina']");
+        const btnPrintReport = document.getElementById("btnPrintReport");
         
-        // PERBAIKAN: Aktifkan dropdown untuk kedua mode
         ddlFilter.disabled = false; 
         
         if (mode === 'FIX') {
             btnEditKarantina.classList.add("d-none"); 
             btnEditPR.classList.add("d-none"); 
+            if(btnKarantinaData) btnKarantinaData.classList.add("d-none");
+            ddlFilter.classList.remove("d-none");
+            if(btnPrintReport) btnPrintReport.innerHTML = `<i class="bi bi-printer me-1"></i> Cetak Tabel`;
         } else {
             btnEditKarantina.classList.remove("d-none");
             btnEditPR.classList.remove("d-none");
+            if(btnKarantinaData) btnKarantinaData.classList.remove("d-none");
+            ddlFilter.classList.add("d-none"); // Sembunyikan week filter untuk mode estimasi
+            if(btnPrintReport) btnPrintReport.innerHTML = `<i class="bi bi-printer me-1"></i> Cetak Lap. Lolos`;
         }
         populateWeekFilterDropdown();
         renderHistoryTable();
@@ -296,6 +371,7 @@
     // =========================================================
     function renderHistoryTable() {
         const selectedWeek = document.getElementById("historyWeekFilter").value;
+        const selectedPlant = document.getElementById("historyPlantFilter") ? document.getElementById("historyPlantFilter").value : "";
         const theadRow = document.getElementById("historyTheadRow");
         const tbody = document.getElementById("historyTableBody");
         
@@ -306,28 +382,62 @@
             if (isQuarantineEditModeActive) prefixTh = `<th style="width:40px;">Pilih</th>`;
             if (isPRModeActive) prefixTh = `<th style="width:40px;">Order PR</th>`;
 
-            theadRow.innerHTML = `${prefixTh}<th>Tanggal</th><th>No Material</th><th>Deskripsi Barang</th><th>Tujuan / Mesin</th><th>Nama Pengambil</th><th style="width: 6%;">Qty</th><th style="width: 8%;">Sisa Stok</th><th>Harga Satuan</th><th>Total Biaya</th>`;
+            theadRow.innerHTML = `${prefixTh}<th>Tanggal</th><th>No Material</th><th>Deskripsi Barang</th><th>Tujuan / Mesin</th><th>Nama Pengambil</th><th>Plant</th><th style="width: 6%;">Qty</th><th style="width: 8%;">Sisa Stok</th><th>Harga Satuan</th><th>Total Biaya</th>`;
         }
 
         let sourceData = currentHistoryMode === 'FIX' ? historyDatasetFix : historyDatasetEstimasi;
         let filteredData = sourceData.filter(x => x.WeekYearKey === selectedWeek);
+        if (selectedPlant !== "") {
+            filteredData = filteredData.filter(x => x.Plant === selectedPlant);
+        }
         
         // HITUNG NILAI WIDGET SECARA DINAMIS
         let totalCostSelectedWeek = filteredData.reduce((sum, item) => sum + item.TotalHargaNumeric, 0);
 
         if (currentHistoryMode === 'ESTIMASI') {
             document.getElementById("lblCostThisWeek").innerText = totalCostSelectedWeek.toLocaleString("id-ID");
+            
+            let outputPcs = 0;
+            if (selectedPlant !== "") {
+                outputPcs = yr21OutputPerWeekPlant[`${serverCurrentWeek}|${selectedPlant}`] || 0;
+            } else {
+                outputPcs = yr21OutputPerWeek[serverCurrentWeek] || 0;
+            }
+            document.getElementById("lblOutputThisWeek").innerText = outputPcs.toLocaleString("id-ID");
+            
+            let ratio = outputPcs > 0 ? totalCostSelectedWeek / outputPcs : 0;
+            document.getElementById("lblRatioThisWeek").innerText = ratio.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            let cardRatio = document.getElementById("cardRatioThisWeek");
+            if (ratio > 1.75) {
+                cardRatio.className = "card bg-danger text-white shadow-sm border-0";
+            } else {
+                cardRatio.className = "card bg-success text-white shadow-sm border-0";
+            }
         } else if (currentHistoryMode === 'FIX') {
             document.getElementById("lblCostLastWeek").innerText = totalCostSelectedWeek.toLocaleString("id-ID");
             
-            // Hitung Rasio dari data YR21 untuk minggu yang dipilih
-            let outputPcs = yr21OutputPerWeek[selectedWeek] || 0;
+            let outputPcs = 0;
+            if (selectedPlant !== "") {
+                outputPcs = yr21OutputPerWeekPlant[`${selectedWeek}|${selectedPlant}`] || 0;
+            } else {
+                outputPcs = yr21OutputPerWeek[selectedWeek] || 0;
+            }
+            document.getElementById("lblOutputLastWeek").innerText = outputPcs.toLocaleString("id-ID");
+            
             let ratio = outputPcs > 0 ? totalCostSelectedWeek / outputPcs : 0;
-            document.getElementById("lblRatio").innerText = ratio.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            document.getElementById("lblRatioLastWeek").innerText = ratio.toLocaleString("id-ID", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+            let cardRatio = document.getElementById("cardRatioLastWeek");
+            if (ratio > 1.75) {
+                cardRatio.className = "card bg-danger text-white shadow-sm border-0";
+            } else {
+                cardRatio.className = "card bg-success text-white shadow-sm border-0";
+            }
         }
 
         if (filteredData.length === 0) {
-            let colSpan = currentHistoryMode === 'FIX' ? 8 : (isQuarantineEditModeActive || isPRModeActive ? 10 : 9);
+            let colSpan = currentHistoryMode === 'FIX' ? 8 : (isQuarantineEditModeActive || isPRModeActive ? 11 : 10);
             tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center py-4 text-muted">Tidak ada riwayat pada periode ini.</td></tr>`;
             return;
         }
@@ -378,6 +488,7 @@
                     <td class="text-uppercase text-truncate" style="max-width: 260px;" title="${item.MaterialDesc}">${item.MaterialDesc}</td>
                     <td class="text-muted text-truncate" style="max-width: 180px;" title="${item.TujuanPengambilan}">${item.TujuanPengambilan || '-'}</td>
                     <td>${item.NamaPengambil || '-'}</td>
+                    <td><span class="badge bg-secondary">${item.Plant || '-'}</span></td>
                     <td class="text-center fw-bold text-primary">${item.JumlahPengambilan}</td>
                     <td class="text-center align-middle">${stokHtml}</td>
                     <td class="text-end font-monospace">Rp ${item.HargaSatuanFormated}</td>
@@ -530,7 +641,6 @@
     }
 
     function printLaporanLolos() {
-        if (currentHistoryMode === 'FIX') { alert("Mode Cetak khusus untuk data laporan Estimasi."); return; }
         window.print();
     }
 
@@ -549,7 +659,8 @@
             <td><input type="text" class="form-control form-control-sm border-0 bg-transparent text-primary fw-bold inp-desc" placeholder="Ketik deskripsi part..." autocomplete="off" oninput="handleDescSearch(this)" onfocus="handleDescSearch(this)"></td>
             
             <td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-tujuan" placeholder="Lokasi mesin/line..."></td>
-            <td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-nama" placeholder="Nama teknisi"></td>
+            <td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-nama text-success fw-bold" placeholder="Cari teknisi..." autocomplete="off" oninput="handleTeknisiSearch(this)" onfocus="handleTeknisiSearch(this)" onblur="lookupTeknisi(this)"></td>
+            <td><input type="text" class="form-control form-control-sm border-0 bg-light inp-plant text-center text-muted" placeholder="Plant" readonly tabindex="-1"></td>
             <td><input type="number" class="form-control form-control-sm border-0 bg-transparent inp-qty text-center fw-bold" placeholder="0" onkeydown="handleExcelTab(event, this)"></td>
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0 text-center fw-bold inp-stok h-100 bg-light" readonly tabindex="-1" style="border-radius: 0;"></td>
             <td class="text-center"><button class="btn btn-sm text-danger border-0 p-0" onclick="removeRow(this)" tabindex="-1"><i class="bi bi-trash"></i></button><input type="hidden" class="inp-harga" value="0"></td>`;
@@ -667,11 +778,109 @@
         activeAutoCompleteRow.querySelector('.inp-qty').focus();
     }
 
+    // =========================================================
+    // LOGIKA AUTOCOMPLETE TEKNISI
+    // =========================================================
+    let activeTeknisiRow = null;
+
+    function handleTeknisiSearch(inputElement) {
+        const row = inputElement.closest('tr');
+        const query = inputElement.value.toLowerCase().trim();
+        const dropdown = document.getElementById('autoCompleteTeknisiDropdown');
+
+        if (query.length < 2) {
+            dropdown.classList.add('d-none');
+            return;
+        }
+
+        let filtered = masterTeknisi.filter(item => {
+            let nama = item.Nama || item.nama || "";
+            return nama.toLowerCase().includes(query);
+        }).slice(0, 10);
+
+        if (filtered.length === 0) {
+            dropdown.innerHTML = `<div class="list-group-item text-muted small py-2"><i class="bi bi-info-circle me-1"></i> Teknisi tidak ditemukan...</div>`;
+        } else {
+            let html = "";
+            filtered.forEach(teknisi => {
+                let nama = teknisi.Nama || teknisi.nama || "";
+                let plant = teknisi.Plant || teknisi.plant || "";
+                html += `
+                <button type="button" class="list-group-item list-group-item-action p-2 border-bottom" onmousedown="selectTeknisiFromDropdown('${nama}', '${plant}')">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="fw-bold text-dark small">${nama}</span>
+                        <span class="badge bg-secondary shadow-sm" style="font-size: 0.7rem;">${plant}</span>
+                    </div>
+                </button>`;
+            });
+            dropdown.innerHTML = html;
+        }
+
+        const rect = inputElement.getBoundingClientRect();
+        dropdown.style.top = (rect.bottom + window.scrollY) + 'px';
+        dropdown.style.left = (rect.left + window.scrollX) + 'px';
+        dropdown.style.width = rect.width >= 250 ? rect.width + 'px' : '250px';
+        
+        dropdown.classList.remove('d-none');
+        activeTeknisiRow = row;
+    }
+
+    function selectTeknisiFromDropdown(nama, plant) {
+        if (!activeTeknisiRow) return;
+        
+        const inpNama = activeTeknisiRow.querySelector('.inp-nama');
+        const inpPlant = activeTeknisiRow.querySelector('.inp-plant');
+        
+        inpNama.value = nama;
+        inpPlant.value = plant;
+        
+        document.getElementById('autoCompleteTeknisiDropdown').classList.add('d-none');
+        activeTeknisiRow.querySelector('.inp-qty').focus();
+    }
+
+    function lookupTeknisi(inputElement) {
+        // Beri sedikit delay agar klik pada dropdown bisa terproses lebih dulu sebelum blur
+        setTimeout(() => {
+            const row = inputElement.closest('tr');
+            const nama = inputElement.value.trim().toLowerCase();
+            const inpPlant = row.querySelector('.inp-plant');
+            
+            // Cek apakah input kosong
+            if (nama === "") {
+                inpPlant.value = "";
+                return;
+            }
+
+            // Coba cari teknisi yang persis sama namanya (case-insensitive)
+            const matched = masterTeknisi.find(t => {
+                let tNama = t.Nama || t.nama || "";
+                return tNama.toLowerCase() === nama;
+            });
+
+            if (matched) {
+                // Rapikan penulisan nama dan set plant
+                let matchedNama = matched.Nama || matched.nama || "";
+                let matchedPlant = matched.Plant || matched.plant || "";
+                inputElement.value = matchedNama;
+                inpPlant.value = matchedPlant;
+            } else {
+                // Jika tidak ditemukan kecocokan persis, kosongkan plant 
+                // Opsional: tampilkan alert atau biarkan kosong jika plant wajib dari DB
+                inpPlant.value = "";
+            }
+        }, 200);
+    }
+
     // Fungsi Pengaman: Tutup dropdown jika user klik di sembarang tempat di luar layar
     document.addEventListener('mousedown', function(e) {
         const dropdown = document.getElementById('autoCompleteDropdown');
         if (dropdown && !dropdown.contains(e.target) && !e.target.classList.contains('inp-desc')) {
             dropdown.classList.add('d-none');
+        }
+        
+        const dropdownTeknisi = document.getElementById('autoCompleteTeknisiDropdown');
+        if (dropdownTeknisi && !dropdownTeknisi.contains(e.target) && !e.target.classList.contains('inp-nama')) {
+            dropdownTeknisi.classList.add('d-none');
         }
     });
     
@@ -707,6 +916,7 @@
                 JumlahPengambilan: qty, 
                 TujuanPengambilan: row.querySelector('.inp-tujuan').value.trim(), 
                 NamaPengambil: row.querySelector('.inp-nama').value.trim(), 
+                Plant: row.querySelector('.inp-plant').value.trim(),
                 HargaSatuanSaatIni: parseFloat(row.querySelector('.inp-harga').value) 
             }); 
         }); 
