@@ -21,9 +21,9 @@ namespace DashboardTeknikP1.Controllers
         // 1. HALAMAN DAFTAR TEMUAN (INDEX)
         // ====================================================================
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var daftarTemuan = _repository.GetAllTemuan();
+            var daftarTemuan = await _repository.GetAllTemuanAsync();
             return View(daftarTemuan);
         }
 
@@ -32,11 +32,10 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         [Authorize(Roles = "Administrator,Section,Teknisi")]
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-
             // Ambil data mesin asli dari database melalui repositori
-            var listMesin = _repository.GetAllMesin();
+            var listMesin = await _repository.GetAllMesinAsync();
 
             // Titipkan data ke ViewBag agar opsi select/dropdown muncul di layar View
             ViewBag.DaftarMesin = listMesin;
@@ -49,29 +48,30 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         [Authorize(Roles = "Administrator,Section,Teknisi")]
         [HttpPost]
-        public IActionResult Create(TemuanAbnormal model)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("KodeMesin,Line,DeskripsiAbnormal,TindakanKorektif")] TemuanAbnormal model)
         {
-            // Bersihkan validasi Model agar tidak error saat dikirim kosong dari form
+            // Karena kita menggunakan Bind untuk over-posting, kita lengkapi properti lainnya
+            model.UserID = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "SYSTEM";
+            model.TanggalInput = DateTime.Now;
+            model.StatusTemuan = "OPEN";
+
+            // Hapus validasi untuk properti yang diisi otomatis di atas (karena implicitly required oleh sistem)
             ModelState.Remove("UserID");
             ModelState.Remove("StatusTemuan");
             ModelState.Remove("TanggalInput");
 
             if (ModelState.IsValid)
             {
-                // Hardcode & otomatisasi sementara di sisi Backend
-                model.UserID = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "SYSTEM";
-                model.TanggalInput = DateTime.Now;
-                model.StatusTemuan = "OPEN";
-
                 // Simpan ke database
-                _repository.InsertTemuan(model);
+                await _repository.InsertTemuanAsync(model);
 
                 // Kembali ke halaman Index setelah berhasil simpan
                 return RedirectToAction("Index");
             }
 
             // PENTING: Jika gagal validasi, ViewBag harus diisi ulang agar dropdown tidak kosong
-            ViewBag.DaftarMesin = _repository.GetAllMesin();
+            ViewBag.DaftarMesin = await _repository.GetAllMesinAsync();
 
             return View(model);
         }
@@ -81,9 +81,9 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         [Authorize(Roles = "Administrator,Section")]
         [HttpGet]
-        public IActionResult Close(int id)
+        public async Task<IActionResult> Close(int id)
         {
-            var temuan = _repository.GetTemuanById(id);
+            var temuan = await _repository.GetTemuanByIdAsync(id);
             if (temuan == null)
             {
                 return NotFound(); // Jika ID tidak ditemukan di database
@@ -103,10 +103,11 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         [Authorize(Roles = "Administrator,Section")]
         [HttpPost]
-        public IActionResult Close(int TemuanID, string TindakanKorektif)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Close(int TemuanID, string TindakanKorektif)
         {
             // Eksekusi update ke database melalui repository
-            _repository.CloseTemuan(TemuanID, TindakanKorektif);
+            await _repository.CloseTemuanAsync(TemuanID, TindakanKorektif);
 
             // Kembalikan ke halaman utama log teknik
             return RedirectToAction("Index");
@@ -116,17 +117,17 @@ namespace DashboardTeknikP1.Controllers
         // 6. API UNTUK FORM INLINE (AMBIL MASTER MESIN & RIWAYAT)
         // ====================================================================
         [HttpGet]
-        public IActionResult GetApiData()
+        public async Task<IActionResult> GetApiData()
         {
-            var listMesin = _repository.GetAllMesin();
-            var listTemuan = _repository.GetAllTemuan();
+            var listMesin = await _repository.GetAllMesinAsync();
+            var listTemuan = await _repository.GetAllTemuanAsync();
             
             // Format ulang data temuan agar mudah dibaca JavaScript
             var formattedTemuan = listTemuan.Select(t => new {
                 t.TemuanID,
                 TanggalFormated = t.TanggalInput.ToString("dd MMM yyyy HH:mm"),
                 Pelapor = t.UserID,
-                Line = t.Line ?? "-", // TAMBAHAN BARU
+                Line = t.Line ?? "-", 
                 t.KodeMesin,
                 NamaMesin = t.NamaMesin ?? "Mesin Tidak Dikenal",
                 t.DeskripsiAbnormal,
@@ -145,7 +146,8 @@ namespace DashboardTeknikP1.Controllers
         // 7. API UNTUK SIMPAN MULTIPLE DATA (FORM INLINE EXCEL)
         // ====================================================================
         [HttpPost]
-        public IActionResult SaveDataFast([FromBody] List<TemuanAbnormal> payload)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveDataFast([FromBody] List<TemuanAbnormal> payload)
         {
             if (payload == null || !payload.Any()) return BadRequest("Data laporan kosong.");
 
@@ -160,7 +162,7 @@ namespace DashboardTeknikP1.Controllers
                     item.StatusTemuan = "OPEN";
                     if (string.IsNullOrEmpty(item.TindakanKorektif)) item.TindakanKorektif = "";
 
-                    _repository.InsertTemuan(item);
+                    await _repository.InsertTemuanAsync(item);
                 }
                 return Ok("Berhasil disimpan");
             }

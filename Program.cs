@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,6 +27,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Auth/Login"; // Jika belum login, lempar ke sini
         options.LogoutPath = "/Auth/Logout";
         options.ExpireTimeSpan = TimeSpan.FromHours(8); // Sesi login kedaluwarsa dalam 8 jam (1 Shift)
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Mengikuti protokol (HTTP/HTTPS) agar bisa diakses dari HP lokal
+        options.Cookie.HttpOnly = true; // Mencegah XSS
     });
 
 builder.Services.AddControllersWithViews();
@@ -38,7 +41,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Dinonaktifkan sementara agar bisa diakses dari HP via IP lokal HTTP
 app.UseRouting();
 
 // ==========================================================
