@@ -163,8 +163,11 @@
 
     <div class="col-md-5 h-100">
         <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-white border-bottom border-primary py-2">
+            <div class="card-header bg-white border-bottom border-primary py-2 d-flex justify-content-between align-items-center">
                 <span class="fw-bold small">🍩 Proporsi Downtime per Regu (Menit)</span>
+                <button id="btnResetRegu" class="btn btn-sm btn-outline-secondary d-none" style="font-size: 0.7rem; padding: 2px 5px;" onclick="resetReguFilter()">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
             </div>
             <div class="card-body p-2" style="position: relative; flex-grow: 1; min-height: 0;">
                 <canvas id="pieChart"></canvas>
@@ -1137,7 +1140,39 @@
         });
         const ctx = document.getElementById('pieChart').getContext('2d');
         if (pieChartInst) pieChartInst.destroy();
-        pieChartInst = new Chart(ctx, { type: 'pie', data: { labels: Object.keys(reguAgg), datasets: [{ data: Object.values(reguAgg), backgroundColor: ['rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)', 'rgba(201, 203, 207, 0.8)'], borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { datalabels: { color: getChartLabelColor, font: { weight: 'bold', size: 11 }, formatter: (val) => val > 0 ? `${val}m` : null } } } });
+        pieChartInst = new Chart(ctx, { 
+            type: 'pie', 
+            data: { labels: Object.keys(reguAgg), datasets: [{ data: Object.values(reguAgg), backgroundColor: ['rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)', 'rgba(201, 203, 207, 0.8)'], borderWidth: 1 }] }, 
+            options: { 
+                responsive: true, maintainAspectRatio: false, 
+                plugins: { datalabels: { color: getChartLabelColor, font: { weight: 'bold', size: 11 }, formatter: (val) => val > 0 ? `${val}m` : null } },
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const idx = elements[0].index;
+                        const reguLabel = Object.keys(reguAgg)[idx];
+                        
+                        let specificItems = filteredData.filter(item => {
+                            let shift = item.WageGroup_GroupShift || "Lainnya";
+                            if (reguLabel === "Regu A") return shift.includes("A");
+                            if (reguLabel === "Regu B") return shift.includes("B");
+                            if (reguLabel === "Regu C") return shift.includes("C");
+                            return !shift.includes("A") && !shift.includes("B") && !shift.includes("C");
+                        });
+                        
+                        document.getElementById('btnResetRegu').classList.remove('d-none');
+                        loadDrillDownTable(`📌 Filter Regu: ${reguLabel}`, specificItems);
+                        document.getElementById('lblDetail').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }
+            } 
+        });
+    }
+
+    function resetReguFilter() {
+        document.getElementById('btnResetRegu').classList.add('d-none');
+        let data = drillHistory.length > 0 ? drillHistory[drillHistory.length - 1].dataYP : baseDataYP;
+        let title = drillHistory.length > 0 ? `Rincian: ${drillHistory[drillHistory.length - 1].label}` : 'Pilih Batang Grafik';
+        loadDrillDownTable(title, data);
     }
 
     function loadDrillDownTable(title, items) {

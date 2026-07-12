@@ -82,7 +82,7 @@
   </div>
 </div>
 
-<div class="card shadow-sm border-0 border-top border-4 border-success mb-4 d-print-none">
+<div id="formPengambilanContainer" class="card shadow-sm border-0 border-top border-4 border-success mb-4 d-print-none">
     <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center">
         <span class="fw-bold text-success" style="font-size: 0.9rem;"><i class="bi bi-table me-1"></i> Form Pengambilan (Input Cepat)</span>
         <div class="spinner-border spinner-border-sm text-primary d-none" id="loadingMaster"></div>
@@ -260,7 +260,8 @@
             yr21OutputPerWeek = resJson.outputPerWeek || {}; 
             yr21OutputPerWeekPlant = resJson.outputPerWeekPlant || {};
 
-            document.getElementById("badgeKarantinaCount").innerText = historyDatasetKarantina.length;
+            var badge = document.getElementById("badgeKarantinaCount");
+            if (badge) badge.innerText = historyDatasetKarantina.length;
 
             populateWeekFilterDropdown();
             renderHistoryTable();
@@ -281,20 +282,23 @@
         const btnEditPR = document.getElementById("btnModePR");
         const btnKarantinaData = document.querySelector("[data-bs-target='#modalKarantina']");
         const btnPrintReport = document.getElementById("btnPrintReport");
+        const formContainer = document.getElementById("formPengambilanContainer");
         
         ddlFilter.disabled = false; 
         
         if (mode === 'FIX') {
-            btnEditKarantina.classList.add("d-none"); 
-            btnEditPR.classList.add("d-none"); 
+            if(formContainer) formContainer.classList.add("d-none");
+            if(btnEditKarantina) btnEditKarantina.classList.add("d-none"); 
+            if(btnEditPR) btnEditPR.classList.add("d-none"); 
             if(btnKarantinaData) btnKarantinaData.classList.add("d-none");
-            ddlFilter.classList.remove("d-none");
+            if(ddlFilter) ddlFilter.classList.remove("d-none");
             if(btnPrintReport) btnPrintReport.innerHTML = `<i class="bi bi-printer me-1"></i> Cetak Tabel`;
         } else {
-            btnEditKarantina.classList.remove("d-none");
-            btnEditPR.classList.remove("d-none");
+            if(formContainer) formContainer.classList.remove("d-none");
+            if(btnEditKarantina) btnEditKarantina.classList.remove("d-none");
+            if(btnEditPR) btnEditPR.classList.remove("d-none");
             if(btnKarantinaData) btnKarantinaData.classList.remove("d-none");
-            ddlFilter.classList.add("d-none"); // Sembunyikan week filter untuk mode estimasi
+            if(ddlFilter) ddlFilter.classList.add("d-none"); // Sembunyikan week filter untuk mode estimasi
             if(btnPrintReport) btnPrintReport.innerHTML = `<i class="bi bi-printer me-1"></i> Cetak Lap. Lolos`;
         }
         populateWeekFilterDropdown();

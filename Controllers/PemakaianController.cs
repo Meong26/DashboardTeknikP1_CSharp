@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize(Roles = "Administrator,Supervisor,Section,WHS.SP")]
+    [Authorize(Roles = "Administrator,Supervisor,Section,WHS.SP,Dashboard")]
     public class PemakaianController : Controller
     {
         private readonly PemakaianRepository _pemakaianRepo;
@@ -24,6 +24,7 @@ namespace DashboardTeknikP1.Controllers
             _teknisiRepo = teknisiRepo;
         }
 
+        [Authorize(Roles = "Administrator,Supervisor,Section,WHS.SP")]
         public IActionResult Index()
         {
             return View();

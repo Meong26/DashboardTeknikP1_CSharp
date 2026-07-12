@@ -87,6 +87,10 @@ namespace DashboardTeknikP1.Controllers
                 {
                     return RedirectToAction("TvDashboard", "Home");
                 }
+                else if (roleName == "WHS.SP")
+                {
+                    return RedirectToAction("Index", "Sparepart");
+                }
                 return RedirectToAction("Index", "Home");
             }
 

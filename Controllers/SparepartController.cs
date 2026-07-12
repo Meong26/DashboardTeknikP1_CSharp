@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize(Roles = "Administrator,Supervisor,Section,Teknisi,WHS.SP")]
+    [Authorize(Roles = "Administrator,Supervisor,Section,Teknisi,WHS.SP,Dashboard")]
     public class SparepartController : Controller
     {
         private readonly SparepartRepository _sparepartRepo;
@@ -23,6 +23,7 @@ namespace DashboardTeknikP1.Controllers
             _sparepartRepo = sparepartRepo;
         }
 
+        [Authorize(Roles = "Administrator,Supervisor,Section,Teknisi,WHS.SP")]
         public IActionResult Index()
         {
             return View();
