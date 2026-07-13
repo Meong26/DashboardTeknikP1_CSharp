@@ -80,15 +80,16 @@
             if(btnEditPR) btnEditPR.classList.add("d-none"); 
             if(btnKarantinaData) btnKarantinaData.classList.add("d-none");
             if(ddlFilter) ddlFilter.classList.remove("d-none");
-            if(btnPrintReport) btnPrintReport.innerHTML = `<i class="bi bi-printer me-1"></i> Cetak Tabel`;
+            if(btnPrintReport) btnPrintReport.innerHTML = `<i class="bi bi-printer me-1"></i> Cetak`;
         } else {
             if(formContainer) formContainer.classList.remove("d-none");
             if(btnEditKarantina) btnEditKarantina.classList.remove("d-none");
             if(btnEditPR) btnEditPR.classList.remove("d-none");
             if(btnKarantinaData) btnKarantinaData.classList.remove("d-none");
             if(ddlFilter) ddlFilter.classList.add("d-none"); // Sembunyikan week filter untuk mode estimasi
-            if(btnPrintReport) btnPrintReport.innerHTML = `<i class="bi bi-printer me-1"></i> Cetak Lap. Lolos`;
+            if(btnPrintReport) btnPrintReport.innerHTML = `<i class="bi bi-printer me-1"></i> Cetak`;
         }
+        currentSortCol = null;
         populateWeekFilterDropdown();
         renderHistoryTable();
     }
@@ -105,7 +106,7 @@
             btnToggle.className = "btn btn-sm btn-outline-secondary fw-bold shadow-sm";
             btnExecute.classList.remove("d-none");
         } else {
-            btnToggle.innerHTML = `<i class="bi bi-pencil-square me-1"></i> Karantina / Edit`;
+            btnToggle.innerHTML = `<i class="bi bi-pencil-square me-1"></i> Edit`;
             btnToggle.className = "btn btn-sm btn-outline-danger fw-bold shadow-sm";
             btnExecute.classList.add("d-none");
         }
@@ -124,7 +125,7 @@
             btnToggle.className = "btn btn-sm btn-outline-secondary fw-bold shadow-sm";
             btnExecute.classList.remove("d-none");
         } else {
-            btnToggle.innerHTML = `<i class="bi bi-cart-plus me-1"></i> Mode Order PR`;
+            btnToggle.innerHTML = `<i class="bi bi-cart-plus me-1"></i> Buat PR`;
             btnToggle.className = "btn btn-sm btn-outline-info fw-bold shadow-sm";
             btnExecute.classList.add("d-none");
         }
@@ -161,26 +162,79 @@
     // =========================================================
     // RENDER TABEL UTAMA (HISTORY)
     // =========================================================
+    let currentSortCol = null;
+    let currentSortAsc = true;
+
+    window.sortHistory = function(col) {
+        if (currentSortCol === col) {
+            currentSortAsc = !currentSortAsc;
+        } else {
+            currentSortCol = col;
+            currentSortAsc = true;
+        }
+        renderHistoryTable();
+    };
+
     function renderHistoryTable() {
         const selectedWeek = document.getElementById("historyWeekFilter").value;
         const selectedPlant = document.getElementById("historyPlantFilter") ? document.getElementById("historyPlantFilter").value : "";
         const theadRow = document.getElementById("historyTheadRow");
         const tbody = document.getElementById("historyTableBody");
         
+        const sortIcon = (col) => {
+            if (currentSortCol !== col) return "⇅";
+            return currentSortAsc ? "↑" : "↓";
+        };
+
         if (currentHistoryMode === 'FIX') {
-            theadRow.innerHTML = `<th>Tanggal</th><th>No Material</th><th>Deskripsi Barang</th><th>Tujuan / Mesin</th><th>No Order</th><th style="width: 6%;">Qty</th><th>Harga Satuan</th><th>Total Biaya</th>`;
+            theadRow.innerHTML = `
+                <th style="cursor:pointer;" onclick="sortHistory('TanggalFormated')">Tanggal ${sortIcon('TanggalFormated')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('MaterialNo')">No Material ${sortIcon('MaterialNo')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('MaterialDesc')">Deskripsi Barang ${sortIcon('MaterialDesc')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('TujuanPengambilan')">Tujuan / Mesin ${sortIcon('TujuanPengambilan')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('NoOrder')">No Order ${sortIcon('NoOrder')}</th>
+                <th style="cursor:pointer; width: 6%;" onclick="sortHistory('JumlahPengambilan')">Qty ${sortIcon('JumlahPengambilan')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('HargaSatuanNumeric')">Harga Satuan ${sortIcon('HargaSatuanNumeric')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('TotalHargaNumeric')">Total Biaya ${sortIcon('TotalHargaNumeric')}</th>`;
         } else {
             let prefixTh = "";
             if (isQuarantineEditModeActive) prefixTh = `<th style="width:40px;">Pilih</th>`;
             if (isPRModeActive) prefixTh = `<th style="width:40px;">Order PR</th>`;
 
-            theadRow.innerHTML = `${prefixTh}<th>Tanggal</th><th>No Material</th><th>Deskripsi Barang</th><th>Tujuan / Mesin</th><th>Nama Pengambil</th><th>Plant</th><th style="width: 6%;">Qty</th><th style="width: 8%;">Sisa Stok</th><th>Harga Satuan</th><th>Total Biaya</th>`;
+            theadRow.innerHTML = `${prefixTh}
+                <th style="cursor:pointer;" onclick="sortHistory('TanggalFormated')">Tanggal ${sortIcon('TanggalFormated')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('MaterialNo')">No Material ${sortIcon('MaterialNo')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('MaterialDesc')">Deskripsi Barang ${sortIcon('MaterialDesc')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('TujuanPengambilan')">Tujuan / Mesin ${sortIcon('TujuanPengambilan')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('NamaPengambil')">Nama Pengambil ${sortIcon('NamaPengambil')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('Plant')">Plant ${sortIcon('Plant')}</th>
+                <th style="cursor:pointer; width: 6%;" onclick="sortHistory('JumlahPengambilan')">Qty ${sortIcon('JumlahPengambilan')}</th>
+                <th style="cursor:pointer; width: 8%;" onclick="sortHistory('SisaStokAkhir')">Sisa Stok ${sortIcon('SisaStokAkhir')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('HargaSatuanNumeric')">Harga Satuan ${sortIcon('HargaSatuanNumeric')}</th>
+                <th style="cursor:pointer;" onclick="sortHistory('TotalHargaNumeric')">Total Biaya ${sortIcon('TotalHargaNumeric')}</th>`;
         }
 
         let sourceData = currentHistoryMode === 'FIX' ? historyDatasetFix : historyDatasetEstimasi;
         let filteredData = sourceData.filter(x => x.WeekYearKey === selectedWeek);
         if (selectedPlant !== "") {
             filteredData = filteredData.filter(x => x.Plant === selectedPlant);
+        }
+
+        if (currentSortCol !== null) {
+            filteredData.sort((a, b) => {
+                let valA = a[currentSortCol];
+                let valB = b[currentSortCol];
+                
+                // Prioritaskan numeric sorting jika property-nya numerik
+                if (typeof valA === 'string' && typeof valB === 'string') {
+                    valA = valA.toLowerCase();
+                    valB = valB.toLowerCase();
+                }
+
+                if (valA < valB) return currentSortAsc ? -1 : 1;
+                if (valA > valB) return currentSortAsc ? 1 : -1;
+                return 0;
+            });
         }
         
         // HITUNG NILAI WIDGET SECARA DINAMIS
@@ -432,8 +486,147 @@
         } catch (error) { alert("Error jaringan."); }
     }
 
-    function printLaporanLolos() {
-        window.print();
+    async function printLaporanLolos() {
+        const btnPrintReport = document.getElementById("btnPrintReport");
+        if(!btnPrintReport) return;
+        
+        const originalText = btnPrintReport.innerHTML;
+        btnPrintReport.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Merakit PDF...`;
+        btnPrintReport.disabled = true;
+
+        try {
+            const selectedWeek = document.getElementById("historyWeekFilter").value;
+            const historyPlantFilter = document.getElementById("historyPlantFilter");
+            const selectedPlant = historyPlantFilter ? historyPlantFilter.value : "";
+            
+            let sourceData = currentHistoryMode === 'FIX' ? historyDatasetFix : historyDatasetEstimasi;
+            let filteredData = sourceData.filter(x => x.WeekYearKey === selectedWeek);
+            if (selectedPlant !== "") {
+                filteredData = filteredData.filter(x => x.Plant === selectedPlant);
+            }
+
+            if (filteredData.length === 0) {
+                alert("Tidak ada data untuk dicetak pada periode ini.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('l', 'mm', 'a4'); // Landscape A4
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const marginX = 10;
+            const marginY = 15;
+            const imgWidth = pdfWidth - 2 * marginX;
+            
+            const judulMode = currentHistoryMode === 'FIX' ? 'LAPORAN RIWAYAT PEMAKAIAN (GOODS ISSUE)' : 'LAPORAN ESTIMASI PEMAKAIAN (LOLOS)';
+            const plantStr = selectedPlant ? `Plant: ${selectedPlant}` : `Plant: Semua`;
+            const headerHtml = `
+                <div style="text-align: center; margin-bottom: 10px; border-bottom: 3px solid #dc3545; padding-bottom: 10px;">
+                    <h2 style="margin: 0; color: #343a40; text-transform: uppercase;">${judulMode}</h2>
+                    <p style="margin: 5px 0 0 0; font-size: 14px; color: #6c757d; font-weight: bold;">Periode: ${selectedWeek} | ${plantStr}</p>
+                </div>`;
+
+            // Pagination setup
+            const maxRowsPerPage = 20; 
+            const chunks = [];
+            for (let i = 0; i < filteredData.length; i += maxRowsPerPage) {
+                chunks.push(filteredData.slice(i, i + maxRowsPerPage));
+            }
+
+            let overallTotalBiaya = 0;
+            
+            // Buat container tersembunyi
+            const container = document.createElement('div');
+            container.style.position = 'absolute';
+            container.style.left = '-9999px';
+            container.style.top = '0';
+            container.style.width = '1000px'; 
+            container.style.backgroundColor = 'white';
+            container.style.padding = '20px';
+            container.style.fontFamily = 'Arial, sans-serif';
+            document.body.appendChild(container);
+
+            let currentY = marginY;
+
+            for (let c = 0; c < chunks.length; c++) {
+                let chunk = chunks[c];
+                let tableRows = '';
+                
+                chunk.forEach((item, idx) => {
+                    overallTotalBiaya += item.TotalHargaNumeric;
+                    let globalIdx = (c * maxRowsPerPage) + idx + 1;
+                    
+                    tableRows += `<tr>
+                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${globalIdx}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${item.TanggalFormated}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px; font-family: monospace; font-weight: bold;">${item.MaterialNo}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.MaterialDesc}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px;">${item.TujuanPengambilan || '-'}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px;">${item.NamaPengambil || '-'}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px; text-align: center;">${item.JumlahPengambilan}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px; text-align: right; font-family: monospace;">Rp ${item.HargaSatuanFormated}</td>
+                        <td style="border: 1px solid #ddd; padding: 6px; text-align: right; font-family: monospace; font-weight: bold; color: #dc3545;">Rp ${item.TotalHargaFormated}</td>
+                    </tr>`;
+                });
+
+                // Jika ini adalah halaman terakhir, tambahkan baris Total
+                if (c === chunks.length - 1) {
+                    tableRows += `<tr style="background-color: #f8f9fa;">
+                        <td colspan="8" style="border: 1px solid #ddd; padding: 8px; text-align: right; font-weight: bold;">TOTAL BIAYA:</td>
+                        <td style="border: 1px solid #ddd; padding: 8px; text-align: right; font-family: monospace; font-weight: bold; color: #dc3545; font-size: 14px;">Rp ${overallTotalBiaya.toLocaleString("id-ID")}</td>
+                    </tr>`;
+                }
+
+                let pageHtml = `
+                ${c === 0 ? headerHtml : ''}
+                <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                    <thead style="background-color: #343a40; color: white;">
+                        <tr>
+                            <th style="padding: 8px; border: 1px solid #ddd; width: 4%;">No</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; width: 10%;">Tanggal</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; width: 12%;">Material</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; width: 20%;">Deskripsi</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; width: 15%;">Tujuan</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; width: 12%;">Pengambil</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; width: 5%;">Qty</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; width: 10%; text-align: right;">Harga/Satuan</th>
+                            <th style="padding: 8px; border: 1px solid #ddd; width: 12%; text-align: right;">Total Biaya</th>
+                        </tr>
+                    </thead>
+                    <tbody>${tableRows}</tbody>
+                </table>
+                <div style="text-align: right; font-size: 10px; margin-top: 10px; color: #6c757d;">
+                    Halaman ${c + 1} dari ${chunks.length} | Dicetak: ${new Date().toLocaleString('id-ID')}
+                </div>
+                `;
+
+                container.innerHTML = pageHtml;
+                
+                // Beri waktu sejenak agar DOM render
+                await new Promise(r => setTimeout(r, 100));
+
+                const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                if (c > 0) {
+                    pdf.addPage();
+                }
+                
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', marginX, marginY, imgWidth, imgHeight);
+            }
+
+            const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,"");
+            pdf.save(`Laporan_Pemakaian_${selectedWeek}_${dateStr}.pdf`);
+            
+            document.body.removeChild(container);
+            
+        } catch (error) {
+            console.error(error);
+            alert("Kesalahan saat merakit PDF.");
+        } finally {
+            btnPrintReport.innerHTML = originalText;
+            btnPrintReport.disabled = false;
+        }
     }
 
     // =========================================================
@@ -448,10 +641,10 @@
             <td><input type="date" class="form-control form-control-sm border-0 bg-transparent inp-tgl" value="${today}"></td>
             <td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-matno font-monospace fw-bold" placeholder="Ketik/Scan..." onblur="lookupMaterial(this)"></td>
             
-            <td><input type="text" class="form-control form-control-sm border-0 bg-transparent text-primary fw-bold inp-desc" placeholder="Ketik deskripsi part..." autocomplete="off" oninput="handleDescSearch(this)" onfocus="handleDescSearch(this)"></td>
+            <td><input type="text" class="form-control form-control-sm border-0 bg-transparent text-primary fw-bold inp-desc" placeholder="Ketik deskripsi part..." autocomplete="off" oninput="handleDescSearch(this)" onfocus="handleDescSearch(this)" onkeydown="handleDescKeydown(event, this)"></td>
             
             <td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-tujuan" placeholder="Lokasi mesin/line..."></td>
-            <td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-nama text-success fw-bold" placeholder="Cari teknisi..." autocomplete="off" oninput="handleTeknisiSearch(this)" onfocus="handleTeknisiSearch(this)" onblur="lookupTeknisi(this)"></td>
+            <td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-nama text-success fw-bold" placeholder="Cari teknisi..." autocomplete="off" oninput="handleTeknisiSearch(this)" onfocus="handleTeknisiSearch(this)" onblur="lookupTeknisi(this)" onkeydown="handleTeknisiKeydown(event, this)"></td>
             <td><input type="text" class="form-control form-control-sm border-0 bg-light inp-plant text-center text-muted" placeholder="Plant" readonly tabindex="-1"></td>
             <td><input type="number" class="form-control form-control-sm border-0 bg-transparent inp-qty text-center fw-bold" placeholder="0" onkeydown="handleExcelTab(event, this)"></td>
             <td class="p-0"><input type="text" class="form-control form-control-sm border-0 text-center fw-bold inp-stok h-100 bg-light" readonly tabindex="-1" style="border-radius: 0;"></td>
@@ -500,6 +693,7 @@
     // LOGIKA AUTOCOMPLETE DESKRIPSI SPAREPART
     // =========================================================
     let activeAutoCompleteRow = null;
+    let currentDescFocus = -1;
 
     function handleDescSearch(inputElement) {
         const row = inputElement.closest('tr');
@@ -551,6 +745,35 @@
         
         dropdown.classList.remove('d-none');
         activeAutoCompleteRow = row;
+        currentDescFocus = -1;
+    }
+
+    function handleDescKeydown(e, inputElement) {
+        const dropdown = document.getElementById('autoCompleteDropdown');
+        if (!dropdown || dropdown.classList.contains('d-none')) return;
+        
+        let items = dropdown.getElementsByTagName('button');
+        if (items.length === 0) return;
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            currentDescFocus++;
+            if (currentDescFocus >= items.length) currentDescFocus = 0;
+            setActiveDropdownItem(items, currentDescFocus);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            currentDescFocus--;
+            if (currentDescFocus < 0) currentDescFocus = items.length - 1;
+            setActiveDropdownItem(items, currentDescFocus);
+        } else if (e.key === 'Enter') {
+            e.preventDefault(); 
+            let clickEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+            if (currentDescFocus > -1) {
+                items[currentDescFocus].dispatchEvent(clickEvent);
+            } else if (items.length > 0) {
+                items[0].dispatchEvent(clickEvent);
+            }
+        }
     }
 
     function selectMaterialFromDropdown(btn, matNo) {
@@ -566,14 +789,15 @@
         // 3. Picu Trigger `lookupMaterial` seolah-olah user men-scan barcode
         lookupMaterial(inpMatNo);
         
-        // 4. Fokuskan kursor langsung ke kolom QTY (Siap ketik jumlah)
-        activeAutoCompleteRow.querySelector('.inp-qty').focus();
+        // 4. Fokuskan kursor langsung ke kolom 'Tujuan / Mesin'
+        activeAutoCompleteRow.querySelector('.inp-tujuan').focus();
     }
 
     // =========================================================
     // LOGIKA AUTOCOMPLETE TEKNISI
     // =========================================================
     let activeTeknisiRow = null;
+    let currentTeknisiFocus = -1;
 
     function handleTeknisiSearch(inputElement) {
         const row = inputElement.closest('tr');
@@ -615,6 +839,35 @@
         
         dropdown.classList.remove('d-none');
         activeTeknisiRow = row;
+        currentTeknisiFocus = -1;
+    }
+
+    function handleTeknisiKeydown(e, inputElement) {
+        const dropdown = document.getElementById('autoCompleteTeknisiDropdown');
+        if (!dropdown || dropdown.classList.contains('d-none')) return;
+        
+        let items = dropdown.getElementsByTagName('button');
+        if (items.length === 0) return;
+        
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            currentTeknisiFocus++;
+            if (currentTeknisiFocus >= items.length) currentTeknisiFocus = 0;
+            setActiveDropdownItem(items, currentTeknisiFocus);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            currentTeknisiFocus--;
+            if (currentTeknisiFocus < 0) currentTeknisiFocus = items.length - 1;
+            setActiveDropdownItem(items, currentTeknisiFocus);
+        } else if (e.key === 'Enter') {
+            e.preventDefault(); 
+            let clickEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+            if (currentTeknisiFocus > -1) {
+                items[currentTeknisiFocus].dispatchEvent(clickEvent);
+            } else if (items.length > 0) {
+                items[0].dispatchEvent(clickEvent);
+            }
+        }
     }
 
     function selectTeknisiFromDropdown(nama, plant) {
@@ -731,3 +984,25 @@
             } else { alert("Gagal menyimpan."); } 
         } catch (error) { alert("Kesalahan jaringan."); } 
     }
+
+    function setActiveDropdownItem(items, index) {
+        for (let i = 0; i < items.length; i++) {
+            items[i].classList.remove('bg-primary-subtle');
+        }
+        if (index >= 0 && index < items.length) {
+            items[index].classList.add('bg-primary-subtle');
+            items[index].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    // Listener global untuk Ctrl+Enter (Save Form)
+    document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            const formContainer = document.getElementById("formPengambilanContainer");
+            // Hanya jalankan save jika form sedang terbuka / terlihat (bukan di mode FIX histori)
+            if (formContainer && !formContainer.classList.contains("d-none")) {
+                e.preventDefault();
+                saveData();
+            }
+        }
+    });

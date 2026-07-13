@@ -123,21 +123,21 @@
             @if (!User.IsInRole("WHS.SP"))
             {
                 <button id="btnModePR" class="btn btn-sm btn-outline-info fw-bold shadow-sm" onclick="toggleModePRUI()">
-                    <i class="bi bi-cart-plus me-1"></i> Mode Order PR
+                    <i class="bi bi-cart-plus me-1"></i> Buat PR
                 </button>
                 <button id="btnExecutePR" class="btn btn-sm btn-info fw-bold shadow-sm d-none text-white" onclick="submitOrderPR()">
                     <i class="bi bi-file-earmark-spreadsheet me-1"></i> Buat Dokumen PR
                 </button>
 
                 <button id="btnModeKarantina" class="btn btn-sm btn-outline-danger fw-bold shadow-sm" onclick="toggleModeKarantinaUI()">
-                    <i class="bi bi-pencil-square me-1"></i> Karantina / Edit
+                    <i class="bi bi-pencil-square me-1"></i> Edit
                 </button>
                 <button id="btnExecuteKarantina" class="btn btn-sm btn-danger fw-bold shadow-sm d-none" onclick="submitKarantinaBulk()">
                     <i class="bi bi-exclamation-octagon-fill me-1"></i> Simpan ke Karantina
                 </button>
 
                 <button id="btnPrintReport" class="btn btn-sm btn-dark fw-bold shadow-sm" onclick="printLaporanLolos()">
-                    <i class="bi bi-printer me-1"></i> Cetak Lap. Lolos
+                    <i class="bi bi-printer me-1"></i> Cetak
                 </button>
                 <button class="btn btn-sm btn-warning fw-bold shadow-sm border border-warning-subtle position-relative me-2" data-bs-toggle="modal" data-bs-target="#modalKarantina">
                     <i class="bi bi-shield-exclamation me-1"></i> Data Karantina
@@ -210,4 +210,6 @@
 <div id="autoCompleteDropdown" class="list-group shadow-lg position-absolute d-none" style="z-index: 9999; max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px;"></div>
 <div id="autoCompleteTeknisiDropdown" class="list-group shadow-lg position-absolute d-none" style="z-index: 9999; max-height: 250px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 6px;"></div>
 
+<script src="~/lib/jspdf.umd.min.js"></script>
+<script src="~/lib/html2canvas.min.js"></script>
 <script src="~/js/pemakaian.js"></script>

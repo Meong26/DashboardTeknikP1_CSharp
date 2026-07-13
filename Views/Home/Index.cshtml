@@ -58,7 +58,25 @@
 </div>
 
 <div class="row mb-3 g-3 d-print-none animate__animated animate__fadeIn">
-    <div class="col-md-4">
+    <div class="col-md-3">
+        <div class="card bg-white shadow-sm border-0" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openDTAchievementDetails()" title="Pencapaian Downtime vs Terencana (Minggu Ini)">
+            <div class="card-body py-2 px-3 d-flex flex-column justify-content-center">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="small fw-bold text-uppercase text-muted" style="font-size: 0.7rem;"><i class="bi bi-speedometer2 me-1"></i> PENCAPAIAN DT NT (MINGGU INI)</div>
+                    <i class="bi bi-graph-down text-primary opacity-50" style="font-size: 1.5rem;"></i>
+                </div>
+                <div class="d-flex align-items-baseline mb-2">
+                    <h4 class="mb-0 fw-bold me-2" id="lblDTAchievement">0.0 %</h4>
+                    <span class="small fw-bold text-danger me-2" id="lblDTMins" style="font-size: 0.85rem;">(0 mnt)</span>
+                    <span class="small fw-bold text-muted" style="font-size: 0.75rem;">(Target: &le; 1.5%)</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div id="pbDTAchievement" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
         <div class="card bg-danger text-white shadow-sm border-0" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openMTTRDetails()" title="Klik untuk melihat Analitik Mendalam MTTR">
             <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
                 <div>
@@ -69,7 +87,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card bg-success text-white shadow-sm border-0" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openMTBFDetails()" title="Klik untuk melihat Analitik Mendalam MTBF">
             <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
                 <div>
@@ -80,7 +98,7 @@
             </div>
         </div>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
         <div class="card bg-primary text-white shadow-sm border-0" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openAvailabilityDetails()" title="Klik untuk melihat Analitik Mendalam Availability">
             <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
                 <div>
@@ -197,6 +215,54 @@
 
 <!-- REPORT BUILDER MODAL -->
 @await Html.PartialAsync("_ReportBuilderModal")
+
+<div class="modal fade" id="modalDTAchievement" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-top border-4 border-success" id="modalDTAchievementBorder">
+            <div class="modal-header bg-light py-2">
+                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-speedometer2 me-2"></i> Rincian Pencapaian DT NT (Minggu Ini)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-body-tertiary">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-body p-4 text-center">
+                                <h3 class="fw-bold mb-3" id="modalDTPercentage">0.0 %</h3>
+                                <div class="progress mb-3" style="height: 25px;">
+                                    <div id="modalDTProgressBar" class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; font-size: 1rem; font-weight: bold;"></div>
+                                </div>
+                                <div class="d-flex justify-content-center gap-4">
+                                    <div class="bg-light rounded p-2 px-3 border shadow-sm">
+                                        <span class="small text-muted fw-bold d-block text-uppercase">Total DT NT</span>
+                                        <span class="fs-4 fw-bold text-danger" id="modalDTMins">0 Menit</span>
+                                    </div>
+                                    <div class="bg-light rounded p-2 px-3 border shadow-sm">
+                                        <span class="small text-muted fw-bold d-block text-uppercase">Total Jam Terencana</span>
+                                        <span class="fs-4 fw-bold text-primary" id="modalPlannedMins">0 Menit</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="card shadow-sm border-0">
+                            <div class="card-header bg-white py-2 fw-bold small text-muted">Daftar Kejadian Kerusakan (NT) Minggu Ini</div>
+                            <div class="card-body p-0 table-responsive" style="max-height: 400px; overflow-y: auto;">
+                                <table class="table table-sm table-striped table-hover align-middle mb-0" style="font-size: 0.85rem;">
+                                    <thead class="table-dark text-center sticky-top">
+                                        <tr><th>No</th><th>Tanggal</th><th>Identitas Mesin & Line</th><th>Deskripsi Masalah (Activity Text)</th><th>Durasi (Menit)</th></tr>
+                                    </thead>
+                                    <tbody id="tbodyDTAchievement"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="modalMTTR" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">

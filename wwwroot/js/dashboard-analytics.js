@@ -228,6 +228,7 @@
         // KALKULASI MTTR & MTBF DARI DATA TERSARING
         // ==========================================
         updateMTTRAndMTBF(baseDataYP, baseDataYR);
+        updateWeeklyDTAchievement();
         // ==========================================
 
         calculateTopBadActors(baseDataYP);
@@ -641,6 +642,61 @@
         if (lblAvail) lblAvail.innerText = availability.toFixed(2) + " %";
     }
 
+    function updateWeeklyDTAchievement() {
+        const target = 1.5; 
+        
+        let maxDate = new Date('2000-01-01');
+        let currentWeekStr = "";
+        (ypDataRaw || []).forEach(i => { 
+            let d = new Date(i.NotificationDate); 
+            if (d > maxDate) { maxDate = d; currentWeekStr = i.WeekKalendarIndofood; } 
+        });
+
+        if (!currentWeekStr) {
+            currentWeekStr = ""; 
+        }
+
+        let thisWeekYP = ypDataRaw.filter(item => item.WeekKalendarIndofood === currentWeekStr && item.NotificationType === 'NT');
+        let thisWeekYR = yrDataRaw.filter(item => item.WeekOfBasicFinishedDate === currentWeekStr);
+
+        let dtMins = thisWeekYP.reduce((sum, item) => sum + item.TotalDownTimeInMinutes, 0);
+        let plannedMins = thisWeekYR.reduce((sum, item) => sum + (item.PlannedHour * 60), 0);
+
+        let percentage = 0;
+        if (plannedMins > 0) {
+            percentage = (dtMins / plannedMins) * 100;
+        }
+
+        let lbl = document.getElementById('lblDTAchievement');
+        let lblMins = document.getElementById('lblDTMins');
+        let pb = document.getElementById('pbDTAchievement');
+        
+        if(lbl && pb) {
+            lbl.innerText = percentage.toFixed(2) + " %";
+            if (lblMins) lblMins.innerText = `(${dtMins.toFixed(0)} mnt)`;
+            
+            // Scale width so that Target (1.5%) is rendered at 50% width of the progress bar, 
+            // making it visually easier to see than a tiny 1.5% width bar.
+            let scaledWidth = (percentage / (target * 2)) * 100;
+            if (scaledWidth > 100) scaledWidth = 100;
+            pb.style.width = scaledWidth + "%";
+            
+            pb.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+            lbl.classList.remove('text-success', 'text-warning', 'text-danger', 'text-dark');
+            
+            if (percentage <= 1.2) {
+                pb.classList.add('bg-success');
+                lbl.classList.add('text-success');
+            } else if (percentage <= 1.5) {
+                pb.classList.add('bg-warning');
+                lbl.classList.add('text-warning');
+            } else {
+                pb.classList.add('bg-danger');
+                lbl.classList.add('text-danger');
+            }
+        }
+    }
+
     // --- SISANYA ADALAH FUNGSI BAWAAN YANG TETAP SAMA ---
 
     function calculateTopBadActors(filteredData) {
@@ -839,6 +895,83 @@
     // ==========================================
     let chartInstMTTR = null;
     let chartInstMTBF = null;
+
+    function openDTAchievementDetails() {
+        const modalElement = document.getElementById('modalDTAchievement');
+        if (!modalElement) return;
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+
+        const target = 1.5; 
+        
+        let maxDate = new Date('2000-01-01');
+        let currentWeekStr = "";
+        (ypDataRaw || []).forEach(i => { 
+            let d = new Date(i.NotificationDate); 
+            if (d > maxDate) { maxDate = d; currentWeekStr = i.WeekKalendarIndofood; } 
+        });
+
+        if (!currentWeekStr) currentWeekStr = ""; 
+
+        let thisWeekYP = ypDataRaw.filter(item => item.WeekKalendarIndofood === currentWeekStr && item.NotificationType === 'NT');
+        let thisWeekYR = yrDataRaw.filter(item => item.WeekOfBasicFinishedDate === currentWeekStr);
+
+        let dtMins = thisWeekYP.reduce((sum, item) => sum + item.TotalDownTimeInMinutes, 0);
+        let plannedMins = thisWeekYR.reduce((sum, item) => sum + (item.PlannedHour * 60), 0);
+
+        let percentage = 0;
+        if (plannedMins > 0) percentage = (dtMins / plannedMins) * 100;
+
+        document.getElementById('modalDTPercentage').innerText = percentage.toFixed(2) + " %";
+        document.getElementById('modalDTMins').innerText = dtMins.toFixed(0) + " Menit";
+        document.getElementById('modalPlannedMins').innerText = plannedMins.toFixed(0) + " Menit";
+
+        let pb = document.getElementById('modalDTProgressBar');
+        let modalBorder = document.getElementById('modalDTAchievementBorder');
+
+        if(pb) {
+            let scaledWidth = (percentage / (target * 2)) * 100;
+            if (scaledWidth > 100) scaledWidth = 100;
+            pb.style.width = scaledWidth + "%";
+            
+            pb.classList.remove('bg-success', 'bg-warning', 'bg-danger');
+            modalBorder.classList.remove('border-success', 'border-warning', 'border-danger');
+            
+            if (percentage <= 1.2) {
+                pb.classList.add('bg-success');
+                modalBorder.classList.add('border-success');
+            } else if (percentage <= 1.5) {
+                pb.classList.add('bg-warning');
+                modalBorder.classList.add('border-warning');
+            } else {
+                pb.classList.add('bg-danger');
+                modalBorder.classList.add('border-danger');
+            }
+        }
+
+        let tbody = document.getElementById('tbodyDTAchievement');
+        let htmlTable = '';
+        
+        if(thisWeekYP.length === 0) {
+            htmlTable = '<tr><td colspan="5" class="text-center py-4 text-muted">Tidak ada kejadian downtime NT pada minggu ini.</td></tr>';
+        } else {
+            // Sort by duration descending
+            let sortedYP = [...thisWeekYP].sort((a, b) => b.TotalDownTimeInMinutes - a.TotalDownTimeInMinutes);
+            sortedYP.forEach((item, index) => {
+                let dateStr = new Date(item.NotificationDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
+                let machine = getMachineName(item.FunctionLocation, item.ActivityText);
+                let line = getLineName(item.FunctionLocation);
+                htmlTable += `<tr>
+                    <td class="text-center fw-bold">${index + 1}</td>
+                    <td class="text-center">${dateStr}</td>
+                    <td class="fw-bold text-primary">${line} - ${machine}</td>
+                    <td class="text-truncate" style="max-width: 350px;" title="${item.ActivityText || item.NotificationDesc}">${item.ActivityText || item.NotificationDesc || '-'}</td>
+                    <td class="text-danger fw-bold text-end pe-3">${item.TotalDownTimeInMinutes} Menit</td>
+                </tr>`;
+            });
+        }
+        tbody.innerHTML = htmlTable;
+    }
 
     function openMTTRDetails() {
         const modal = new bootstrap.Modal(document.getElementById('modalMTTR'));
