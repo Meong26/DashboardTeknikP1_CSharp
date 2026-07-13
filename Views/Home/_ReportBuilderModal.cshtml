@@ -1,0 +1,187 @@
+﻿<!-- REPORT BUILDER MODAL -->
+<div class="modal fade" id="modalReportBuilder" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white py-2">
+                <h5 class="modal-title fs-6"><i class="bi bi-file-earmark-pdf me-1"></i> Konfigurasi Laporan PDF</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-3">
+                <p class="small text-muted mb-3">Pilih komponen yang ingin dicetak ke dalam laporan. Data akan diproses sesuai filter yang Anda tentukan tanpa mengambil ulang dari server.</p>
+                <div class="list-group list-group-flush small">
+                    <div class="list-group-item px-0 py-2">
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" checked disabled id="chkRepMain">
+                            <label class="form-check-label fw-bold" for="chkRepMain">Grafik Utama (Downtime vs Terencana)</label>
+                        </div>
+                        <div class="text-muted ms-4" style="font-size: 0.75rem;">(Wajib, mengikuti filter tampilan saat ini)</div>
+                    </div>
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="chkRepTrend" onchange="toggleRepFilter('RepTrend')">
+                                <label class="form-check-label" for="chkRepTrend">Grafik Analitik Sekunder (Run Chart)</label>
+                            </div>
+                        </div>
+                        <div id="fltRepTrendWrapper" class="ms-4 mt-2 d-none">
+                            <select id="fltRepTrendMode" class="form-select form-select-sm mb-1" style="font-size: 0.75rem;" onchange="updateRepFilterDdl('RepTrend')">
+                                <option value="SYNC">Sesuai Filter Dashboard (Sync)</option>
+                                <option value="ALL">Semua Waktu (All Time)</option>
+                                <option value="MONTH">Pilih Bulan Khusus</option>
+                                <option value="WEEK">Pilih Minggu Khusus</option>
+                            </select>
+                            <select id="fltRepTrendMonth" class="form-select form-select-sm mb-1 d-none" style="font-size: 0.75rem;"></select>
+                            <select id="fltRepTrendWeek" class="form-select form-select-sm d-none" style="font-size: 0.75rem;"></select>
+                        </div>
+                    </div>
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="chkRepPie" onchange="toggleRepFilter('RepPie')">
+                                <label class="form-check-label" for="chkRepPie">Proporsi Downtime per Regu (Pie Chart)</label>
+                            </div>
+                        </div>
+                        <div id="fltRepPieWrapper" class="ms-4 mt-2 d-none">
+                            <select id="fltRepPieMode" class="form-select form-select-sm mb-1" style="font-size: 0.75rem;" onchange="updateRepFilterDdl('RepPie')">
+                                <option value="SYNC">Sesuai Filter Dashboard (Sync)</option>
+                                <option value="ALL">Semua Waktu (All Time)</option>
+                                <option value="MONTH">Pilih Bulan Khusus</option>
+                                <option value="WEEK">Pilih Minggu Khusus</option>
+                            </select>
+                            <select id="fltRepPieMonth" class="form-select form-select-sm mb-1 d-none" style="font-size: 0.75rem;"></select>
+                            <select id="fltRepPieWeek" class="form-select form-select-sm d-none" style="font-size: 0.75rem;"></select>
+                        </div>
+                    </div>
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="chkRepLine" onchange="toggleRepFilter('RepLine')">
+                                <label class="form-check-label" for="chkRepLine">Grafik Batang Downtime by Line</label>
+                            </div>
+                        </div>
+                        <div id="fltRepLineWrapper" class="ms-4 mt-2 d-none">
+                            <select id="fltRepLineMode" class="form-select form-select-sm mb-1" style="font-size: 0.75rem;" onchange="updateRepFilterDdl('RepLine')">
+                                <option value="SYNC">Sesuai Filter Dashboard (Sync)</option>
+                                <option value="ALL">Semua Waktu (All Time)</option>
+                                <option value="MONTH">Pilih Bulan Khusus</option>
+                                <option value="WEEK">Pilih Minggu Khusus</option>
+                            </select>
+                            <select id="fltRepLineMonth" class="form-select form-select-sm mb-1 d-none" style="font-size: 0.75rem;"></select>
+                            <select id="fltRepLineWeek" class="form-select form-select-sm d-none" style="font-size: 0.75rem;"></select>
+                        </div>
+                    </div>
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="chkRepMachine" onchange="toggleRepFilter('RepMachine')">
+                                <label class="form-check-label" for="chkRepMachine">Grafik Batang Downtime by Mesin</label>
+                            </div>
+                        </div>
+                        <div id="fltRepMachineWrapper" class="ms-4 mt-2 d-none">
+                            <select id="fltRepMachineMode" class="form-select form-select-sm mb-1" style="font-size: 0.75rem;" onchange="updateRepFilterDdl('RepMachine')">
+                                <option value="SYNC">Sesuai Filter Dashboard (Sync)</option>
+                                <option value="ALL">Semua Waktu (All Time)</option>
+                                <option value="MONTH">Pilih Bulan Khusus</option>
+                                <option value="WEEK">Pilih Minggu Khusus</option>
+                            </select>
+                            <select id="fltRepMachineMonth" class="form-select form-select-sm mb-1 d-none" style="font-size: 0.75rem;"></select>
+                            <select id="fltRepMachineWeek" class="form-select form-select-sm d-none" style="font-size: 0.75rem;"></select>
+                        </div>
+                    </div>
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="chkRepMTTRBF" onchange="toggleRepFilter('RepMTTRBF')">
+                                <label class="form-check-label" for="chkRepMTTRBF">Kesimpulan Kehandalan (MTTR, MTBF, Availability)</label>
+                            </div>
+                        </div>
+                        <div id="fltRepMTTRBFWrapper" class="ms-4 mt-2 d-none">
+                            <select id="fltRepMTTRBFMode" class="form-select form-select-sm mb-1" style="font-size: 0.75rem;" onchange="updateRepFilterDdl('RepMTTRBF')">
+                                <option value="SYNC">Sesuai Filter Dashboard (Sync)</option>
+                                <option value="ALL">Semua Waktu (All Time)</option>
+                                <option value="MONTH">Pilih Bulan Khusus</option>
+                                <option value="WEEK">Pilih Minggu Khusus</option>
+                            </select>
+                            <select id="fltRepMTTRBFMonth" class="form-select form-select-sm mb-1 d-none" style="font-size: 0.75rem;"></select>
+                            <select id="fltRepMTTRBFWeek" class="form-select form-select-sm d-none" style="font-size: 0.75rem;"></select>
+                        </div>
+                    </div>
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="chkRepTopBadActor" onchange="toggleRepFilter('RepTopBadActor')">
+                                <label class="form-check-label" for="chkRepTopBadActor">Tabel Top 5 Bad Actor (Downtime Tertinggi)</label>
+                            </div>
+                        </div>
+                        <div id="fltRepTopBadActorWrapper" class="ms-4 mt-2 d-none">
+                            <select id="fltRepTopBadActorMode" class="form-select form-select-sm mb-1" style="font-size: 0.75rem;" onchange="updateRepFilterDdl('RepTopBadActor')">
+                                <option value="SYNC">Sesuai Filter Dashboard (Sync)</option>
+                                <option value="ALL">Semua Waktu (All Time)</option>
+                                <option value="MONTH">Pilih Bulan Khusus</option>
+                                <option value="WEEK">Pilih Minggu Khusus</option>
+                            </select>
+                            <select id="fltRepTopBadActorMonth" class="form-select form-select-sm mb-1 d-none" style="font-size: 0.75rem;"></select>
+                            <select id="fltRepTopBadActorWeek" class="form-select form-select-sm d-none" style="font-size: 0.75rem;"></select>
+                        </div>
+                    </div>
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="chkRepActivity" onchange="toggleRepFilter('RepActivity')">
+                                <label class="form-check-label" for="chkRepActivity">Tabel Rincian Aktifitas Downtime</label>
+                            </div>
+                        </div>
+                        <div id="fltRepActivityWrapper" class="ms-4 mt-2 d-none">
+                            <select id="fltRepActivityMode" class="form-select form-select-sm mb-1" style="font-size: 0.75rem;" onchange="updateRepFilterDdl('RepActivity')">
+                                <option value="SYNC">Sesuai Filter Dashboard (Sync)</option>
+                                <option value="ALL">Semua Waktu (All Time)</option>
+                                <option value="MONTH">Pilih Bulan Khusus</option>
+                                <option value="WEEK">Pilih Minggu Khusus</option>
+                            </select>
+                            <select id="fltRepActivityMonth" class="form-select form-select-sm mb-1 d-none" style="font-size: 0.75rem;"></select>
+                            <select id="fltRepActivityWeek" class="form-select form-select-sm d-none" style="font-size: 0.75rem;"></select>
+                        </div>
+                    </div>
+                    <div class="list-group-item px-0 py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input" type="checkbox" id="chkRepOpenFindings">
+                                <label class="form-check-label text-danger fw-bold" for="chkRepOpenFindings">Tabel Daftar Temuan (Status OPEN)</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-sm btn-danger fw-bold" onclick="generatePDF()"><i class="bi bi-printer me-1"></i> Buat Laporan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- HIDDEN PDF CONTAINER -->
+<div id="pdf-container" style="position: absolute; left: -9999px; top: 0; width: 794px; background: white; padding: 20px; font-family: 'Segoe UI', Arial, sans-serif; box-sizing: border-box; z-index: -1;">
+    <div id="pdf-header" style="border-bottom: 2px solid #dc3545; padding-bottom: 10px; margin-bottom: 20px;">
+        <h2 style="margin: 0; color: #333; font-size: 24px;">Laporan Analitik Dashboard Teknik</h2>
+        <p style="margin: 5px 0 0; color: #666; font-size: 14px;" id="pdf-timestamp"></p>
+    </div>
+    
+    <div id="pdf-content-area" style="width: 100%;">
+        <!-- Charts will be injected here -->
+    </div>
+    
+    <div id="pdf-footer" style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px; text-align: center; font-size: 10px; color: #999;">
+        Dihasilkan secara otomatis oleh Sistem Dashboard Teknik P1
+    </div>
+</div>
+
+<!-- FULL SCREEN LOADING OVERLAY -->
+<div id="pdf-loading-overlay" class="d-none" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(255,255,255,0.9); z-index: 9999; flex-direction: column; justify-content: center; align-items: center;">
+    <div class="spinner-border text-danger mb-3" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <h4 class="text-dark fw-bold mb-1">Membangun Laporan PDF</h4>
+    <p class="text-muted small">Sedang merender grafik, mohon tunggu sebentar...</p>
+</div>
+
