@@ -92,9 +92,9 @@ namespace DashboardTeknikP1.Controllers
                     var currentSheet = package.Workbook.Worksheets.Add($"Halaman {pageIndex + 1}", baseTemplateSheet);
 
                     // Suntikkan Data Statis (Header & Footer) ke Sheet saat ini
-                    currentSheet.Cells["J5"].Value = tanggalCetak;
-                    currentSheet.Cells["J5"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
-                    currentSheet.Cells["G37"].Value = $"({namaPemesan})";
+                    currentSheet.Cells["H5"].Value = tanggalCetak;
+                    currentSheet.Cells["H5"].Style.VerticalAlignment = ExcelVerticalAlignment.Center;
+                    currentSheet.Cells["E37"].Value = $"({namaPemesan})";
 
                     // Ambil potongan data khusus untuk halaman ini saja (23 item per potong)
                     var itemsForThisPage = request.Items.Skip(pageIndex * maxItemsPerPage).Take(maxItemsPerPage).ToList();
@@ -112,20 +112,26 @@ namespace DashboardTeknikP1.Controllers
                         currentSheet.Cells[currentRow, 2].Value = globalNumber;
                         currentSheet.Cells[currentRow, 2].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-                        currentSheet.Cells[currentRow, 5].Value = inputItem.MaterialNo;
-                        currentSheet.Cells[currentRow, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                        currentSheet.Cells[currentRow, 3].Value = inputItem.MaterialNo;
+                        currentSheet.Cells[currentRow, 3].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
                         
-                        currentSheet.Cells[currentRow, 6].Value = dbItem?.MaterialDescription ?? "-";
+                        currentSheet.Cells[currentRow, 4].Value = dbItem?.MaterialDescription ?? "-";
 
-                        currentSheet.Cells[currentRow, 7].Value = inputItem.Qty;
+                        currentSheet.Cells[currentRow, 5].Value = inputItem.Qty;
+                        currentSheet.Cells[currentRow, 5].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                        currentSheet.Cells[currentRow, 6].Value = dbItem?.UoM ?? "PC";
+                        currentSheet.Cells[currentRow, 6].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+
+                        currentSheet.Cells[currentRow, 7].Value = "14 Hari";
                         currentSheet.Cells[currentRow, 7].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-                        currentSheet.Cells[currentRow, 8].Value = dbItem?.UoM ?? "PC";
+                        currentSheet.Cells[currentRow, 8].Value = dbItem?.CurrentStock ?? 0;
                         currentSheet.Cells[currentRow, 8].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
 
-                        currentSheet.Cells[currentRow, 9].Value = "14 Hari";
-                        currentSheet.Cells[currentRow, 9].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
-
+                        currentSheet.Cells[currentRow, 10].Value = dbItem?.StorLoct ?? "-";
+                        currentSheet.Cells[currentRow, 10].Style.HorizontalAlignment = ExcelHorizontalAlignment.Center;
+                    
                         currentSheet.Cells[currentRow, 12].Value = inputItem.Remark;
                     }
                 }

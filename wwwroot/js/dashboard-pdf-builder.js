@@ -111,6 +111,17 @@ let modalReportBuilderInst = null;
                 appendImageToPDFContainer(container, 'Grafik Analitik Sekunder (Run Chart)', trendDataUrl, getFilterSubtitle(mode, timeVal));
             }
             
+            // 2.5. BAR GAUGE PENCAPAIAN DT NT (KHUSUS MINGGU INI)
+            if(document.getElementById('chkRepDTAchievement') && document.getElementById('chkRepDTAchievement').checked) {
+                const html = generateOfflineDTAchievement();
+                const div = document.createElement('div');
+                div.style.marginBottom = '20px';
+                div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px;">Pencapaian DT NT</h3>
+                                 <p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 10px; font-style: italic;">Khusus Minggu Berjalan (Filter Diabaikan)</p>
+                                 ${html}`;
+                container.appendChild(div);
+            }
+            
             // 3. PIE CHART
             if(document.getElementById('chkRepPie').checked) {
                 const mode = document.getElementById('fltRepPieMode').value;
@@ -384,6 +395,57 @@ let modalReportBuilderInst = null;
             document.getElementById('pdf-loading-overlay').classList.add('d-none');
             document.getElementById('pdf-loading-overlay').classList.remove('d-flex');
         }
+    }
+
+    function generateOfflineDTAchievement() {
+        // Karena ini murni "Minggu Ini", kita tentukan string minggu dari data terbaru YP
+        let maxDate = new Date('2000-01-01');
+        let currentWeekStr = "";
+        (ypDataRaw || []).filter(item => item.NotificationType === 'NT').forEach(i => { 
+            let d = new Date(i.NotificationDate); 
+            if (d > maxDate) { maxDate = d; currentWeekStr = i.WeekKalendarIndofood; } 
+        });
+
+        if (!currentWeekStr) currentWeekStr = ""; 
+
+        let fYP = (ypDataRaw || []).filter(item => item.WeekKalendarIndofood === currentWeekStr && item.NotificationType === 'NT');
+        let fYR = (yrDataRaw || []).filter(item => item.WeekOfBasicFinishedDate === currentWeekStr);
+
+        let dtMins = fYP.reduce((sum, item) => sum + item.TotalDownTimeInMinutes, 0);
+        let plannedMins = fYR.reduce((sum, item) => sum + (item.PlannedHour * 60), 0);
+        
+        let percentage = 0;
+        if (plannedMins > 0) percentage = (dtMins / plannedMins) * 100;
+        
+        const target = window.AppConfig.TargetDowntime || 1.5;
+        let scaledWidth = (percentage / (target * 2)) * 100;
+        if (scaledWidth > 100) scaledWidth = 100;
+
+        let colorCode = '#dc3545'; // bg-danger
+        let textCode = '#dc3545';
+        if (percentage <= 1.2) { colorCode = '#198754'; textCode = '#198754'; }
+        else if (percentage <= 1.5) { colorCode = '#ffc107'; textCode = '#ffc107'; }
+
+        return `
+            <div style="background: white; border: 1px solid #ddd; border-radius: 5px; padding: 20px; text-align: center; margin-bottom: 20px;">
+                <h1 style="font-size: 32px; font-weight: bold; color: ${textCode}; margin-bottom: 15px;">${percentage.toFixed(2)} %</h1>
+                
+                <div style="background: #e9ecef; height: 30px; border-radius: 15px; overflow: hidden; margin-bottom: 20px; position: relative;">
+                    <div style="height: 100%; width: ${scaledWidth}%; background-color: ${colorCode};"></div>
+                </div>
+                
+                <div style="display: flex; justify-content: center; gap: 40px;">
+                    <div style="background: #f8f9fa; border: 1px solid #ccc; padding: 15px 30px; border-radius: 5px;">
+                        <span style="font-size: 12px; color: #666; font-weight: bold; display: block; text-transform: uppercase;">Total DT NT</span>
+                        <span style="font-size: 24px; font-weight: bold; color: #dc3545;">${dtMins.toFixed(0)} Menit</span>
+                    </div>
+                    <div style="background: #f8f9fa; border: 1px solid #ccc; padding: 15px 30px; border-radius: 5px;">
+                        <span style="font-size: 12px; color: #666; font-weight: bold; display: block; text-transform: uppercase;">Total Jam Terencana</span>
+                        <span style="font-size: 24px; font-weight: bold; color: #0d6efd;">${plannedMins.toFixed(0)} Menit</span>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     async function generateOfflineCurrentStateChart() {

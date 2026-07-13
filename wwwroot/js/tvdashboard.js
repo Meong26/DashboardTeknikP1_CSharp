@@ -135,7 +135,11 @@
             let filterWeekYP = filterMonthYP.filter(i => i.WeekKalendarIndofood === currentWeekStr);
             let filterWeekYR = filterMonthYR.filter(i => i.WeekOfBasicFinishedDate === currentWeekStr);
 
-            // Slide 1: Run Chart (This Year - All Months, grouped by Week)
+            // Slide 1: Pencapaian DT NT (Bar Gauge & Top 5)
+            let dtAchievementHtml = buildDTAchievementSlide(filterWeekYP, filterWeekYR);
+            addSlide(`Pencapaian DT NT Week ${currentWeekStr}`, dtAchievementHtml, '/Home/Index');
+
+            // Slide 2: Run Chart (This Year - All Months, grouped by Week)
             addSlide(`Run Chart Downtime vs Jam Terencana - Semua Bulan`, `<div class="chart-wrapper"><canvas id="chartS1"></canvas></div>`, '/Home/Index');
             
             // Slide 2: Run Chart (This Month)
@@ -321,6 +325,75 @@
                             <tbody>${trs}</tbody>
                         </table>
                     </div>`;
+        }
+
+        function buildDTAchievementSlide(ypArr, yrArr) {
+            let dtMins = ypArr.reduce((sum, item) => sum + item.TotalDownTimeInMinutes, 0);
+            let plannedMins = yrArr.reduce((sum, item) => sum + (item.PlannedHour * 60), 0);
+            
+            let percentage = 0;
+            if (plannedMins > 0) percentage = (dtMins / plannedMins) * 100;
+            
+            const target = window.AppConfig.TargetDowntime || 1.5;
+            let scaledWidth = (percentage / (target * 2)) * 100;
+            if (scaledWidth > 100) scaledWidth = 100;
+
+            let colorClass = 'bg-danger';
+            let textClass = 'text-danger';
+            if (percentage <= 1.2) { colorClass = 'bg-success'; textClass = 'text-success'; }
+            else if (percentage <= 1.5) { colorClass = 'bg-warning'; textClass = 'text-warning'; }
+
+            // Table Top 5 DT NT
+            let sortedYP = [...ypArr].sort((a, b) => b.TotalDownTimeInMinutes - a.TotalDownTimeInMinutes).slice(0, 5);
+            let trs = sortedYP.map((item, index) => {
+                let dateStr = new Date(item.NotificationDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short'});
+                let machine = getMachineName(item.FunctionLocation, item.ActivityText);
+                let line = getLineName(item.FunctionLocation);
+                return `<tr>
+                    <td class="text-center fw-bold fs-4">${index + 1}</td>
+                    <td class="text-center fs-4">${dateStr}</td>
+                    <td class="fw-bold text-primary fs-4">${line} - ${machine}</td>
+                    <td class="text-truncate fs-4" style="max-width: 250px;">${item.ActivityText || item.NotificationDesc || '-'}</td>
+                    <td class="text-danger fw-bold text-end fs-4 pe-3">${item.TotalDownTimeInMinutes} mnt</td>
+                </tr>`;
+            }).join('');
+            
+            if(sortedYP.length === 0) trs = `<tr><td colspan="5" class="text-center py-4 text-muted fs-3">Tidak ada kejadian downtime NT pada minggu ini.</td></tr>`;
+
+            return `
+                <div class="d-flex flex-column h-100 justify-content-between g-3">
+                    <div class="row gx-4 mb-4 mt-3">
+                        <div class="col-12 text-center">
+                            <h1 class="display-3 fw-bold mb-3 ${textClass}">${percentage.toFixed(2)} %</h1>
+                            <div class="progress mb-4" style="height: 40px; border-radius: 20px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);">
+                                <div class="progress-bar ${colorClass} progress-bar-striped progress-bar-animated" role="progressbar" style="width: ${scaledWidth}%;"></div>
+                            </div>
+                            <div class="d-flex justify-content-center gap-5">
+                                <div class="bg-light rounded p-3 px-5 border shadow-sm">
+                                    <span class="fs-4 text-muted fw-bold d-block text-uppercase">Total DT NT</span>
+                                    <span class="display-6 fw-bold text-danger">${dtMins.toFixed(0)} Menit</span>
+                                </div>
+                                <div class="bg-light rounded p-3 px-5 border shadow-sm">
+                                    <span class="fs-4 text-muted fw-bold d-block text-uppercase">Total Jam Terencana</span>
+                                    <span class="display-6 fw-bold text-primary">${plannedMins.toFixed(0)} Menit</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row flex-grow-1 overflow-hidden mt-2">
+                        <div class="col-12 h-100 d-flex flex-column">
+                            <div class="bg-dark text-white text-center py-2 fw-bold fs-4 rounded-top">Top 5 Kerusakan Terlama Minggu Ini</div>
+                            <div class="table-responsive flex-grow-1 border border-top-0 rounded-bottom">
+                                <table class="table table-striped table-hover align-middle mb-0 h-100">
+                                    <thead class="table-secondary text-center sticky-top fs-4">
+                                        <tr><th>No</th><th>Tanggal</th><th>Mesin & Line</th><th>Kendala</th><th>Durasi</th></tr>
+                                    </thead>
+                                    <tbody>${trs}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
         }
 
         function buildKpiSummary(ypArr, yrArr) {
