@@ -163,7 +163,7 @@
             addSlide(`Kesimpulan Kehandalan Sistem - Minggu Ke-${currentWeekStr}`, kpiHtml, '/Home/Index');
 
             // Slide 8: Estimasi Rupiah Sparepart & RM Cost Ratio
-            let costHtml = buildSparepartCost(currentWeekStr);
+            let costHtml = buildSparepartCost();
             addSlide(`Analitik Pemakaian Sparepart - Minggu Ke-${currentWeekStr}`, costHtml, '/Pemakaian/Index');
 
             // Slide 9: EWS Table
@@ -256,7 +256,11 @@
                     responsive: true, maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: true, labels: { font: { size: 16 } } },
-                        datalabels: { align: 'top', color: '#000', font: { weight: 'bold', size: 16 }, formatter: (v, ctx) => v == 0 ? null : `${v}%\n(${ctx.dataset.customMinutes[ctx.dataIndex]}m)` }
+                        datalabels: { align: 'top', color: '#000', font: { weight: 'bold', size: 16 }, formatter: (v, ctx) => {
+                            if (v == 0) return null;
+                            if (canvasId === 'chartS1') return `${v}%`;
+                            return `${v}%\n(${ctx.dataset.customMinutes[ctx.dataIndex]}m)`;
+                        } }
                     },
                     scales: { 
                         y: { beginAtZero: true, suggestedMax: 3, ticks: { font: { size: 16 } } },
@@ -414,20 +418,17 @@
                 </div>`;
         }
 
-        function buildSparepartCost(currentWeek) {
-            // Asumsi format data Pemakaian
-            const items = dataPemakaian.HistoryData || [];
+        function buildSparepartCost() {
+            const items = dataPemakaian.dataEstimasi || [];
             
-            // Gunakan matching nilai currentWeekStr (contoh "27") jika data Pemakaian juga punya format minggu yang sama, 
-            // jika tidak, fallback ke getWeekNumber tanggal. 
-            // Untuk amannya, kita parse angkanya.
-            let weekNumeric = parseInt(currentWeek.replace(/\D/g, '')) || 0;
-
+            // Ambil filter week saat ini langsung dari object server (seperti di tab estimasi)
+            const serverWeekKey = dataPemakaian.currentWeek || "";
+            
             let weekItems = items.filter(i => {
-                return getWeekNumber(new Date(i.TanggalInput)) === weekNumeric;
+                return i.WeekYearKey === serverWeekKey && i.Plant === "Plant 1";
             });
             
-            let cost = weekItems.reduce((s, i) => s + i.TotalHarga, 0);
+            let cost = weekItems.reduce((s, i) => s + (i.TotalHargaNumeric || 0), 0);
             
             // Estimasi Rasio (Cost / Rata-rata target, atau tampilkan nilai statis jika tak ada target harian di sini)
             // Di sini kita tampilkan nilai aslinya dengan format rupiah

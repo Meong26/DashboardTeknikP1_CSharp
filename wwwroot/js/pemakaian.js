@@ -86,7 +86,7 @@
             if(btnEditKarantina) btnEditKarantina.classList.remove("d-none");
             if(btnEditPR) btnEditPR.classList.remove("d-none");
             if(btnKarantinaData) btnKarantinaData.classList.remove("d-none");
-            if(ddlFilter) ddlFilter.classList.add("d-none"); // Sembunyikan week filter untuk mode estimasi
+            if(ddlFilter) ddlFilter.classList.remove("d-none"); 
             if(btnPrintReport) btnPrintReport.innerHTML = `<i class="bi bi-printer me-1"></i> Cetak`;
         }
         currentSortCol = null;

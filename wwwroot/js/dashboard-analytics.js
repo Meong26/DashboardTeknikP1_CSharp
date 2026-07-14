@@ -197,6 +197,7 @@
         const mode = document.getElementById("dimMode").value;
         const fltNotif = document.getElementById("fltNotif").value;
         const fltShift = document.getElementById("fltShift").value;
+        const fltLine = document.getElementById("fltLine") ? document.getElementById("fltLine").value : "";
         const selMonth = document.getElementById("fltBulan").value;
         const selWeek = document.getElementById("fltMinggu").value;
         const isSteamIncluded = document.getElementById("chkSteam").checked;
@@ -213,9 +214,13 @@
         baseDataYP = ypDataRaw.filter(item => {
             let mNotif = !fltNotif || (item.NotificationType && item.NotificationType.includes(fltNotif));
             let mShift = !fltShift || (item.WageGroup_GroupShift && item.WageGroup_GroupShift.includes(fltShift));
+            
+            let lineVal = getLineName(item.FunctionLocation);
+            let mLine = !fltLine || (lineVal === fltLine);
+            
             let mTime = isTimeMatch(new Date(item.NotificationDate), item.WeekKalendarIndofood);
             let mBoiler = !(getMachineName(item.FunctionLocation, item.ActivityText) === "Boiler" && !isSteamIncluded);
-            return mNotif && mShift && mTime && mBoiler;
+            return mNotif && mShift && mLine && mTime && mBoiler;
         });
 
         baseDataYR = yrDataRaw.filter(item => {
