@@ -527,7 +527,7 @@
                 </div>`;
 
             // Pagination setup
-            const maxRowsPerPage = 20; 
+            const maxRowsPerPage = 12; // Dikurangi dari 20 agar tidak terpotong di bagian bawah
             const chunks = [];
             for (let i = 0; i < filteredData.length; i += maxRowsPerPage) {
                 chunks.push(filteredData.slice(i, i + maxRowsPerPage));

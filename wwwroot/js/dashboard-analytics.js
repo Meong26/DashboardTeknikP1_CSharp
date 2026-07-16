@@ -661,8 +661,17 @@
             currentWeekStr = ""; 
         }
 
-        let thisWeekYP = ypDataRaw.filter(item => item.WeekKalendarIndofood === currentWeekStr && item.NotificationType === 'NT');
-        let thisWeekYR = yrDataRaw.filter(item => item.WeekOfBasicFinishedDate === currentWeekStr);
+        const fltShift = document.getElementById("fltShift") ? document.getElementById("fltShift").value : "";
+
+        let thisWeekYP = ypDataRaw.filter(item => {
+            let mShift = !fltShift || (item.WageGroup_GroupShift && item.WageGroup_GroupShift.includes(fltShift));
+            return item.WeekKalendarIndofood === currentWeekStr && item.NotificationType === 'NT' && mShift;
+        });
+        
+        let thisWeekYR = yrDataRaw.filter(item => {
+            let mShift = !fltShift || (item.WageGroup && item.WageGroup.includes(fltShift));
+            return item.WeekOfBasicFinishedDate === currentWeekStr && mShift;
+        });
 
         let dtMins = thisWeekYP.reduce((sum, item) => sum + item.TotalDownTimeInMinutes, 0);
         let plannedMins = thisWeekYR.reduce((sum, item) => sum + (item.PlannedHour * 60), 0);

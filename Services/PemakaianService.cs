@@ -54,11 +54,12 @@ namespace DashboardTeknikP1.Services
 
             string GetPlantFromFuncLoc(string funcLoc)
             {
-                if (string.IsNullOrEmpty(funcLoc) || funcLoc.Length < 7) return "";
-                string prefix = funcLoc.Substring(0, 7);
-                if (prefix == "2808-P1") return "Plant 1";
-                if (prefix == "2808-P2") return "Plant 2";
-                if (prefix == "2808-P3") return "Plant 3";
+                if (string.IsNullOrEmpty(funcLoc)) return "";
+                
+                if (funcLoc.StartsWith("2808-P1-PRODU00-")) return "Plant 1";
+                if (funcLoc.StartsWith("2808-P2-PRODU00-")) return "Plant 2";
+                if (funcLoc.StartsWith("2808-P3-PRODU00-")) return "Plant 3";
+                
                 return "";
             }
 
