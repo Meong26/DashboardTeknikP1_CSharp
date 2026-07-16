@@ -9,6 +9,7 @@ using DashboardTeknikP1.Repositories;
 using DashboardTeknikP1.Models;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
@@ -17,10 +18,12 @@ namespace DashboardTeknikP1.Controllers
     public class SparepartController : Controller
     {
         private readonly SparepartRepository _sparepartRepo;
+        private readonly IWebHostEnvironment _env;
 
-        public SparepartController(SparepartRepository sparepartRepo)
+        public SparepartController(SparepartRepository sparepartRepo, IWebHostEnvironment env)
         {
             _sparepartRepo = sparepartRepo;
+            _env = env;
         }
 
         [Authorize(Roles = "Administrator,Supervisor,Section,Teknisi,WHS.SP")]
@@ -59,7 +62,7 @@ namespace DashboardTeknikP1.Controllers
             }
 
             // 1. Lokasi "Cetakan" Excel Anda di server
-            string templatePath = Path.Combine(Directory.GetCurrentDirectory(), "Templates", "Format_PR.xlsx");
+            string templatePath = Path.Combine(_env.ContentRootPath, "Templates", "Format_PR.xlsx");
             FileInfo templateFile = new FileInfo(templatePath);
 
             if (!templateFile.Exists)
