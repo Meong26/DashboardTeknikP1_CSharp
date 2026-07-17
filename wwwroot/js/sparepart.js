@@ -260,7 +260,7 @@ function renderEwsTableRows() {
         let rowClass = isZero ? "table-danger" : "table-warning";
 
         if (isItemPriority && !isPriorityModeActive && !isPRModeActive) {
-            rowClass = "table-light border-start border-4 border-warning";
+            rowClass = "table-secondary border-start border-4 border-warning";
         }
 
         if (isPriorityModeActive) {
@@ -502,7 +502,7 @@ function renderMainTableRows() {
         }
 
         if (isItemPriority && !isZero && !isCritical) {
-            rowStyleClass = "table-light";
+            rowStyleClass = "table-secondary";
             badgeComponent = `<span class="badge bg-info text-white fw-bold px-2 w-100">PRIORITAS</span>`;
         } else if (isItemPriority) {
             badgeComponent = `<span class="badge ${isZero ? 'bg-danger' : 'bg-warning text-dark'} fw-bold px-2 w-100">PRIORITAS</span>`;

@@ -75,7 +75,7 @@
 
 <div class="row mb-3 g-3 d-print-none animate__animated animate__fadeIn">
     <div class="col-md-3">
-        <div class="card bg-white shadow-sm border-0" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openDTAchievementDetails()" title="Pencapaian Downtime vs Terencana (Minggu Ini)">
+        <div class="card bg-body shadow-sm border-0" style="cursor: pointer; transition: transform 0.2s;" onmouseover="this.style.transform='translateY(-3px)'" onmouseout="this.style.transform='translateY(0)'" onclick="openDTAchievementDetails()" title="Pencapaian Downtime vs Terencana (Minggu Ini)">
             <div class="card-body py-2 px-3 d-flex flex-column justify-content-center">
                 <div class="d-flex justify-content-between align-items-center mb-1">
                     <div class="small fw-bold text-uppercase text-muted" style="font-size: 0.7rem;"><i class="bi bi-speedometer2 me-1"></i> PENCAPAIAN DT NT (MINGGU INI)</div>
@@ -130,7 +130,7 @@
 <div class="row mb-3" style="height: 45vh;">
     <div class="col-12 h-100">
         <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-white border-bottom-0 d-flex justify-content-between align-items-center py-2">
+            <div class="card-header bg-transparent border-bottom-0 d-flex justify-content-between align-items-center py-2">
                 <span class="fw-bold fs-6" id="mainChartTitle">📊 Analitik Downtime vs Jam Terencana</span>
                 
                 <div class="d-flex align-items-center">
@@ -173,7 +173,7 @@
 <div class="row" style="height: 40vh;">
     <div class="col-md-7 h-100">
         <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-white border-bottom border-warning d-flex justify-content-between align-items-center py-2">
+            <div class="card-header bg-transparent border-bottom border-warning d-flex justify-content-between align-items-center py-2">
                 <span class="fw-bold small">🔍 Rincian Aktivitas: <span id="lblDetail" class="text-primary">Pilih Batang Grafik</span></span>
                 
                 <div class="btn-group btn-group-sm" role="group">
@@ -197,7 +197,7 @@
 
     <div class="col-md-5 h-100">
         <div class="card shadow-sm h-100 border-0">
-            <div class="card-header bg-white border-bottom border-primary py-2 d-flex justify-content-between align-items-center">
+            <div class="card-header bg-transparent border-bottom border-primary py-2 d-flex justify-content-between align-items-center">
                 <span class="fw-bold small">🍩 Proporsi Downtime per Regu (Menit)</span>
                 <button id="btnResetRegu" class="btn btn-sm btn-outline-secondary d-none" style="font-size: 0.7rem; padding: 2px 5px;" onclick="resetReguFilter()">
                     <i class="bi bi-arrow-counterclockwise"></i> Reset
@@ -235,8 +235,8 @@
 <div class="modal fade" id="modalDTAchievement" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content border-top border-4 border-success" id="modalDTAchievementBorder">
-            <div class="modal-header bg-light py-2">
-                <h5 class="modal-title fw-bold text-dark"><i class="bi bi-speedometer2 me-2"></i> Rincian Pencapaian DT NT (Minggu Ini)</h5>
+            <div class="modal-header bg-body-secondary py-2">
+                <h5 class="modal-title fw-bold text-success"><i class="bi bi-speedometer2 me-2"></i> Rincian Pencapaian DT NT (Minggu Ini)</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body bg-body-tertiary">
@@ -249,11 +249,11 @@
                                     <div id="modalDTProgressBar" class="progress-bar bg-success progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%; font-size: 1rem; font-weight: bold;"></div>
                                 </div>
                                 <div class="d-flex justify-content-center gap-4">
-                                    <div class="bg-light rounded p-2 px-3 border shadow-sm">
+                                    <div class="bg-body-secondary rounded p-2 px-3 border shadow-sm">
                                         <span class="small text-muted fw-bold d-block text-uppercase">Total DT NT</span>
                                         <span class="fs-4 fw-bold text-danger" id="modalDTMins">0 Menit</span>
                                     </div>
-                                    <div class="bg-light rounded p-2 px-3 border shadow-sm">
+                                    <div class="bg-body-secondary rounded p-2 px-3 border shadow-sm">
                                         <span class="small text-muted fw-bold d-block text-uppercase">Total Jam Terencana</span>
                                         <span class="fs-4 fw-bold text-primary" id="modalPlannedMins">0 Menit</span>
                                     </div>
@@ -263,7 +263,7 @@
                     </div>
                     <div class="col-md-12">
                         <div class="card shadow-sm border-0">
-                            <div class="card-header bg-white py-2 fw-bold small text-muted">Daftar Kejadian Kerusakan (NT) Minggu Ini</div>
+                            <div class="card-header bg-transparent py-2 fw-bold small text-muted">Daftar Kejadian Kerusakan (NT) Minggu Ini</div>
                             <div class="card-body p-0 table-responsive" style="max-height: 400px; overflow-y: auto;">
                                 <table class="table table-sm table-striped table-hover align-middle mb-0" style="font-size: 0.85rem;">
                                     <thead class="table-dark text-center sticky-top">
@@ -283,7 +283,7 @@
 <div class="modal fade" id="modalMTTR" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content border-top border-4 border-danger">
-            <div class="modal-header bg-light py-2">
+            <div class="modal-header bg-body-secondary py-2">
                 <h5 class="modal-title fw-bold text-danger"><i class="bi bi-tools me-2"></i> Deep Dive Analytics: MTTR (Kecepatan Perbaikan)</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -291,7 +291,7 @@
                 <div class="row g-3">
                     <div class="col-md-12">
                         <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-white py-2 fw-bold small text-muted" id="headerChartMTTR">Tren MTTR Historis</div>
+                            <div class="card-header bg-transparent py-2 fw-bold small text-muted" id="headerChartMTTR">Tren MTTR Historis</div>
                             <div class="card-body p-2" style="height: 250px;">
                                 <canvas id="chartMTTR"></canvas>
                             </div>
@@ -299,7 +299,7 @@
                     </div>
                     <div class="col-md-12">
                         <div class="card shadow-sm border-0">
-                            <div class="card-header bg-white py-2 fw-bold small text-muted">Top 10 Breakdown Terlama (Menarik Nilai Rata-rata)</div>
+                            <div class="card-header bg-transparent py-2 fw-bold small text-muted">Top 10 Breakdown Terlama (Menarik Nilai Rata-rata)</div>
                             <div class="card-body p-0 table-responsive">
                                 <table class="table table-sm table-striped table-hover align-middle mb-0" style="font-size: 0.85rem;">
                                     <thead class="table-dark text-center">
@@ -319,7 +319,7 @@
 <div class="modal fade" id="modalMTBF" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content border-top border-4 border-success">
-            <div class="modal-header bg-light py-2">
+            <div class="modal-header bg-body-secondary py-2">
                 <h5 class="modal-title fw-bold text-success"><i class="bi bi-shield-check me-2"></i> Deep Dive Analytics: MTBF (Kehandalan Mesin)</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -327,7 +327,7 @@
                 <div class="row g-3">
                     <div class="col-md-12">
                         <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-white py-2 fw-bold small text-muted" id="headerChartMTBF">📈 Tren MTBF Historis</div>
+                            <div class="card-header bg-transparent py-2 fw-bold small text-muted" id="headerChartMTBF">📈 Tren MTBF Historis</div>
                             <div class="card-body p-2" style="height: 250px;">
                                 <canvas id="chartMTBF"></canvas>
                             </div>
@@ -335,7 +335,7 @@
                     </div>
                     <div class="col-md-12">
                         <div class="card shadow-sm border-0">
-                            <div class="card-header bg-white py-2 fw-bold small text-muted">ðŸ”§ Mesin Paling Sering Rusak (Frekuensi Tertinggi)</div>
+                            <div class="card-header bg-transparent py-2 fw-bold small text-muted">ðŸ”§ Mesin Paling Sering Rusak (Frekuensi Tertinggi)</div>
                             <div class="card-body p-0 table-responsive">
                                 <table class="table table-sm table-striped table-hover align-middle mb-0" style="font-size: 0.85rem;">
                                     <thead class="table-dark text-center">
@@ -355,7 +355,7 @@
 <div class="modal fade" id="modalAvailability" tabindex="-1" aria-hidden="true" style="z-index: 1060;">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content border-top border-4 border-primary">
-            <div class="modal-header bg-light py-2">
+            <div class="modal-header bg-body-secondary py-2">
                 <h5 class="modal-title fw-bold text-primary"><i class="bi bi-bar-chart-line me-2"></i> Deep Dive Analytics: Machine Availability</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -363,7 +363,7 @@
                 <div class="row g-3">
                     <div class="col-md-12">
                         <div class="card shadow-sm border-0 h-100">
-                            <div class="card-header bg-white py-2 fw-bold small text-muted" id="headerChartAvailability">📈 Tren Availability Historis</div>
+                            <div class="card-header bg-transparent py-2 fw-bold small text-body-emphasis" id="headerChartAvailability">📈 Tren Availability Historis</div>
                             <div class="card-body p-2" style="height: 250px;">
                                 <canvas id="chartAvailability"></canvas>
                             </div>
@@ -371,7 +371,7 @@
                     </div>
                     <div class="col-md-12">
                         <div class="card shadow-sm border-0">
-                            <div class="card-header bg-white py-2 fw-bold small text-muted">⚠️ Line/Mesin Penurun Availability (Downtime Tertinggi)</div>
+                            <div class="card-header bg-transparent py-2 fw-bold small text-body-emphasis">⚠️ Line/Mesin Penurun Availability (Downtime Tertinggi)</div>
                             <div class="card-body p-0 table-responsive">
                                 <table class="table table-sm table-striped table-hover align-middle mb-0" style="font-size: 0.85rem;">
                                     <thead class="table-dark text-center">

@@ -3,6 +3,8 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using DashboardTeknikP1.Repositories;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.Extensions.Caching.Memory;
+using System;
 
 namespace DashboardTeknikP1.Controllers
 {
@@ -11,11 +13,13 @@ namespace DashboardTeknikP1.Controllers
     {
         private readonly HomeRepository _repository;
         private readonly SettingRepository _settingRepo;
+        private readonly IMemoryCache _cache;
 
-        public HomeController(HomeRepository repository, SettingRepository settingRepo)
+        public HomeController(HomeRepository repository, SettingRepository settingRepo, IMemoryCache cache)
         {
             _repository = repository;
             _settingRepo = settingRepo;
+            _cache = cache;
         }
 
         // 1. Luncurkan kerangka HTML kosong secepat kilat
@@ -41,17 +45,28 @@ namespace DashboardTeknikP1.Controllers
         [HttpGet]
         public async Task<IActionResult> GetDashboardData()
         {
-            int currentYear = System.DateTime.Now.Year;
-            // Menarik kedua data secara paralel (opsional, tapi ditunggu berurutan di sini)
-            var detailsYP = await _repository.GetDowntimeDetailsAsync(currentYear);
-            var detailsYR = await _repository.GetProduksiDetailsAsync(currentYear);
+            int currentYear = DateTime.Now.Year;
+            string cacheKey = $"DashboardData_{currentYear}";
 
-            // Menggabungkan dua data ke dalam satu objek JSON (ypData dan yrData)
-            var resultData = new
+            // Coba ambil dari memori (RAM) Server
+            if (!_cache.TryGetValue(cacheKey, out object resultData))
             {
-                ypData = detailsYP,
-                yrData = detailsYR
-            };
+                // Jika cache kosong (atau sudah kedaluwarsa), hajar ke Database
+                var detailsYP = await _repository.GetDowntimeDetailsAsync(currentYear);
+                var detailsYR = await _repository.GetProduksiDetailsAsync(currentYear);
+
+                resultData = new
+                {
+                    ypData = detailsYP,
+                    yrData = detailsYR
+                };
+
+                // Simpan ke Cache selama 1 menit (60 detik) untuk menangkal auto-refresh TV Dashboard
+                var cacheEntryOptions = new MemoryCacheEntryOptions()
+                    .SetAbsoluteExpiration(TimeSpan.FromSeconds(60));
+                
+                _cache.Set(cacheKey, resultData, cacheEntryOptions);
+            }
 
             return Json(resultData, new JsonSerializerOptions { PropertyNamingPolicy = null });
         }

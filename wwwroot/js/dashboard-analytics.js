@@ -134,11 +134,13 @@
             }
             if (item.WeekKalendarIndofood) mingguSet.add(item.WeekKalendarIndofood);
         });
-        ddlBulan.innerHTML = `<option value="ALL">Semua Bulan</option>`; 
-        Array.from(bulanSet).map(x => JSON.parse(x)).sort((a, b) => b.val.localeCompare(a.val)).forEach(item => ddlBulan.innerHTML += `<option value="${item.val}">${item.text}</option>`);
+        let htmlBulan = `<option value="ALL">Semua Bulan</option>`; 
+        Array.from(bulanSet).map(x => JSON.parse(x)).sort((a, b) => b.val.localeCompare(a.val)).forEach(item => htmlBulan += `<option value="${item.val}">${item.text}</option>`);
+        ddlBulan.innerHTML = htmlBulan;
 
-        ddlMinggu.innerHTML = "";
-        Array.from(mingguSet).sort((a, b) => b.localeCompare(a)).forEach(w => ddlMinggu.innerHTML += `<option value="${w}">Week ${w}</option>`);
+        let htmlMinggu = "";
+        Array.from(mingguSet).sort((a, b) => b.localeCompare(a)).forEach(w => htmlMinggu += `<option value="${w}">Week ${w}</option>`);
+        ddlMinggu.innerHTML = htmlMinggu;
     }
 
     function handleModeChange() {
@@ -926,9 +928,21 @@
         });
 
         if (!currentWeekStr) currentWeekStr = ""; 
+        
+        let fltShift = document.getElementById("fltShift") ? document.getElementById("fltShift").value : "";
 
-        let thisWeekYP = ypDataRaw.filter(item => item.WeekKalendarIndofood === currentWeekStr && item.NotificationType === 'NT');
-        let thisWeekYR = yrDataRaw.filter(item => item.WeekOfBasicFinishedDate === currentWeekStr);
+        let thisWeekYP = ypDataRaw.filter(item => {
+            if (item.WeekKalendarIndofood !== currentWeekStr) return false;
+            if (item.NotificationType !== 'NT') return false;
+            if (fltShift && (!item.WageGroup_GroupShift || !item.WageGroup_GroupShift.includes(fltShift))) return false;
+            return true;
+        });
+
+        let thisWeekYR = yrDataRaw.filter(item => {
+            if (item.WeekOfBasicFinishedDate !== currentWeekStr) return false;
+            if (fltShift && (!item.WageGroup || !item.WageGroup.includes(fltShift))) return false;
+            return true;
+        });
 
         let dtMins = thisWeekYP.reduce((sum, item) => sum + item.TotalDownTimeInMinutes, 0);
         let plannedMins = thisWeekYR.reduce((sum, item) => sum + (item.PlannedHour * 60), 0);

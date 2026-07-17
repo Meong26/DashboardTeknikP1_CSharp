@@ -149,7 +149,9 @@
 
         // Urutkan minggu dari yang terbaru (Descending)
         const sortedKeys = Object.keys(uniqueWeeks).sort((a, b) => b.localeCompare(a));
-        sortedKeys.forEach(key => { ddl.innerHTML += `<option value="${key}">${uniqueWeeks[key]}</option>`; });
+        let ddlHtml = "";
+        sortedKeys.forEach(key => { ddlHtml += `<option value="${key}">${uniqueWeeks[key]}</option>`; });
+        ddl.innerHTML = ddlHtml;
 
         // Pertahankan seleksi sebelumnya jika masih relevan, jika tidak pilih yang paling atas
         if (currentSelection && sortedKeys.includes(currentSelection)) {
@@ -330,7 +332,7 @@
                 <tr>
                     ${prefixTd}
                     <td class="text-center text-secondary">${item.TanggalFormated}</td>
-                    <td class="font-monospace fw-bold text-dark">${item.MaterialNo}</td>
+                    <td class="font-monospace fw-bold text-body-emphasis">${item.MaterialNo}</td>
                     <td class="text-uppercase text-truncate" style="max-width: 260px;" title="${item.MaterialDesc}">${item.MaterialDesc}</td>
                     <td class="text-muted text-truncate" style="max-width: 180px;" title="${item.TujuanPengambilan}">${item.TujuanPengambilan || '-'}</td>
                     <td>${item.NamaPengambil || '-'}</td>
@@ -645,9 +647,9 @@
             
             <td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-tujuan" placeholder="Lokasi mesin/line..."></td>
             <td><input type="text" class="form-control form-control-sm border-0 bg-transparent inp-nama text-success fw-bold" placeholder="Cari teknisi..." autocomplete="off" oninput="handleTeknisiSearch(this)" onfocus="handleTeknisiSearch(this)" onblur="lookupTeknisi(this)" onkeydown="handleTeknisiKeydown(event, this)"></td>
-            <td><input type="text" class="form-control form-control-sm border-0 bg-light inp-plant text-center text-muted" placeholder="Plant" readonly tabindex="-1"></td>
+            <td><input type="text" class="form-control form-control-sm border-0 bg-body-secondary inp-plant text-center text-muted" placeholder="Plant" readonly tabindex="-1"></td>
             <td><input type="number" class="form-control form-control-sm border-0 bg-transparent inp-qty text-center fw-bold" placeholder="0" onkeydown="handleExcelTab(event, this)"></td>
-            <td class="p-0"><input type="text" class="form-control form-control-sm border-0 text-center fw-bold inp-stok h-100 bg-light" readonly tabindex="-1" style="border-radius: 0;"></td>
+            <td class="p-0"><input type="text" class="form-control form-control-sm border-0 text-center fw-bold inp-stok h-100 bg-body-secondary" readonly tabindex="-1" style="border-radius: 0;"></td>
             <td class="text-center"><button class="btn btn-sm text-danger border-0 p-0" onclick="removeRow(this)" tabindex="-1"><i class="bi bi-trash"></i></button><input type="hidden" class="inp-harga" value="0"></td>`;
         tbody.appendChild(tr);
     }
@@ -667,7 +669,7 @@
         
         if (matNo === "") { 
             inpDesc.value = ""; inpStok.value = ""; inpHarga.value = "0"; 
-            inpStok.className = "form-control form-control-sm border-0 text-center bg-light fw-bold inp-stok h-100"; 
+            inpStok.className = "form-control form-control-sm border-0 text-center bg-body-secondary fw-bold inp-stok h-100"; 
             return; 
         } 
         

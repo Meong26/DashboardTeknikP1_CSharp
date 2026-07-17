@@ -93,11 +93,12 @@
         function buildSlides() {
             const inner = document.getElementById('carouselInner');
             let slideIndex = 0;
+            let slideHtml = "";
 
             function addSlide(title, contentHtml, link) {
                 const isActive = slideIndex === 0 ? 'active' : '';
                 const id = `slide_${slideIndex}`;
-                inner.innerHTML += `
+                slideHtml += `
                     <div class="carousel-item ${isActive}" onclick="window.location.href='${link}'" id="${id}">
                         <div class="slide-content">
                             <div class="slide-title">${title}</div>
@@ -169,6 +170,8 @@
             // Slide 9: EWS Table
             let ewsHtml = buildEwsTable();
             addSlide(`Early Warning System (EWS) - 10 Stok Paling Kritis`, ewsHtml, '/Sparepart/Index');
+
+            inner.innerHTML = slideHtml;
 
             // --- RENDER CHARTS ---
             setTimeout(() => {
