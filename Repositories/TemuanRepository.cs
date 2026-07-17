@@ -33,10 +33,10 @@ namespace DashboardTeknikP1.Repositories
                 {
                     TanggalInput = temuan.TanggalInput,
                     UserID = temuan.UserID,
-                    Line = string.IsNullOrEmpty(temuan.Line) ? null : temuan.Line,
+                    Line = string.IsNullOrEmpty(temuan.Line) ? "" : temuan.Line,
                     KodeMesin = temuan.KodeMesin,
                     DeskripsiAbnormal = temuan.DeskripsiAbnormal,
-                    TindakanKorektif = string.IsNullOrEmpty(temuan.TindakanKorektif) ? null : temuan.TindakanKorektif,
+                    TindakanKorektif = string.IsNullOrEmpty(temuan.TindakanKorektif) ? "" : temuan.TindakanKorektif,
                     StatusTemuan = temuan.StatusTemuan
                 };
 
@@ -52,10 +52,13 @@ namespace DashboardTeknikP1.Repositories
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 string query = @"
-                    SELECT t.TemuanID, t.TanggalInput, t.UserID, t.Line, t.KodeMesin, 
-                           m.NamaMesin, t.DeskripsiAbnormal, t.TindakanKorektif, t.StatusTemuan 
+                    SELECT t.TemuanID, t.TanggalInput, COALESCE(u.NamaLengkap, t.UserID) AS UserID, t.Line, t.KodeMesin, 
+                           m.NamaMesin, t.DeskripsiAbnormal, t.TindakanKorektif, t.StatusTemuan,
+                           t.TanggalClosed, t.ClosedBy, uc.NamaLengkap AS ClosedByName
                     FROM tbl_TemuanAbnormal t
                     LEFT JOIN tbl_Mesin m ON t.KodeMesin = m.KodeMesin
+                    LEFT JOIN tbl_Users u ON t.UserID = u.UserID
+                    LEFT JOIN tbl_Users uc ON t.ClosedBy = uc.UserID
                     ORDER BY t.TanggalInput DESC";
 
                 var result = await conn.QueryAsync<TemuanAbnormal>(query);
@@ -97,10 +100,13 @@ namespace DashboardTeknikP1.Repositories
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 string query = @"
-                    SELECT t.TemuanID, t.TanggalInput, t.UserID, t.Line, t.KodeMesin, 
-                           m.NamaMesin, t.DeskripsiAbnormal, t.TindakanKorektif, t.StatusTemuan 
+                    SELECT t.TemuanID, t.TanggalInput, COALESCE(u.NamaLengkap, t.UserID) AS UserID, t.Line, t.KodeMesin, 
+                           m.NamaMesin, t.DeskripsiAbnormal, t.TindakanKorektif, t.StatusTemuan,
+                           t.TanggalClosed, t.ClosedBy, uc.NamaLengkap AS ClosedByName
                     FROM tbl_TemuanAbnormal t
                     LEFT JOIN tbl_Mesin m ON t.KodeMesin = m.KodeMesin
+                    LEFT JOIN tbl_Users u ON t.UserID = u.UserID
+                    LEFT JOIN tbl_Users uc ON t.ClosedBy = uc.UserID
                     WHERE t.TemuanID = @TemuanID";
 
                 var item = await conn.QueryFirstOrDefaultAsync<TemuanAbnormal>(query, new { TemuanID = id });
@@ -123,17 +129,19 @@ namespace DashboardTeknikP1.Repositories
         // ====================================================================
         // 5. METHOD: UPDATE TINDAKAN DAN UBAH STATUS MENJADI CLOSED
         // ====================================================================
-        public async Task CloseTemuanAsync(int id, string tindakanKorektif)
+        public async Task CloseTemuanAsync(int id, string tindakanKorektif, string closedBy)
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
                 string query = @"UPDATE tbl_TemuanAbnormal 
-                                SET TindakanKorektif = @Tindakan, StatusTemuan = 'CLOSED' 
+                                SET TindakanKorektif = @Tindakan, StatusTemuan = 'CLOSED',
+                                    TanggalClosed = GETDATE(), ClosedBy = @ClosedBy
                                 WHERE TemuanID = @TemuanID";
 
                 await conn.ExecuteAsync(query, new { 
                     TemuanID = id, 
-                    Tindakan = string.IsNullOrEmpty(tindakanKorektif) ? null : tindakanKorektif 
+                    Tindakan = string.IsNullOrEmpty(tindakanKorektif) ? null : tindakanKorektif,
+                    ClosedBy = closedBy
                 });
             }
         }

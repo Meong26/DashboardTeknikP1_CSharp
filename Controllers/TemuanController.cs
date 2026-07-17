@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize(Roles = "Administrator,Supervisor,Section,Teknisi")]
+    [Authorize(Roles = "Administrator,Supervisor,Section,Teknisi,Dashboard")]
     public class TemuanController : Controller
     {
         private readonly TemuanRepository _repository;
@@ -106,8 +106,9 @@ namespace DashboardTeknikP1.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Close(int TemuanID, string TindakanKorektif)
         {
+            string activeUser = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "SYSTEM";
             // Eksekusi update ke database melalui repository
-            await _repository.CloseTemuanAsync(TemuanID, TindakanKorektif);
+            await _repository.CloseTemuanAsync(TemuanID, TindakanKorektif, activeUser);
 
             // Kembalikan ke halaman utama log teknik
             return RedirectToAction("Index");
@@ -132,7 +133,9 @@ namespace DashboardTeknikP1.Controllers
                 NamaMesin = t.NamaMesin ?? "Mesin Tidak Dikenal",
                 t.DeskripsiAbnormal,
                 TindakanKorektif = string.IsNullOrEmpty(t.TindakanKorektif) ? "-" : t.TindakanKorektif,
-                Status = t.StatusTemuan ?? "OPEN"
+                Status = t.StatusTemuan ?? "OPEN",
+                TanggalClosedFormated = t.TanggalClosed?.ToString("dd MMM yyyy HH:mm") ?? "-",
+                ClosedByName = t.ClosedByName ?? t.ClosedBy ?? "-"
             }).ToList();
 
             // PERBAIKAN: Tambahkan JsonSerializerOptions agar huruf besar/kecil (PascalCase) tidak diubah ke camelCase

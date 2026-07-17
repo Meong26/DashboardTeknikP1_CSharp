@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
-using OfficeOpenXml;
 
 var builder = WebApplication.CreateBuilder(args);
-ExcelPackage.License.SetNonCommercialOrganization("Indofood CBP");
 
 // REGISTER REPOSITORY
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.HomeRepository>();

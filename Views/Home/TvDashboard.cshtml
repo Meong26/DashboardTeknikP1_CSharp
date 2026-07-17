@@ -1,6 +1,7 @@
 @{
     Layout = null;
 }
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 <!DOCTYPE html>
 <html lang="en" data-bs-theme="light">
 <head>
@@ -59,6 +60,14 @@
         .tv-logout-btn:hover {
             opacity: 1;
         }
+        
+        .carousel-control-prev, .carousel-control-next {
+            opacity: 0 !important;
+            transition: opacity 0.4s ease-in-out;
+        }
+        .carousel-control-prev:hover, .carousel-control-next:hover {
+            opacity: 0.9 !important;
+        }
     </style>
 </head>
 <body>
@@ -72,7 +81,7 @@
             <img src="~/images/logo_indofood.svg" alt="Logo Indofood">
             <h1>Teknik P1 Super App</h1>
         </div>
-        <form asp-controller="Account" asp-action="Logout" method="post" class="position-absolute end-0 me-4">
+        <form asp-controller="Auth" asp-action="Logout" method="post" class="position-absolute end-0 me-4">
             <button type="submit" class="btn btn-outline-light btn-sm tv-logout-btn" title="Keluar (Logout)">
                 <i class="bi bi-box-arrow-right fs-5"></i>
             </button>

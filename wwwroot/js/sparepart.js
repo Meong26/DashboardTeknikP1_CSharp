@@ -32,7 +32,7 @@ function injectControlButtons() {
 
         if (canManagePRAndPriority) {
             buttonsHtml += `
-                <button id="btnTogglePriority" class="btn btn-sm btn-outline-warning fw-bold text-dark" onclick="togglePriorityMode()">
+                <button id="btnTogglePriority" class="btn btn-sm btn-outline-warning fw-bold" onclick="togglePriorityMode()">
                     <i class="bi bi-star-fill me-1 text-warning"></i> Set Priority Mode
                 </button>
                 <button id="btnSavePriority" class="btn btn-sm btn-warning fw-bold d-none text-dark" onclick="executeSavePriorities()">
@@ -57,22 +57,25 @@ async function fetchDataDariServer() {
         const response = await fetch('/Sparepart/GetApiData');
         const dbDataRaw = await response.json();
 
-        // MAPPING BARU DARI JSON (Tanpa Dormant dan Bin Lokasi)
-        datasetSparepart = dbDataRaw.map(item => {
-            return {
-                materialNo: item.Material ? item.Material.trim() : "-",
-                description: item.MaterialDescription ? item.MaterialDescription.trim() : "-",
-                uom: item.UoM ? item.UoM.trim() : "PC",
-                actualStock: item.CurrentStock || 0,
-                safetyStock: item.SafetyStock || 0,
-                storLoct: item.StorLoct ? item.StorLoct.trim() : "-",
-                priority: item.Priority ? item.Priority.trim() : ""
-            };
-        });
-        currentTableData = [...datasetSparepart];
-        document.getElementById('lblTotalCount').innerText = datasetSparepart.length;
-        renderEWSContainer();
-        renderMainTableRows();
+        // Beri jeda agar browser bisa render state awal & menghentikan animasi loading di Tab
+        setTimeout(() => {
+            // MAPPING BARU DARI JSON (Tanpa Dormant dan Bin Lokasi)
+            datasetSparepart = dbDataRaw.map(item => {
+                return {
+                    materialNo: item.Material ? item.Material.trim() : "-",
+                    description: item.MaterialDescription ? item.MaterialDescription.trim() : "-",
+                    uom: item.UoM ? item.UoM.trim() : "PC",
+                    actualStock: item.CurrentStock || 0,
+                    safetyStock: item.SafetyStock || 0,
+                    storLoct: item.StorLoct ? item.StorLoct.trim() : "-",
+                    priority: item.Priority ? item.Priority.trim() : ""
+                };
+            });
+            currentTableData = [...datasetSparepart];
+            document.getElementById('lblTotalCount').innerText = datasetSparepart.length;
+            renderEWSContainer();
+            renderMainTableRows();
+        }, 100);
     } catch (error) { console.error("Gagal menarik data:", error); }
 }
 
@@ -92,7 +95,7 @@ function togglePriorityMode() {
         searchInput.focus();
     } else {
         btnToggle.innerHTML = `<i class="bi bi-star-fill me-1 text-warning"></i> Set Priority Mode`;
-        btnToggle.className = "btn btn-sm btn-outline-warning fw-bold text-dark";
+        btnToggle.className = "btn btn-sm btn-outline-warning fw-bold";
         btnSave.classList.add("d-none");
         searchContainer.classList.add("d-none"); // Sembunyikan pencarian khusus EWS
         searchInput.value = "";
@@ -257,11 +260,7 @@ function renderEwsTableRows() {
     paginatedData.forEach((item) => {
         let isZero = item.actualStock === 0;
         let isItemPriority = item.priority === 'Y';
-        let rowClass = isZero ? "table-danger" : "table-warning";
-
-        if (isItemPriority && !isPriorityModeActive && !isPRModeActive) {
-            rowClass = "table-secondary border-start border-4 border-warning";
-        }
+        let rowClass = "";
 
         if (isPriorityModeActive) {
             let isChecked = isItemPriority ? "checked" : "";
@@ -290,7 +289,6 @@ function renderEwsTableRows() {
         } else {
             let badgeClass = isZero ? "bg-danger" : "bg-warning text-dark border border-warning";
             let statusText = isZero ? "HABIS" : "KRITIS";
-            if (isItemPriority) statusText = "PRIORITAS";
 
             htmlGrid += `
                 <tr class="${rowClass} ews-row" onclick="focusSearchToItem('${item.materialNo}')" style="cursor:pointer;">
@@ -493,16 +491,16 @@ function renderMainTableRows() {
 
         if (isZero) {
             badgeComponent = `<span class="badge bg-danger text-white fw-bold px-2 w-100">KOSONG</span>`;
-            rowStyleClass = "table-danger opacity-90";
+            rowStyleClass = "";
             textStockStyle = "text-danger fw-bold fs-6";
         } else if (isCritical) {
             badgeComponent = `<span class="badge bg-warning text-dark fw-bold px-2 border border-warning w-100">KRITIS</span>`;
             textStockStyle = "text-warning fw-bold fs-6";
-            rowStyleClass = "table-warning";
+            rowStyleClass = "";
         }
 
         if (isItemPriority && !isZero && !isCritical) {
-            rowStyleClass = "table-secondary";
+            rowStyleClass = "";
             badgeComponent = `<span class="badge bg-info text-white fw-bold px-2 w-100">PRIORITAS</span>`;
         } else if (isItemPriority) {
             badgeComponent = `<span class="badge ${isZero ? 'bg-danger' : 'bg-warning text-dark'} fw-bold px-2 w-100">PRIORITAS</span>`;

@@ -49,11 +49,15 @@
         try {
             const response = await fetch('/Home/GetDashboardData');
             const data = await response.json();
-            ypDataRaw = data.ypData || [];
-            yrDataRaw = data.yrData || [];
+            
+            // Beri jeda agar browser bisa render state awal & menghentikan animasi loading di Tab
+            setTimeout(() => {
+                ypDataRaw = data.ypData || [];
+                yrDataRaw = data.yrData || [];
 
-            populateDynamicDropdowns();
-            handleModeChange(); 
+                populateDynamicDropdowns();
+                handleModeChange(); 
+            }, 100);
         } catch (error) {
             console.error("Gagal menarik data dasbor:", error);
             document.getElementById("rowBadActors").innerHTML = `

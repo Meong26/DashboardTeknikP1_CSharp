@@ -444,7 +444,7 @@
                 <td class="text-truncate text-uppercase" style="max-width: 220px;">${item.MaterialDesc}</td>
                 <td class="text-muted text-truncate" style="max-width: 150px;">${item.TujuanPengambilan || '-'}</td>
                 <td>${item.NamaPengambil || '-'}</td>
-                <td class="text-center fw-bold text-dark">${item.JumlahPengambilan}</td>
+                <td class="text-center fw-bold text-body-emphasis">${item.JumlahPengambilan}</td>
                 <td class="text-end font-monospace text-danger fw-bold">Rp ${item.TotalHargaFormated}</td>
                 <td class="text-center">
                     <div class="btn-group btn-group-sm w-100">

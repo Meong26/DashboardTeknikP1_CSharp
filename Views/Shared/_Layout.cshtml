@@ -116,6 +116,16 @@
     </style>
     <link rel="icon" type="image/x-icon" href="~/favicon.ico" />
     <link rel="manifest" href="~/manifest.json" />
+    
+    <!-- ANTI-FOUC DARK MODE SCRIPT -->
+    <script>
+        (function() {
+            try {
+                const currentTheme = localStorage.getItem('theme') || 'light';
+                document.documentElement.setAttribute('data-bs-theme', currentTheme);
+            } catch (e) {}
+        })();
+    </script>
 </head>
 <body class="bg-body-tertiary">
 
@@ -265,7 +275,6 @@
             const footer = document.getElementById('main-footer');
 
             const currentTheme = localStorage.getItem('theme') || 'light';
-            htmlElement.setAttribute('data-bs-theme', currentTheme);
             updateColors(currentTheme);
 
             themeToggleBtn.addEventListener('click', function () {

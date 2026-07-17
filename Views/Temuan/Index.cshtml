@@ -55,7 +55,6 @@
         <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem;">
             <thead class="table-dark sticky-top">
                 <tr>
-                    <th class="px-3" style="width: 8%;">ID</th>
                     <th style="width: 15%;">Waktu Laporan</th>
                     <th style="width: 8%;">Pelapor</th>
                     <th style="width: 10%;">Line</th>
@@ -68,6 +67,35 @@
                 <tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-secondary me-2"></div> Memuat riwayat...</td></tr>
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- MODAL DETAIL CLOSED -->
+<div class="modal fade" id="modalClosedDetail" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-success text-white py-2">
+                <h6 class="modal-title fw-bold"><i class="bi bi-check2-circle me-1"></i> Detail Penutupan Laporan</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="font-size: 0.9rem;">
+                <div class="mb-3">
+                    <label class="text-muted small fw-bold">Tanggal Ditutup</label>
+                    <div id="lblTanggalClosed" class="fw-bold"></div>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small fw-bold">Ditutup Oleh (Teknisi/Section)</label>
+                    <div id="lblClosedBy" class="fw-bold text-primary"></div>
+                </div>
+                <div class="mb-2">
+                    <label class="text-muted small fw-bold">Tindakan Perbaikan yang Dilakukan</label>
+                    <div id="lblTindakanKorektif" class="p-2 bg-secondary-subtle border rounded text-break text-body-emphasis"></div>
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -120,7 +148,15 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
-                <input type="text" class="form-control form-control-sm border-0 bg-transparent fw-bold text-success inp-line" placeholder="Cth: Line 1" onkeydown="handleEnter(event, this, '.inp-mesin')">
+                <select class="form-select form-select-sm border-0 bg-transparent fw-bold text-success inp-line" onchange="this.closest('tr').querySelector('.inp-mesin').focus()" onkeydown="handleEnter(event, this, '.inp-mesin')">
+                    <option value="" disabled selected>Pilih...</option>
+                    <option value="Line 1">Line 1</option>
+                    <option value="Line 2">Line 2</option>
+                    <option value="Line 3">Line 3</option>
+                    <option value="Line 4">Line 4</option>
+                    <option value="Line 5">Line 5</option>
+                    <option value="Umum">Umum</option>
+                </select>
             </td>
             <td>
                 <input list="listMasterMesin" class="form-control form-control-sm border-0 bg-transparent fw-bold text-primary inp-mesin" placeholder="Ketik/Pilih Mesin..." onchange="validateMesin(this)" onkeydown="handleEnter(event, this, '.inp-desc')">
@@ -270,9 +306,16 @@
                 statusBadge = `<span class="badge bg-warning text-dark">${item.Status}</span>`;
             }
 
+            let rowAttr = "";
+            let trClass = "";
+            if (item.Status === "CLOSED") {
+                let safeTindakan = item.TindakanKorektif ? item.TindakanKorektif.replace(/'/g, "&#39;").replace(/"/g, "&quot;") : "-";
+                rowAttr = `style="cursor: pointer;" onclick="showCloseModal('${item.TanggalClosedFormated}', '${item.ClosedByName}', '${safeTindakan}')"`;
+                trClass = `class="table-success-hover" title="Klik untuk melihat detail perbaikan"`;
+            }
+
             htmlGrid += `
-                <tr>
-                    <td class="px-3 fw-bold text-secondary">#${item.TemuanID}</td>
+                <tr ${rowAttr} ${trClass}>
                     <td>${item.TanggalFormated}</td>
                     <td><span class="badge bg-secondary font-monospace">${item.Pelapor}</span></td>
                     
@@ -284,14 +327,25 @@
                     </td>
                     <td><div class="text-break pe-2" style="max-height: 3.6em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">${item.DeskripsiAbnormal}</div></td>
                     <td class="align-middle">
-                        <div class="mb-1 text-muted small text-truncate" style="max-width: 200px;" title="${item.TindakanKorektif}">${item.TindakanKorektif}</div>
                         ${statusBadge}
+                        ${item.Status === 'CLOSED' 
+                            ? `<div class="mt-1 small text-muted"><i class="bi bi-clock me-1"></i>Closed at ${item.TanggalClosedFormated}</div>` 
+                            : `<div class="mt-1 text-muted small text-truncate" style="max-width: 200px;" title="${item.TindakanKorektif}">${item.TindakanKorektif}</div>`
+                        }
                     </td>
                 </tr>
             `;
         });
         
         tbody.innerHTML = htmlGrid;
+    }
+
+    function showCloseModal(tanggal, closedBy, tindakan) {
+        document.getElementById('lblTanggalClosed').innerText = tanggal;
+        document.getElementById('lblClosedBy').innerText = closedBy;
+        document.getElementById('lblTindakanKorektif').innerHTML = tindakan; // innerHTML karena ada encode HTML
+        var myModal = new bootstrap.Modal(document.getElementById('modalClosedDetail'));
+        myModal.show();
     }
 </script>
 
@@ -307,5 +361,8 @@
     }
     .table-hover tbody tr:hover {
         background-color: rgba(0,0,0,0.02);
+    }
+    .table-success-hover:hover {
+        background-color: rgba(25, 135, 84, 0.05) !important;
     }
 </style>

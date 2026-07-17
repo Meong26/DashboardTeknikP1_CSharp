@@ -4,6 +4,7 @@
         let dataAnalitik = null;
         let dataPemakaian = null;
         let dataEWS = null;
+        let dataTemuan = null;
 
         // --- HELPER FUNCTIONS (Diadaptasi dari Index.cshtml) ---
         const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -73,14 +74,16 @@
 
         async function initData() {
             try {
-                const [resAnalitik, resPemakaian, resEWS] = await Promise.all([
+                const [resAnalitik, resPemakaian, resEWS, resTemuan] = await Promise.all([
                     fetch('/Home/GetDashboardData').then(r => r.json()),
                     fetch('/Pemakaian/GetHistoryData').then(r => r.json()),
-                    fetch('/Sparepart/GetApiData').then(r => r.json())
+                    fetch('/Sparepart/GetApiData').then(r => r.json()),
+                    fetch('/Temuan/GetApiData').then(r => r.json())
                 ]);
                 dataAnalitik = resAnalitik;
                 dataPemakaian = resPemakaian;
                 dataEWS = resEWS;
+                dataTemuan = resTemuan;
 
                 buildSlides();
                 document.getElementById('loadingOverlay').style.display = 'none';
@@ -170,6 +173,10 @@
             // Slide 9: EWS Table
             let ewsHtml = buildEwsTable();
             addSlide(`Early Warning System (EWS) - 10 Stok Paling Kritis`, ewsHtml, '/Sparepart/Index');
+
+            // Slide 10: Temuan OPEN Table
+            let temuanHtml = buildTemuanTable(dataTemuan);
+            addSlide(`Daftar Temuan - Status OPEN`, temuanHtml, '/Temuan/Index');
 
             inner.innerHTML = slideHtml;
 
@@ -484,6 +491,49 @@
                             <tbody>${trs}</tbody>
                         </table>
                     </div>`;
+        }
+
+        function buildTemuanTable(apiData) {
+            let openFindings = (apiData.history || []).filter(t => t.Status === "OPEN");
+            
+            if(openFindings.length === 0) return `<div class="alert alert-success fs-3 text-center mt-5"><i class="bi bi-check-circle-fill me-2"></i>Semua laporan temuan sudah terselesaikan (CLOSED).</div>`;
+
+            // Urutkan berdasarkan tanggal terbaru
+            openFindings.sort((a,b) => new Date(b.Tanggal) - new Date(a.Tanggal));
+            
+            // Batasi tampilan maksimal 10 temuan agar muat di layar TV
+            let list = openFindings.slice(0, 10);
+
+            let trs = list.map((a, i) => `
+                <tr>
+                    <td class="text-center fs-4">${i+1}</td>
+                    <td class="text-center fs-4">${a.TanggalFormated}</td>
+                    <td class="fs-4">${a.Line} - ${a.NamaMesin}</td>
+                    <td class="fs-4 text-wrap text-truncate" style="max-width: 400px;">${a.DeskripsiAbnormal}</td>
+                    <td class="fs-4">${a.Pelapor}</td>
+                    <td class="text-center fw-bold fs-4 text-danger blink-text">OPEN</td>
+                </tr>
+            `).join('');
+
+            return `<div class="table-responsive h-100 d-flex flex-column justify-content-center">
+                        <table class="table table-striped table-bordered mb-0 align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="text-center w-5">No</th>
+                                    <th class="text-center w-15">Tanggal</th>
+                                    <th class="w-20">Line / Mesin</th>
+                                    <th class="w-35">Deskripsi Kendala</th>
+                                    <th class="w-15">Pelapor</th>
+                                    <th class="text-center w-10">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>${trs}</tbody>
+                        </table>
+                    </div>
+                    <style>
+                        .blink-text { animation: blinker 1.5s linear infinite; }
+                        @keyframes blinker { 50% { opacity: 0.3; } }
+                    </style>`;
         }
 
         // Initialize TV Mode

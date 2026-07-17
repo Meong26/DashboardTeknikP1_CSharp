@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using DashboardTeknikP1.Repositories;
 using DashboardTeknikP1.Models;
-using OfficeOpenXml;
+using ClosedXML.Excel;
 using System;
 using System.IO;
 using System.Globalization;
@@ -40,28 +40,28 @@ namespace DashboardTeknikP1.Controllers
                 using (var stream = new MemoryStream())
                 {
                     fileYP11.CopyTo(stream);
-                    using (var package = new ExcelPackage(stream))
+                    using (var workbook = new XLWorkbook(stream))
                     {
-                        ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
-                        int rowCount = worksheet.Dimension.Rows;
+                        var worksheet = workbook.Worksheet(1);
+                        int rowCount = worksheet.LastRowUsed()?.RowNumber() ?? 0;
                         for (int row = 2; row <= rowCount; row++)
                         {
                             var data = new SAP_YP11
                             {
-                                WeekKalendarIndofood = worksheet.Cells[row, 1].Text,
-                                FunctionLocation = worksheet.Cells[row, 2].Text,
-                                NotificationType = worksheet.Cells[row, 3].Text,
-                                NotificationDesc = worksheet.Cells[row, 4].Text,
-                                NotificationDate = ParseDate(worksheet.Cells[row, 5]),
-                                TotalDownTimeInMinutes = ParseDouble(worksheet.Cells[row, 6]),
-                                DownTimeStartTime = ParseTime(worksheet.Cells[row, 5], worksheet.Cells[row, 7]),
-                                DownTimeEndTime = ParseTime(worksheet.Cells[row, 5], worksheet.Cells[row, 8]),
-                                ActivityText = worksheet.Cells[row, 9].Text,
-                                WageGroup_GroupShift = worksheet.Cells[row, 10].Text,
-                                MasterReceipt = worksheet.Cells[row, 11].Text,
-                                ProcessOrder = worksheet.Cells[row, 12].Text,
-                                WorkCenterPPDesc = worksheet.Cells[row, 13].Text,
-                                DownTimeCode_ActivityCodeDesc = worksheet.Cells[row, 14].Text
+                                WeekKalendarIndofood = worksheet.Cell(row, 1).GetString(),
+                                FunctionLocation = worksheet.Cell(row, 2).GetString(),
+                                NotificationType = worksheet.Cell(row, 3).GetString(),
+                                NotificationDesc = worksheet.Cell(row, 4).GetString(),
+                                NotificationDate = ParseDate(worksheet.Cell(row, 5)),
+                                TotalDownTimeInMinutes = ParseDouble(worksheet.Cell(row, 6)),
+                                DownTimeStartTime = ParseTime(worksheet.Cell(row, 5), worksheet.Cell(row, 7)),
+                                DownTimeEndTime = ParseTime(worksheet.Cell(row, 5), worksheet.Cell(row, 8)),
+                                ActivityText = worksheet.Cell(row, 9).GetString(),
+                                WageGroup_GroupShift = worksheet.Cell(row, 10).GetString(),
+                                MasterReceipt = worksheet.Cell(row, 11).GetString(),
+                                ProcessOrder = worksheet.Cell(row, 12).GetString(),
+                                WorkCenterPPDesc = worksheet.Cell(row, 13).GetString(),
+                                DownTimeCode_ActivityCodeDesc = worksheet.Cell(row, 14).GetString()
                             };
                             listData.Add(data);
                         }
@@ -80,26 +80,26 @@ namespace DashboardTeknikP1.Controllers
                 using (var stream = new MemoryStream())
                 {
                     fileYR21.CopyTo(stream);
-                    using (var package = new ExcelPackage(stream))
+                    using (var workbook = new XLWorkbook(stream))
                     {
-                        ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
-                        int rowCount = worksheet.Dimension.Rows;
+                        var worksheet = workbook.Worksheet(1);
+                        int rowCount = worksheet.LastRowUsed()?.RowNumber() ?? 0;
                         for (int row = 2; row <= rowCount; row++)
                         {
                             var data = new SAP_YR21
                             {
-                                WeekOfBasicFinishedDate = worksheet.Cells[row, 1].Text,
-                                PostingDate = ParseDate(worksheet.Cells[row, 2]),
-                                ResourceName = worksheet.Cells[row, 3].Text,
-                                WageGroup = worksheet.Cells[row, 4].Text,
-                                GroupName = worksheet.Cells[row, 5].Text,
-                                PlannedHour = ParseDouble(worksheet.Cells[row, 6]),
-                                ActualHour = ParseDouble(worksheet.Cells[row, 7]),
-                                StdOutputPcs = ParseDouble(worksheet.Cells[row, 8]),
-                                DelivQtyPcs = ParseDouble(worksheet.Cells[row, 9]),
-                                EffectivityPO_Pct = ParseDouble(worksheet.Cells[row, 10]),
-                                Efficiency_Pct = ParseDouble(worksheet.Cells[row, 11]),
-                                Ach_Pct = ParseDouble(worksheet.Cells[row, 12])
+                                WeekOfBasicFinishedDate = worksheet.Cell(row, 1).GetString(),
+                                PostingDate = ParseDate(worksheet.Cell(row, 2)),
+                                ResourceName = worksheet.Cell(row, 3).GetString(),
+                                WageGroup = worksheet.Cell(row, 4).GetString(),
+                                GroupName = worksheet.Cell(row, 5).GetString(),
+                                PlannedHour = ParseDouble(worksheet.Cell(row, 6)),
+                                ActualHour = ParseDouble(worksheet.Cell(row, 7)),
+                                StdOutputPcs = ParseDouble(worksheet.Cell(row, 8)),
+                                DelivQtyPcs = ParseDouble(worksheet.Cell(row, 9)),
+                                EffectivityPO_Pct = ParseDouble(worksheet.Cell(row, 10)),
+                                Efficiency_Pct = ParseDouble(worksheet.Cell(row, 11)),
+                                Ach_Pct = ParseDouble(worksheet.Cell(row, 12))
                             };
                             listData.Add(data);
                         }
@@ -110,8 +110,6 @@ namespace DashboardTeknikP1.Controllers
 
             // =========================================================
             // 3. PROSES FILE SPAREPART (SP) - STRUKTUR SIMPLIFIKASI BARU
-            // Asumsi Kolom Excel: 
-            // 1:Plant | 2:Material | 3:Material Desc | 4:UoM | 5:Moving U.Price | 6:Current Stock | 7:Mat.Type | 8:Stor.Loct
             // =========================================================
             if (fileSP != null && fileSP.Length > 0)
             {
@@ -122,45 +120,40 @@ namespace DashboardTeknikP1.Controllers
                 using (var stream = new MemoryStream())
                 {
                     fileSP.CopyTo(stream);
-                    using (var package = new ExcelPackage(stream))
+                    using (var workbook = new XLWorkbook(stream))
                     {
-                        ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
-                        int rowCount = worksheet.Dimension?.Rows ?? 0;
+                        var worksheet = workbook.Worksheet(1);
+                        int rowCount = worksheet.LastRowUsed()?.RowNumber() ?? 0;
                         for (int row = 2; row <= rowCount; row++)
                         {
                             var data = new SAP_Sparepart
                             {
-                                Plant = worksheet.Cells[row, 1].Text,
-                                Material = worksheet.Cells[row, 2].Text,
-                                MaterialDescription = worksheet.Cells[row, 3].Text,
-                                UoM = worksheet.Cells[row, 4].Text,
-                                MovingUnitPrice = ParseDecimal(worksheet.Cells[row, 5]),
-                                CurrentStock = ParseDouble(worksheet.Cells[row, 6]),
-                                MatType = worksheet.Cells[row, 7].Text,
-                                StorLoct = worksheet.Cells[row, 8].Text,
-                                SafetyStock = 1 // Default otomatis
+                                Plant = worksheet.Cell(row, 1).GetString(),
+                                Material = worksheet.Cell(row, 2).GetString(),
+                                MaterialDescription = worksheet.Cell(row, 3).GetString(),
+                                UoM = worksheet.Cell(row, 4).GetString(),
+                                MovingUnitPrice = ParseDecimal(worksheet.Cell(row, 5)),
+                                CurrentStock = ParseDouble(worksheet.Cell(row, 6)),
+                                MatType = worksheet.Cell(row, 7).GetString(),
+                                StorLoct = worksheet.Cell(row, 8).GetString(),
+                                SafetyStock = 1
                             };
                             rawList.Add(data);
                         }
                     }
                 }
 
-                // Logika Penyatuan Material (Agregasi)
                 var groupedSpList = rawList
                     .GroupBy(x => x.Material ?? "UNKNOWN")
                     .Select(group => {
                         var firstItem = group.First();
-                        
-                        // Perbaikan aman untuk C# (Mencegah Error CS0029)
                         string cleanMatNo = firstItem.Material != null ? firstItem.Material.Trim() : "";
-
                         firstItem.CurrentStock = group.Sum(x => x.CurrentStock);
                         
                         if (savedPriorities.Contains(cleanMatNo))
                         {
                             firstItem.Priority = "Y";
                         }
-
                         return firstItem;
                     }).ToList();
 
@@ -177,30 +170,29 @@ namespace DashboardTeknikP1.Controllers
                 using (var stream = new MemoryStream())
                 {
                     fileYP14.CopyTo(stream);
-                    using (var package = new ExcelPackage(stream))
+                    using (var workbook = new XLWorkbook(stream))
                     {
-                        ExcelWorksheet worksheet = package.Workbook.Worksheets[0];
-                        // PERBAIKAN: Gunakan null-conditional operator '?' agar tidak error saat Excel berantakan
-                        int rowCount = worksheet.Dimension?.Rows ?? 0; 
+                        var worksheet = workbook.Worksheet(1);
+                        int rowCount = worksheet.LastRowUsed()?.RowNumber() ?? 0;
                         
                         for (int row = 2; row <= rowCount; row++)
                         {
                             var data = new SAP_YP14
                             {
-                                OrderType = worksheet.Cells[row, 1].Text,
-                                OrderNo = worksheet.Cells[row, 2].Text,
-                                Description = worksheet.Cells[row, 3].Text,
-                                DocumentDate = ParseDate(worksheet.Cells[row, 4]),
-                                MaterialNo = worksheet.Cells[row, 5].Text,
-                                MaterialDescription = worksheet.Cells[row, 6].Text,
-                                Qty = ParseDouble(worksheet.Cells[row, 7]),
-                                PricePerUnit = ParseDecimal(worksheet.Cells[row, 8]),
-                                UoM = worksheet.Cells[row, 9].Text,
-                                MaterialCost = ParseDecimal(worksheet.Cells[row, 10]),
-                                WorkCenter = worksheet.Cells[row, 11].Text,
-                                EquipmentDescription = worksheet.Cells[row, 12].Text,
-                                CostCenter = worksheet.Cells[row, 13].Text,
-                                FuncLoc = worksheet.Cells[row, 14].Text
+                                OrderType = worksheet.Cell(row, 1).GetString(),
+                                OrderNo = worksheet.Cell(row, 2).GetString(),
+                                Description = worksheet.Cell(row, 3).GetString(),
+                                DocumentDate = ParseDate(worksheet.Cell(row, 4)),
+                                MaterialNo = worksheet.Cell(row, 5).GetString(),
+                                MaterialDescription = worksheet.Cell(row, 6).GetString(),
+                                Qty = ParseDouble(worksheet.Cell(row, 7)),
+                                PricePerUnit = ParseDecimal(worksheet.Cell(row, 8)),
+                                UoM = worksheet.Cell(row, 9).GetString(),
+                                MaterialCost = ParseDecimal(worksheet.Cell(row, 10)),
+                                WorkCenter = worksheet.Cell(row, 11).GetString(),
+                                EquipmentDescription = worksheet.Cell(row, 12).GetString(),
+                                CostCenter = worksheet.Cell(row, 13).GetString(),
+                                FuncLoc = worksheet.Cell(row, 14).GetString()
                             };
                             listData.Add(data);
                         }
@@ -213,18 +205,16 @@ namespace DashboardTeknikP1.Controllers
         }
 
         // =========================================================
-        // HELPER METHODS (MENGGUNAKAN NATIVE VALUE EPPLUS AGAR AMAN 100%)
+        // HELPER METHODS (CLOSEDXML VERSION)
         // =========================================================
-        private DateTime ParseDate(ExcelRange cell)
+        private DateTime ParseDate(IXLCell cell)
         {
             var rawValue = cell.Value;
             
-            // Prioritas 1: Jika Excel sudah mengenali sebagai DateTime/Angka Serial
-            if (rawValue is DateTime dt) return dt;
-            if (rawValue is double d) return DateTime.FromOADate(d);
+            if (rawValue.IsDateTime) return rawValue.GetDateTime();
+            if (rawValue.IsNumber) return DateTime.FromOADate(rawValue.GetNumber());
 
-            // Prioritas 2: Manipulasi teks string (Sapu Jagat format titik/strip YP14)
-            string dateText = cell.Text?.Trim() ?? "";
+            string dateText = cell.GetString()?.Trim() ?? "";
             if (string.IsNullOrEmpty(dateText)) return new DateTime(1900, 1, 1);
 
             dateText = dateText.Replace(".", "/").Replace("-", "/");
@@ -243,17 +233,13 @@ namespace DashboardTeknikP1.Controllers
             return new DateTime(1900, 1, 1);
         }
 
-        private double ParseDouble(ExcelRange cell)
+        private double ParseDouble(IXLCell cell)
         {
             var rawValue = cell.Value;
             
-            // Prioritas 1: Tangkap nilai asli tanpa peduli format tulisan
-            if (rawValue is double d) return d;
-            if (rawValue is int i) return Convert.ToDouble(i);
-            if (rawValue is decimal dec) return Convert.ToDouble(dec);
+            if (rawValue.IsNumber) return rawValue.GetNumber();
 
-            // Prioritas 2: Jika terpaksa berupa teks murni
-            string text = cell.Text?.Trim() ?? "";
+            string text = cell.GetString()?.Trim() ?? "";
             if (string.IsNullOrEmpty(text)) return 0;
 
             if (double.TryParse(text, out double res)) return res;
@@ -262,15 +248,13 @@ namespace DashboardTeknikP1.Controllers
             return 0;
         }
 
-        private decimal ParseDecimal(ExcelRange cell)
+        private decimal ParseDecimal(IXLCell cell)
         {
             var rawValue = cell.Value;
             
-            if (rawValue is decimal dec) return dec;
-            if (rawValue is double d) return Convert.ToDecimal(d);
-            if (rawValue is int i) return Convert.ToDecimal(i);
+            if (rawValue.IsNumber) return Convert.ToDecimal(rawValue.GetNumber());
 
-            string text = cell.Text?.Trim() ?? "";
+            string text = cell.GetString()?.Trim() ?? "";
             if (string.IsNullOrEmpty(text)) return 0;
 
             if (decimal.TryParse(text, out decimal res)) return res;
@@ -279,14 +263,13 @@ namespace DashboardTeknikP1.Controllers
             return 0;
         }
 
-        private int ParseInt(ExcelRange cell)
+        private int ParseInt(IXLCell cell)
         {
             var rawValue = cell.Value;
             
-            if (rawValue is int i) return i;
-            if (rawValue is double d) return Convert.ToInt32(d);
+            if (rawValue.IsNumber) return Convert.ToInt32(rawValue.GetNumber());
 
-            string text = cell.Text?.Trim() ?? "";
+            string text = cell.GetString()?.Trim() ?? "";
             if (int.TryParse(text, out int res)) return res;
             
             if (double.TryParse(text.Replace(",", "."), CultureInfo.InvariantCulture, out double dResult))
@@ -295,18 +278,21 @@ namespace DashboardTeknikP1.Controllers
             return 0;
         }
 
-        private DateTime ParseTime(ExcelRange dateCell, ExcelRange timeCell)
+        private DateTime ParseTime(IXLCell dateCell, IXLCell timeCell)
         {
             DateTime baseDate = ParseDate(dateCell);
             var rawTime = timeCell.Value;
 
-            if (rawTime is DateTime timeDt)
+            if (rawTime.IsDateTime)
+            {
+                var timeDt = rawTime.GetDateTime();
                 return new DateTime(baseDate.Year, baseDate.Month, baseDate.Day, timeDt.Hour, timeDt.Minute, timeDt.Second);
+            }
 
-            if (rawTime is double timeDouble && timeDouble < 1)
-                return baseDate.Add(TimeSpan.FromDays(timeDouble));
+            if (rawTime.IsNumber && rawTime.GetNumber() < 1)
+                return baseDate.Add(TimeSpan.FromDays(rawTime.GetNumber()));
 
-            string timeText = timeCell.Text?.Trim() ?? "";
+            string timeText = timeCell.GetString()?.Trim() ?? "";
             timeText = timeText.Replace(".", ":");
 
             if (TimeSpan.TryParse(timeText, out TimeSpan parsedTime))

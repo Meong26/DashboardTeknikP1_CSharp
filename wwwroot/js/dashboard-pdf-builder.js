@@ -69,7 +69,7 @@ let modalReportBuilderInst = null;
     function appendImageToPDFContainer(container, title, dataUrl, subtitle = '') {
         const div = document.createElement('div');
         div.style.marginBottom = '20px';
-        let html = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px;">${title}</h3>`;
+        let html = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px; color: #000;">${title}</h3>`;
         if (subtitle) {
             html += `<p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 10px; font-style: italic;">${subtitle}</p>`;
         }
@@ -78,10 +78,23 @@ let modalReportBuilderInst = null;
         container.appendChild(div);
     }
 
+    let origGetAttr = null;
+
     async function generatePDF() {
         modalReportBuilderInst.hide();
         document.getElementById('pdf-loading-overlay').classList.remove('d-none');
         document.getElementById('pdf-loading-overlay').classList.add('d-flex');
+        
+        // MOCK data-bs-theme to 'light' to trick Chart.js into rendering black texts
+        // This avoids changing the actual DOM attribute, preventing the screen from flashing white
+        origGetAttr = document.documentElement.getAttribute;
+        document.documentElement.getAttribute = function(name) {
+            if (name === 'data-bs-theme') return 'light';
+            return origGetAttr.call(this, name);
+        };
+        
+        if (typeof barChartInst !== 'undefined' && barChartInst) barChartInst.update('none');
+        if (typeof pieChartInst !== 'undefined' && pieChartInst) pieChartInst.update('none');
         
         // Setup timestamp
         const now = new Date();
@@ -116,7 +129,7 @@ let modalReportBuilderInst = null;
                 const html = generateOfflineDTAchievement();
                 const div = document.createElement('div');
                 div.style.marginBottom = '20px';
-                div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px;">Pencapaian DT NT</h3>
+                div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px; color: #000;">Pencapaian DT NT</h3>
                                  <p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 10px; font-style: italic;">Khusus Minggu Berjalan (Filter Diabaikan)</p>
                                  ${html}`;
                 container.appendChild(div);
@@ -154,7 +167,7 @@ let modalReportBuilderInst = null;
                 
                 const div = document.createElement('div');
                 div.style.marginBottom = '20px';
-                div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px;">Kesimpulan Kehandalan Sistem</h3>
+                div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px; color: #000;">Kesimpulan Kehandalan Sistem</h3>
                                  <p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 10px; font-style: italic;">${getFilterSubtitle(mode, timeVal)}</p>
                                  ${html}`;
                 container.appendChild(div);
@@ -167,7 +180,7 @@ let modalReportBuilderInst = null;
                 const html = generateOfflineTopBadActors(mode, timeVal);
                 const div = document.createElement('div');
                 div.style.marginBottom = '20px';
-                div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px;">Top 5 Bad Actor (Downtime Tertinggi)</h3>
+                div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px; color: #000;">Top 5 Bad Actor (Downtime Tertinggi)</h3>
                                  <p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 10px; font-style: italic;">${getFilterSubtitle(mode, timeVal)}</p>
                                  ${html}`;
                 container.appendChild(div);
@@ -186,7 +199,7 @@ let modalReportBuilderInst = null;
                 if (activities.length === 0) {
                     const div = document.createElement('div');
                     div.style.marginBottom = '20px';
-                    div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px;">Rincian Aktifitas Downtime</h3>
+                    div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px; color: #000;">Rincian Aktifitas Downtime</h3>
                                      <p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 10px; font-style: italic;">${getFilterSubtitle(mode, timeVal)}</p>
                                      <table style="width: 100%; border-collapse: collapse; font-size: 10px;"><tr><td style="text-align:center; padding:10px; border: 1px solid #ddd;">Tidak ada aktifitas pada periode ini.</td></tr></table>`;
                     container.appendChild(div);
@@ -211,7 +224,7 @@ let modalReportBuilderInst = null;
                             </tr>`;
                         });
                         
-                        let html = `<table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 20px;">
+                        let html = `<table style="width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 20px; color: #000;">
                             <thead style="background-color: #343a40; color: white;">
                                 <tr>
                                     <th style="padding: 6px; border: 1px solid #ddd; width: 5%;">No</th>
@@ -229,7 +242,7 @@ let modalReportBuilderInst = null;
                         const div = document.createElement('div');
                         div.style.marginBottom = '20px';
                         if (i === 0) {
-                            div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px;">Rincian Aktifitas Downtime</h3>
+                            div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px; color: #000;">Rincian Aktifitas Downtime</h3>
                                              <p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 10px; font-style: italic;">${getFilterSubtitle(mode, timeVal)}</p>
                                              ${html}`;
                         } else {
@@ -263,7 +276,7 @@ let modalReportBuilderInst = null;
                         });
                     }
                     
-                    let html = `<table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+                    let html = `<table style="width: 100%; border-collapse: collapse; font-size: 11px; color: #000;">
                         <thead style="background-color: #343a40; color: white;">
                             <tr>
                                 <th style="padding: 6px; border: 1px solid #ddd; width: 5%;">No</th>
@@ -279,7 +292,7 @@ let modalReportBuilderInst = null;
 
                     const div = document.createElement('div');
                     div.style.marginBottom = '20px';
-                    div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px;">Daftar Temuan (Status OPEN)</h3>
+                    div.innerHTML = `<h3 style="font-size: 16px; border-left: 4px solid #dc3545; padding-left: 8px; margin-bottom: 5px; color: #000;">Daftar Temuan (Status OPEN)</h3>
                                      <p style="font-size: 10px; color: #666; margin-top: 0; margin-bottom: 10px; font-style: italic;">Diambil secara real-time dari database temuan</p>
                                      ${html}`;
                     container.appendChild(div);
@@ -392,6 +405,13 @@ let modalReportBuilderInst = null;
             console.error(error);
             alert("Terjadi kesalahan saat menghasilkan PDF.");
         } finally {
+            // Restore original getAttribute
+            if (origGetAttr) {
+                document.documentElement.getAttribute = origGetAttr;
+                if (typeof barChartInst !== 'undefined' && barChartInst) barChartInst.update('none');
+                if (typeof pieChartInst !== 'undefined' && pieChartInst) pieChartInst.update('none');
+            }
+
             document.getElementById('pdf-loading-overlay').classList.add('d-none');
             document.getElementById('pdf-loading-overlay').classList.remove('d-flex');
         }

@@ -13,5 +13,8 @@ namespace DashboardTeknikP1.Models
         public string DeskripsiAbnormal { get; set; } = string.Empty;
         public string TindakanKorektif { get; set; } = string.Empty;
         public string StatusTemuan { get; set; } = string.Empty;
+        public DateTime? TanggalClosed { get; set; }
+        public string? ClosedBy { get; set; }
+        public string? ClosedByName { get; set; }
     }
 }
