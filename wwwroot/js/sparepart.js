@@ -270,7 +270,7 @@ function renderEwsTableRows() {
                     <td class="font-monospace fw-bold">${item.materialNo} ${isItemPriority ? '⭐' : ''}</td>
                     <td class="fw-bold text-truncate" style="max-width: 320px;">${item.description}</td>
                     <td class="text-center fw-bold">${item.actualStock} ${item.uom}</td>
-                    <td class="text-center"><span class="badge ${isZero ? 'bg-danger' : 'bg-warning text-dark'} fw-bold">${isZero ? 'HABIS' : 'KRITIS'}</span></td>
+                    <td class="text-center"><span class="badge ${isZero ? 'bg-danger' : 'bg-warning text-dark'} fw-bold">${isZero ? 'KOSONG' : 'KRITIS'}</span></td>
                 </tr>`;
         } else if (isPRModeActive) {
             let memory = prSelections[item.materialNo] || {};
@@ -288,7 +288,7 @@ function renderEwsTableRows() {
                 </tr>`;
         } else {
             let badgeClass = isZero ? "bg-danger" : "bg-warning text-dark border border-warning";
-            let statusText = isZero ? "HABIS" : "KRITIS";
+            let statusText = isZero ? "KOSONG" : "KRITIS";
 
             htmlGrid += `
                 <tr class="${rowClass} ews-row" onclick="focusSearchToItem('${item.materialNo}')" style="cursor:pointer;">
@@ -499,12 +499,7 @@ function renderMainTableRows() {
             rowStyleClass = "";
         }
 
-        if (isItemPriority && !isZero && !isCritical) {
-            rowStyleClass = "";
-            badgeComponent = `<span class="badge bg-info text-white fw-bold px-2 w-100">PRIORITAS</span>`;
-        } else if (isItemPriority) {
-            badgeComponent = `<span class="badge ${isZero ? 'bg-danger' : 'bg-warning text-dark'} fw-bold px-2 w-100">PRIORITAS</span>`;
-        }
+
 
         htmlBuffer += `
             <tr class="${rowStyleClass}">
