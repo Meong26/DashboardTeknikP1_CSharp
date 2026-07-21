@@ -55,12 +55,12 @@
         <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem;">
             <thead class="table-dark sticky-top">
                 <tr>
-                    <th style="width: 15%;">Waktu Laporan</th>
-                    <th style="width: 8%;">Pelapor</th>
-                    <th style="width: 10%;">Line</th>
-                    <th style="width: 20%;">Mesin Bermasalah</th>
-                    <th style="width: 25%;">Deskripsi Kendala</th>
-                    <th>Tindakan / Status</th>
+                    <th style="width: 15%; cursor: pointer;" onclick="sortTable('TanggalFormated')" id="th-TanggalFormated">Waktu Laporan <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size: 0.75rem;"></i></th>
+                    <th style="width: 8%; cursor: pointer;" onclick="sortTable('Pelapor')" id="th-Pelapor">Pelapor <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size: 0.75rem;"></i></th>
+                    <th style="width: 10%; cursor: pointer;" onclick="sortTable('Line')" id="th-Line">Line <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size: 0.75rem;"></i></th>
+                    <th style="width: 20%; cursor: pointer;" onclick="sortTable('KodeMesin')" id="th-KodeMesin">Mesin Bermasalah <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size: 0.75rem;"></i></th>
+                    <th style="width: 25%; cursor: pointer;" onclick="sortTable('DeskripsiAbnormal')" id="th-DeskripsiAbnormal">Deskripsi Kendala <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size: 0.75rem;"></i></th>
+                    <th style="cursor: pointer;" onclick="sortTable('Status')" id="th-Status">Tindakan / Status <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size: 0.75rem;"></i></th>
                 </tr>
             </thead>
             <tbody id="historyBody">
@@ -358,6 +358,69 @@
         document.getElementById('lblTindakanKorektif').innerHTML = tindakan; // innerHTML karena ada encode HTML
         var myModal = new bootstrap.Modal(document.getElementById('modalClosedDetail'));
         myModal.show();
+    }
+
+    let sortColumn = "";
+    let sortAscending = true;
+
+    function sortTable(column) {
+        if (sortColumn === column) {
+            sortAscending = !sortAscending;
+        } else {
+            sortColumn = column;
+            sortAscending = true;
+        }
+
+        historyTemuan.sort((a, b) => {
+            let valA = a[column];
+            let valB = b[column];
+
+            if (valA === null || valA === undefined) valA = "";
+            if (valB === null || valB === undefined) valB = "";
+
+            // Handle date parsing for TanggalFormated
+            if (column === 'TanggalFormated') {
+                valA = new Date(valA).getTime();
+                valB = new Date(valB).getTime();
+                // if invalid date, fallback to 0
+                if (isNaN(valA)) valA = 0;
+                if (isNaN(valB)) valB = 0;
+            } else {
+                if (typeof valA === "string") valA = valA.toLowerCase();
+                if (typeof valB === "string") valB = valB.toLowerCase();
+            }
+
+            if (valA < valB) return sortAscending ? -1 : 1;
+            if (valA > valB) return sortAscending ? 1 : -1;
+            return 0;
+        });
+
+        renderHistoryTable();
+        updateSortIcons(column);
+    }
+
+    function updateSortIcons(column) {
+        // Reset all icons to default
+        const thElements = document.querySelectorAll('thead th');
+        thElements.forEach(th => {
+            const icon = th.querySelector('i');
+            if (icon) {
+                icon.className = 'bi bi-arrow-down-up ms-1 text-muted';
+            }
+        });
+
+        // Set the active sort icon
+        const activeTh = document.getElementById('th-' + column);
+        if (activeTh) {
+            const icon = activeTh.querySelector('i');
+            if (icon) {
+                if (sortAscending) {
+                    icon.className = 'bi bi-arrow-up ms-1 text-primary';
+                } else {
+                    icon.className = 'bi bi-arrow-down ms-1 text-primary';
+                }
+            }
+        }
     }
 </script>
 
