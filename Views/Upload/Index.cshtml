@@ -1,5 +1,12 @@
 @{
     ViewData["Title"] = "Upload Data SAP";
+    var dates = ViewBag.LastUploadDates as Dictionary<string, DateTime?>;
+    string GetLastUpload(string tableName) {
+        if(dates != null && dates.ContainsKey(tableName) && dates[tableName].HasValue) {
+            return "Terakhir diupload: " + dates[tableName].Value.ToString("dd MMM yyyy HH:mm");
+        }
+        return "Belum ada data";
+    }
 }
 
 <div class="row justify-content-center">
@@ -13,31 +20,72 @@
                     <strong>Catatan:</strong> Menu ini digunakan untuk melakukan ekstraksi data ke SQL Server selama fase POC berlangsung. Jika koneksi API/Background Job sudah di-ACC oleh Corporate IT, menu ini akan dinonaktifkan.
                 </div>
 
-                <form asp-controller="Upload" asp-action="ProcessUpload" method="post" enctype="multipart/form-data">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success alert-dismissible fade show fw-bold shadow-sm" role="alert">
+                        <i class="bi bi-check-circle-fill me-2"></i> @TempData["SuccessMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show fw-bold shadow-sm" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i> @TempData["ErrorMessage"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                }
+
+                <form id="uploadForm" asp-controller="Upload" asp-action="ProcessUpload" method="post" enctype="multipart/form-data">
                     
                     <div class="mb-4">
-                        <label class="form-label fw-bold">1. File Downtime (YP11.xlsx)</label>
+                        <label class="form-label fw-bold w-100 d-flex justify-content-between align-items-center">
+                            <span>1. File Downtime (YP11.xlsx)</span>
+                            <span class="text-muted fw-normal" style="font-size:0.8rem; font-style:italic;">@GetLastUpload("tbl_SAP_YP11")</span>
+                        </label>
                         <input type="file" name="fileYP11" class="form-control" accept=".xlsx" />
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold">2. File Produksi (YR21.xlsx)</label>
+                        <label class="form-label fw-bold w-100 d-flex justify-content-between align-items-center">
+                            <span>2. File Produksi (YR21.xlsx)</span>
+                            <span class="text-muted fw-normal" style="font-size:0.8rem; font-style:italic;">@GetLastUpload("tbl_SAP_YR21")</span>
+                        </label>
                         <input type="file" name="fileYR21" class="form-control" accept=".xlsx" />
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold">3. File Suku Cadang (YP15.xlsx)</label>
+                        <label class="form-label fw-bold w-100 d-flex justify-content-between align-items-center">
+                            <span>3. File Suku Cadang (YP15.xlsx)</span>
+                            <span class="text-muted fw-normal" style="font-size:0.8rem; font-style:italic;">@GetLastUpload("tbl_SAP_Sparepart")</span>
+                        </label>
                         <input type="file" name="fileSP" class="form-control" accept=".xlsx" />
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label fw-bold">4. File Aktual Biaya Sparepart (YP14.xlsx)</label>
+                        <label class="form-label fw-bold w-100 d-flex justify-content-between align-items-center">
+                            <span>4. File Aktual Biaya Sparepart (YP14.xlsx)</span>
+                            <span class="text-muted fw-normal" style="font-size:0.8rem; font-style:italic;">@GetLastUpload("tbl_SAP_YP14")</span>
+                        </label>
                         <input type="file" name="fileYP14" class="form-control" accept=".xlsx" />
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 fw-bold">Ekstrak & Simpan ke Database</button>
+                    <button type="submit" id="btnSubmitUpload" class="btn btn-primary w-100 fw-bold">Ekstrak & Simpan ke Database</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.getElementById("uploadForm");
+        const btn = document.getElementById("btnSubmitUpload");
+
+        if (form) {
+            form.addEventListener("submit", function () {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Sedang Memproses Data Excel (Mohon Tunggu, Bisa Memakan Waktu Lama)...';
+            });
+        }
+    });
+</script>

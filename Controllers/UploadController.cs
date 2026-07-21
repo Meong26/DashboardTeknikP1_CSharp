@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize(Roles = "Administrator")]
+    [Authorize(Roles = "Administrator,Section")]
     public class UploadController : Controller
     {
         private readonly UploadRepository _repository;
@@ -24,16 +24,19 @@ namespace DashboardTeknikP1.Controllers
 
         public IActionResult Index()
         {
+            ViewBag.LastUploadDates = _repository.GetLastUploadDates();
             return View();
         }
 
         [HttpPost]
         public IActionResult ProcessUpload(IFormFile fileYP11, IFormFile fileYR21, IFormFile fileSP, IFormFile fileYP14)
         {
-            // =========================================================
-            // 1. PROSES FILE YP11 (DOWNTIME)
-            // =========================================================
-            if (fileYP11 != null && fileYP11.Length > 0)
+            try 
+            {
+                // =========================================================
+                // 1. PROSES FILE YP11 (DOWNTIME)
+                // =========================================================
+                if (fileYP11 != null && fileYP11.Length > 0)
             {
                 _repository.TruncateTable("tbl_SAP_YP11");
                 var listData = new List<SAP_YP11>();
@@ -68,6 +71,7 @@ namespace DashboardTeknikP1.Controllers
                     }
                 }
                 _repository.InsertBulkYP11(listData);
+                _repository.LogUpload("tbl_SAP_YP11");
             }
 
             // =========================================================
@@ -106,6 +110,7 @@ namespace DashboardTeknikP1.Controllers
                     }
                 }
                 _repository.InsertBulkYR21(listData);
+                _repository.LogUpload("tbl_SAP_YR21");
             }
 
             // =========================================================
@@ -158,6 +163,7 @@ namespace DashboardTeknikP1.Controllers
                     }).ToList();
 
                 _repository.InsertBulkSparepart(groupedSpList);
+                _repository.LogUpload("tbl_SAP_Sparepart");
             }
 
             // =========================================================
@@ -199,6 +205,14 @@ namespace DashboardTeknikP1.Controllers
                     }
                 }
                 _repository.InsertBulkYP14(listData);
+                _repository.LogUpload("tbl_SAP_YP14");
+            }
+
+            TempData["SuccessMessage"] = "Data Excel SAP berhasil diunggah dan disimpan ke Database.";
+            }
+            catch (Exception ex) 
+            {
+                TempData["ErrorMessage"] = "Terjadi kesalahan sistem atau timeout saat memproses file. Pesan Error: " + ex.Message;
             }
 
             return RedirectToAction("Index");

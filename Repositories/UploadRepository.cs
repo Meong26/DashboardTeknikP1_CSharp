@@ -114,5 +114,47 @@ namespace DashboardTeknikP1.Repositories
                 return conn.Query<string>("SELECT Material FROM tbl_Sparepart_Priority WHERE Material IS NOT NULL").ToList();
             }
         }
+
+        private void EnsureLogTableExists(SqlConnection conn)
+        {
+            var createTableQuery = @"
+                IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='tbl_Upload_Logs' AND xtype='U')
+                BEGIN
+                    CREATE TABLE tbl_Upload_Logs (
+                        TableName VARCHAR(100) PRIMARY KEY,
+                        LastUploadDate DATETIME
+                    )
+                END";
+            conn.Execute(createTableQuery);
+        }
+
+        public Dictionary<string, DateTime?> GetLastUploadDates()
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                EnsureLogTableExists(conn);
+                var query = "SELECT TableName, LastUploadDate FROM tbl_Upload_Logs";
+                var result = conn.Query(query).ToDictionary(
+                    row => (string)row.TableName,
+                    row => (DateTime?)row.LastUploadDate
+                );
+                return result;
+            }
+        }
+
+        public void LogUpload(string tableName)
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                EnsureLogTableExists(conn);
+                var query = @"
+                    IF EXISTS (SELECT 1 FROM tbl_Upload_Logs WHERE TableName = @TableName)
+                        UPDATE tbl_Upload_Logs SET LastUploadDate = GETDATE() WHERE TableName = @TableName;
+                    ELSE
+                        INSERT INTO tbl_Upload_Logs (TableName, LastUploadDate) VALUES (@TableName, GETDATE());
+                ";
+                conn.Execute(query, new { TableName = tableName });
+            }
+        }
     }
 }

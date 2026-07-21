@@ -148,13 +148,19 @@
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>
-                <select class="form-select form-select-sm border-0 bg-transparent fw-bold text-success inp-line" onchange="this.closest('tr').querySelector('.inp-mesin').focus()" onkeydown="handleEnter(event, this, '.inp-mesin')">
+                <select class="form-select form-select-sm border-0 bg-transparent fw-bold text-success inp-line" onkeydown="handleEnter(event, this, '.inp-mesin')">
                     <option value="" disabled selected>Pilih...</option>
                     <option value="Line 1">Line 1</option>
                     <option value="Line 2">Line 2</option>
                     <option value="Line 3">Line 3</option>
                     <option value="Line 4">Line 4</option>
                     <option value="Line 5">Line 5</option>
+                    <option value="Line 6">Line 6</option>
+                    <option value="Line 7">Line 7</option>
+                    <option value="Line 8">Line 8</option>
+                    <option value="Line 9">Line 9</option>
+                    <option value="SILO">SILO</option>
+                    <option value="Emulsik">Emulsik</option>
                     <option value="Umum">Umum</option>
                 </select>
             </td>
@@ -202,6 +208,12 @@
     }
 
     function handleEnter(e, currentElement, nextSelector) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            e.preventDefault();
+            saveDataTemuan();
+            return;
+        }
+
         if (e.key === 'Tab' || e.key === 'Enter') {
             e.preventDefault();
             const currentRow = currentElement.closest('tr');
@@ -211,7 +223,7 @@
                 if (currentRow === tbody.lastElementChild) {
                     addNewRow();
                 } else {
-                    currentRow.nextElementSibling.querySelector('.inp-mesin').focus();
+                    currentRow.nextElementSibling.querySelector('.inp-line').focus();
                 }
             } else {
                 currentRow.querySelector(nextSelector).focus();
