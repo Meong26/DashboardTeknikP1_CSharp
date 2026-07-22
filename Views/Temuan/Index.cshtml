@@ -55,12 +55,12 @@
         <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem;">
             <thead class="table-dark sticky-top">
                 <tr>
-                    <th style="width: 15%; cursor: pointer;" onclick="sortTable('TanggalFormated')" id="th-TanggalFormated">Waktu Laporan <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size: 0.75rem;"></i></th>
-                    <th style="width: 8%; cursor: pointer;" onclick="sortTable('Pelapor')" id="th-Pelapor">Pelapor <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size: 0.75rem;"></i></th>
-                    <th style="width: 10%; cursor: pointer;" onclick="sortTable('Line')" id="th-Line">Line <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size: 0.75rem;"></i></th>
-                    <th style="width: 20%; cursor: pointer;" onclick="sortTable('KodeMesin')" id="th-KodeMesin">Mesin Bermasalah <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size: 0.75rem;"></i></th>
-                    <th style="width: 25%; cursor: pointer;" onclick="sortTable('DeskripsiAbnormal')" id="th-DeskripsiAbnormal">Deskripsi Kendala <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size: 0.75rem;"></i></th>
-                    <th style="cursor: pointer;" onclick="sortTable('Status')" id="th-Status">Tindakan / Status <i class="bi bi-arrow-down-up ms-1 text-muted" style="font-size: 0.75rem;"></i></th>
+                    <th style="width: 15%; cursor: pointer;" onclick="sortTable('TanggalFormated')" id="th-TanggalFormated">Waktu Laporan <i class="bi bi-arrow-down-up ms-1 text-white-50" style="font-size: 0.75rem;"></i></th>
+                    <th style="width: 8%; cursor: pointer;" onclick="sortTable('Pelapor')" id="th-Pelapor">Pelapor <i class="bi bi-arrow-down-up ms-1 text-white-50" style="font-size: 0.75rem;"></i></th>
+                    <th style="width: 10%; cursor: pointer;" onclick="sortTable('Line')" id="th-Line">Line <i class="bi bi-arrow-down-up ms-1 text-white-50" style="font-size: 0.75rem;"></i></th>
+                    <th style="width: 20%; cursor: pointer;" onclick="sortTable('KodeMesin')" id="th-KodeMesin">Mesin Bermasalah <i class="bi bi-arrow-down-up ms-1 text-white-50" style="font-size: 0.75rem;"></i></th>
+                    <th style="width: 25%; cursor: pointer;" onclick="sortTable('DeskripsiAbnormal')" id="th-DeskripsiAbnormal">Deskripsi Kendala <i class="bi bi-arrow-down-up ms-1 text-white-50" style="font-size: 0.75rem;"></i></th>
+                    <th style="cursor: pointer;" onclick="sortTable('Status')" id="th-Status">Tindakan / Status <i class="bi bi-arrow-down-up ms-1 text-white-50" style="font-size: 0.75rem;"></i></th>
                 </tr>
             </thead>
             <tbody id="historyBody">
@@ -405,7 +405,7 @@
         thElements.forEach(th => {
             const icon = th.querySelector('i');
             if (icon) {
-                icon.className = 'bi bi-arrow-down-up ms-1 text-muted';
+                icon.className = 'bi bi-arrow-down-up ms-1 text-white-50';
             }
         });
 
@@ -415,9 +415,9 @@
             const icon = activeTh.querySelector('i');
             if (icon) {
                 if (sortAscending) {
-                    icon.className = 'bi bi-arrow-up ms-1 text-primary';
+                    icon.className = 'bi bi-arrow-up ms-1 text-warning';
                 } else {
-                    icon.className = 'bi bi-arrow-down ms-1 text-primary';
+                    icon.className = 'bi bi-arrow-down ms-1 text-warning';
                 }
             }
         }

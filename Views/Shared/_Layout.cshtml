@@ -314,6 +314,36 @@
                     item.classList.add('active');
                 }
             });
+
+            // --- 4. AUTO SIGN OUT CLIENT-SIDE ---
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <text>
+                let idleTimer;
+                let lastResetTime = 0;
+                const idleDuration = 5 * 60 * 1000; // 30 Menit dalam milidetik
+
+                function resetIdleTimer() {
+                    const now = Date.now();
+                    // THROTTLE: Hanya proses pembaruan timer maksimal 1 kali setiap 5 detik
+                    // Ini mencegah beban CPU yang berat akibat pergerakan mouse yang intensif
+                    if (now - lastResetTime > 5000) {
+                        clearTimeout(idleTimer);
+                        idleTimer = setTimeout(() => {
+                            window.location.href = '/Auth/Logout?reason=timeout';
+                        }, idleDuration);
+                        lastResetTime = now;
+                    }
+                }
+
+                // Daftar event yang menandakan aktivitas user (menggunakan passive: true untuk performa scroll yang lancar)
+                ['mousemove', 'keydown', 'mousedown', 'touchstart', 'scroll'].forEach(evt => 
+                    document.addEventListener(evt, resetIdleTimer, { passive: true })
+                );
+
+                resetIdleTimer(); // Mulai timer saat halaman dimuat
+                </text>
+            }
         });
     </script>
 
