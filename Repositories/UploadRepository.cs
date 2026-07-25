@@ -99,7 +99,6 @@ namespace DashboardTeknikP1.Repositories
                     WHERE NOT EXISTS (
                         SELECT 1 FROM tbl_SAP_YP11 t
                         WHERE (t.FunctionLocation = s.FunctionLocation OR (t.FunctionLocation IS NULL AND s.FunctionLocation IS NULL))
-                          AND (t.NotificationDesc = s.NotificationDesc OR (t.NotificationDesc IS NULL AND s.NotificationDesc IS NULL))
                           AND (t.NotificationDate = s.NotificationDate OR (t.NotificationDate IS NULL AND s.NotificationDate IS NULL))
                           AND (t.DownTimeStartTime = s.DownTimeStartTime OR (t.DownTimeStartTime IS NULL AND s.DownTimeStartTime IS NULL))
                           AND (t.DownTimeEndTime = s.DownTimeEndTime OR (t.DownTimeEndTime IS NULL AND s.DownTimeEndTime IS NULL))
