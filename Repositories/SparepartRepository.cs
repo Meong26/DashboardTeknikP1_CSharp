@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using DashboardTeknikP1.Models;
+using Dapper;
 
 namespace DashboardTeknikP1.Repositories
 {
@@ -60,41 +61,24 @@ namespace DashboardTeknikP1.Repositories
                     try
                     {
                         // 1. Simpan ke Tabel Abadi (Backup)
-                        SqlCommand cmd1 = new SqlCommand("DELETE FROM tbl_Sparepart_Priority", conn, trans);
-                        await cmd1.ExecuteNonQueryAsync();
+                        await conn.ExecuteAsync("DELETE FROM tbl_Sparepart_Priority", transaction: trans);
 
                         if (priorityMaterialNos != null && priorityMaterialNos.Any())
                         {
                             string qInsert = "INSERT INTO tbl_Sparepart_Priority (Material) VALUES (@MatNo)";
-                            using (SqlCommand cmd2 = new SqlCommand(qInsert, conn, trans))
-                            {
-                                cmd2.Parameters.Add("@MatNo", System.Data.SqlDbType.VarChar, 100);
-                                foreach (var matNo in priorityMaterialNos)
-                                {
-                                    cmd2.Parameters["@MatNo"].Value = matNo;
-                                    await cmd2.ExecuteNonQueryAsync();
-                                }
-                            }
+                            var insertParams = priorityMaterialNos.Select(m => new { MatNo = m });
+                            await conn.ExecuteAsync(qInsert, insertParams, transaction: trans);
                         }
 
                         // 2. Sinkronkan ke Tabel Utama (Untuk UI)
-                        SqlCommand cmd3 = new SqlCommand("UPDATE tbl_SAP_Sparepart SET Priority = NULL", conn, trans);
-                        await cmd3.ExecuteNonQueryAsync();
+                        await conn.ExecuteAsync("UPDATE tbl_SAP_Sparepart SET Priority = NULL", transaction: trans);
 
                         if (priorityMaterialNos != null && priorityMaterialNos.Any())
                         {
-                            string qUpdate = "UPDATE tbl_SAP_Sparepart SET Priority = 'Y' WHERE Material = @MatNo";
-                            using (SqlCommand cmd4 = new SqlCommand(qUpdate, conn, trans))
-                            {
-                                cmd4.Parameters.Add("@MatNo", System.Data.SqlDbType.VarChar, 100);
-                                foreach (var matNo in priorityMaterialNos)
-                                {
-                                    cmd4.Parameters["@MatNo"].Value = matNo;
-                                    await cmd4.ExecuteNonQueryAsync();
-                                }
-                            }
+                            string qUpdate = "UPDATE tbl_SAP_Sparepart SET Priority = 'Y' WHERE Material IN @Materials";
+                            await conn.ExecuteAsync(qUpdate, new { Materials = priorityMaterialNos }, transaction: trans);
                         }
-                        
+
                         trans.Commit();
                     }
                     catch

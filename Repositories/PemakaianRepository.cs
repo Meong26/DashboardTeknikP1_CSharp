@@ -42,12 +42,15 @@ namespace DashboardTeknikP1.Repositories
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
+                var startDate = new DateTime(year, 1, 1);
+                var endDate = new DateTime(year + 1, 1, 1);
+
                 string query = @"SELECT p.*, s.MaterialDescription AS MaterialDesc, p.Plant 
                                  FROM tbl_PengambilanSparepart p
                                  LEFT JOIN tbl_SAP_Sparepart s ON p.MaterialNo = s.Material
-                                 WHERE YEAR(p.TanggalPengambilan) = @Year
+                                 WHERE p.TanggalPengambilan >= @StartDate AND p.TanggalPengambilan < @EndDate
                                  ORDER BY p.TanggalPengambilan DESC, p.TanggalInput DESC";
-                var result = await conn.QueryAsync<PengambilanSparepart>(query, new { Year = year });
+                var result = await conn.QueryAsync<PengambilanSparepart>(query, new { StartDate = startDate, EndDate = endDate });
                 return result.ToList();
             }
         }
@@ -56,11 +59,14 @@ namespace DashboardTeknikP1.Repositories
         {
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                string qYp14 = "SELECT * FROM tbl_SAP_YP14 WHERE YEAR(DocumentDate) = @Year ORDER BY DocumentDate DESC";
-                var listYp14 = await conn.QueryAsync<SAP_YP14>(qYp14, new { Year = year });
+                var startDate = new DateTime(year, 1, 1);
+                var endDate = new DateTime(year + 1, 1, 1);
 
-                string qYr21 = "SELECT PostingDate, DelivQtyPcs, WeekOfBasicFinishedDate, ResourceName FROM tbl_SAP_YR21 WHERE YEAR(PostingDate) = @Year";
-                var listYr21 = await conn.QueryAsync<SAP_YR21>(qYr21, new { Year = year });
+                string qYp14 = "SELECT * FROM tbl_SAP_YP14 WHERE DocumentDate >= @StartDate AND DocumentDate < @EndDate ORDER BY DocumentDate DESC";
+                var listYp14 = await conn.QueryAsync<SAP_YP14>(qYp14, new { StartDate = startDate, EndDate = endDate });
+
+                string qYr21 = "SELECT PostingDate, DelivQtyPcs, WeekOfBasicFinishedDate, ResourceName FROM tbl_SAP_YR21 WHERE PostingDate >= @StartDate AND PostingDate < @EndDate";
+                var listYr21 = await conn.QueryAsync<SAP_YR21>(qYr21, new { StartDate = startDate, EndDate = endDate });
 
                 return new Tuple<List<SAP_YP14>, List<SAP_YR21>>(listYp14.ToList(), listYr21.ToList());
             }
@@ -103,6 +109,27 @@ namespace DashboardTeknikP1.Repositories
             {
                 string query = "UPDATE tbl_PengambilanSparepart SET Status = 'ESTIMASI' WHERE PengambilanID = @ID";
                 await conn.ExecuteAsync(query, new { ID = id });
+            }
+        }
+
+        public async Task<List<int>> GetAvailableYearsAsync()
+        {
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                string query = @"
+                    SELECT DISTINCT YEAR(TanggalPengambilan) AS Yr FROM tbl_PengambilanSparepart WHERE TanggalPengambilan IS NOT NULL
+                    UNION
+                    SELECT DISTINCT YEAR(DocumentDate) AS Yr FROM tbl_SAP_YP14 WHERE DocumentDate IS NOT NULL
+                    UNION
+                    SELECT DISTINCT YEAR(PostingDate) AS Yr FROM tbl_SAP_YR21 WHERE PostingDate IS NOT NULL
+                    ORDER BY Yr DESC";
+                var result = await conn.QueryAsync<int>(query);
+                var list = result.ToList();
+                if (!list.Any())
+                {
+                    list.Add(DateTime.Now.Year);
+                }
+                return list;
             }
         }
     }

@@ -7,7 +7,7 @@ let datasetSparepart = [];
 let currentTableData = [];
 let sortState = { col: -1, asc: true };
 let currentPage = 1;
-const itemsPerPage = 100
+const itemsPerPage = 100;
 let isPRModeActive = false;
 let isPriorityModeActive = false;
 let prSelections = {};
@@ -18,37 +18,27 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 function injectControlButtons() {
-    const ewsCardHeader = document.querySelector("#ewsCount").parentElement;
-    if (ewsCardHeader) {
-        const btnContainer = document.createElement("div");
-        btnContainer.className = "float-end d-flex gap-2 align-items-center";
-
+    const ewsControlContainer = document.getElementById("ewsControlContainer");
+    if (ewsControlContainer) {
         let buttonsHtml = `
-                <div class="input-group input-group-sm d-none shadow-sm" id="ewsSearchContainer" style="max-width: 220px;">
-                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
-                    <input type="text" id="ewsSearchInput" class="form-control border-start-0 ps-0" placeholder="Cari Part di EWS..." oninput="renderEWSContainer()">
-                </div>
-            `;
+            <div class="input-group input-group-sm d-none shadow-sm" id="ewsSearchContainer" style="max-width: 220px;">
+                <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" id="ewsSearchInput" class="form-control border-start-0 ps-0" placeholder="Cari Part di EWS..." oninput="renderEWSContainer()">
+            </div>
+        `;
 
         if (canManagePRAndPriority) {
             buttonsHtml += `
-                <button id="btnTogglePriority" class="btn btn-sm btn-outline-warning fw-bold" onclick="togglePriorityMode()">
-                    <i class="bi bi-star-fill me-1 text-warning"></i> Set Priority Mode
-                </button>
-                <button id="btnSavePriority" class="btn btn-sm btn-warning fw-bold d-none text-dark" onclick="executeSavePriorities()">
-                    <i class="bi bi-save2 me-1"></i> Simpan List Prioritas
-                </button>
                 <button id="btnTogglePR" class="btn btn-sm btn-outline-primary fw-bold" onclick="togglePRMode()">
                     <i class="bi bi-file-earmark-spreadsheet me-1"></i> Buat Manual PR
                 </button>
                 <button id="btnDownloadPR" class="btn btn-sm btn-success fw-bold d-none" onclick="executeDownloadPR()">
                     <i class="bi bi-download me-1"></i> Unduh PR Excel
                 </button>
-                `;
+            `;
         }
 
-        btnContainer.innerHTML = buttonsHtml;
-        ewsCardHeader.appendChild(btnContainer);
+        ewsControlContainer.innerHTML = buttonsHtml;
     }
 }
 
@@ -57,9 +47,7 @@ async function fetchDataDariServer() {
         const response = await fetch('/Sparepart/GetApiData');
         const dbDataRaw = await response.json();
 
-        // Beri jeda agar browser bisa render state awal & menghentikan animasi loading di Tab
         setTimeout(() => {
-            // MAPPING BARU DARI JSON (Tanpa Dormant dan Bin Lokasi)
             datasetSparepart = dbDataRaw.map(item => {
                 return {
                     materialNo: item.Material ? item.Material.trim() : "-",
@@ -82,31 +70,27 @@ async function fetchDataDariServer() {
 function togglePriorityMode() {
     if (isPRModeActive) togglePRMode();
     isPriorityModeActive = !isPriorityModeActive;
+
     const btnToggle = document.getElementById("btnTogglePriority");
     const btnSave = document.getElementById("btnSavePriority");
-    const searchContainer = document.getElementById("ewsSearchContainer");
-    const searchInput = document.getElementById("ewsSearchInput");
 
-    if (isPriorityModeActive) {
-        btnToggle.innerHTML = `<i class="bi bi-x-circle me-1"></i> Batal Prioritas`;
-        btnToggle.className = "btn btn-sm btn-danger fw-bold";
-        btnSave.classList.remove("d-none");
-        searchContainer.classList.remove("d-none"); // Tampilkan pencarian khusus EWS
-        searchInput.focus();
-    } else {
-        btnToggle.innerHTML = `<i class="bi bi-star-fill me-1 text-warning"></i> Set Priority Mode`;
-        btnToggle.className = "btn btn-sm btn-outline-warning fw-bold";
-        btnSave.classList.add("d-none");
-        searchContainer.classList.add("d-none"); // Sembunyikan pencarian khusus EWS
-        searchInput.value = "";
+    if (btnToggle) {
+        if (isPriorityModeActive) {
+            btnToggle.innerHTML = `<i class="bi bi-x-circle me-1"></i> Batal Prioritas`;
+            btnToggle.className = "btn btn-sm btn-danger fw-bold shadow-sm";
+            if (btnSave) btnSave.classList.remove("d-none");
+        } else {
+            btnToggle.innerHTML = `<i class="bi bi-star-fill me-1 text-warning"></i> Set Priority Mode`;
+            btnToggle.className = "btn btn-sm btn-outline-warning fw-bold shadow-sm";
+            if (btnSave) btnSave.classList.add("d-none");
+        }
     }
-    renderEWSContainer();
+    renderMainTableRows();
 }
 
 async function executeSavePriorities() {
-    savePriorityState(); // Pastikan halaman terakhir yang sedang tampil ikut terekam
+    savePriorityState();
 
-    // Ambil semua nomor material yang status prioritasnya bernilai 'Y' dari memori global
     let listPriorityMaterialNos = datasetSparepart
         .filter(item => item.priority === 'Y')
         .map(item => item.materialNo);
@@ -114,13 +98,18 @@ async function executeSavePriorities() {
     if (!confirm(`Simpan ${listPriorityMaterialNos.length} item sebagai prioritas?`)) return;
 
     const btnSave = document.getElementById("btnSavePriority");
-    btnSave.disabled = true;
-    btnSave.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...`;
+    if (btnSave) {
+        btnSave.disabled = true;
+        btnSave.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...`;
+    }
 
     try {
         const response = await fetch('/Sparepart/UpdatePriorities', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getCsrfToken()
+            },
             body: JSON.stringify(listPriorityMaterialNos)
         });
 
@@ -131,8 +120,10 @@ async function executeSavePriorities() {
         } else { alert("Gagal menyimpan prioritas."); }
     } catch (error) { alert("Kesalahan jaringan."); }
     finally {
-        btnSave.disabled = false;
-        btnSave.innerHTML = `<i class="bi bi-save2 me-1"></i> Simpan List Prioritas`;
+        if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.innerHTML = `<i class="bi bi-save2 me-1"></i> Simpan List Prioritas`;
+        }
     }
 }
 
@@ -146,16 +137,20 @@ function togglePRMode() {
     const searchInput = document.getElementById("ewsSearchInput");
 
     if (isPRModeActive) {
-        btnToggle.innerHTML = `<i class="bi bi-x-circle me-1"></i> Batal PR`;
-        btnToggle.className = "btn btn-sm btn-danger fw-bold";
-        btnDownload.classList.remove("d-none");
-        searchContainer.classList.remove("d-none");
+        if (btnToggle) {
+            btnToggle.innerHTML = `<i class="bi bi-x-circle me-1"></i> Batal PR`;
+            btnToggle.className = "btn btn-sm btn-danger fw-bold";
+        }
+        if (btnDownload) btnDownload.classList.remove("d-none");
+        if (searchContainer) searchContainer.classList.remove("d-none");
     } else {
-        btnToggle.innerHTML = `<i class="bi bi-file-earmark-spreadsheet me-1"></i> Buat Manual PR`;
-        btnToggle.className = "btn btn-sm btn-outline-primary fw-bold";
-        btnDownload.classList.add("d-none");
-        searchContainer.classList.add("d-none");
-        searchInput.value = "";
+        if (btnToggle) {
+            btnToggle.innerHTML = `<i class="bi bi-file-earmark-spreadsheet me-1"></i> Buat Manual PR`;
+            btnToggle.className = "btn btn-sm btn-outline-primary fw-bold";
+        }
+        if (btnDownload) btnDownload.classList.add("d-none");
+        if (searchContainer) searchContainer.classList.add("d-none");
+        if (searchInput) searchInput.value = "";
         prSelections = {};
     }
     renderEWSContainer();
@@ -179,12 +174,11 @@ function savePRState() {
 
 function savePriorityState() {
     if (!isPriorityModeActive) return;
-    const rows = document.querySelectorAll("#ewsTableBody tr");
+    const rows = document.querySelectorAll("#sparepartTableBody tr");
     rows.forEach(row => {
         const chk = row.querySelector(".chk-priority-flag");
         if (chk) {
             const matNo = chk.getAttribute("data-matno");
-            // Cari data asli di memori global dan perbarui properti priority-nya secara real-time
             const item = datasetSparepart.find(x => x.materialNo === matNo);
             if (item) {
                 item.priority = chk.checked ? "Y" : "";
@@ -193,17 +187,28 @@ function savePriorityState() {
     });
 }
 
+function handleEwsFilter() {
+    renderEWSContainer();
+}
+
 function renderEWSContainer() {
     savePRState();
-    savePriorityState(); // AMAN KAN CENTANGAN PRIORITAS SEBELUM FILTER BERJALAN
 
     let outOfStockList = datasetSparepart.filter(item => item.actualStock === 0);
     let criticalStockList = datasetSparepart.filter(item => item.actualStock > 0 && item.actualStock <= item.safetyStock);
-    let ewsCombinedList = [...outOfStockList, ...criticalStockList];
+
+    const ewsFilterVal = document.getElementById("ewsStatusFilter") ? document.getElementById("ewsStatusFilter").value : "ALL";
+    let ewsCombinedList = [];
+    if (ewsFilterVal === "EMPTY") {
+        ewsCombinedList = [...outOfStockList];
+    } else if (ewsFilterVal === "CRITICAL") {
+        ewsCombinedList = [...criticalStockList];
+    } else {
+        ewsCombinedList = [...outOfStockList, ...criticalStockList];
+    }
 
     const searchInput = document.getElementById("ewsSearchInput");
-    // PERBAIKAN: Aktifkan filter pencarian untuk Mode PR ATAU Mode Prioritas
-    if ((isPRModeActive || isPriorityModeActive) && searchInput && searchInput.value.trim() !== "") {
+    if (isPRModeActive && searchInput && searchInput.value.trim() !== "") {
         const searchQuery = searchInput.value.toLowerCase().trim();
         let tokens = searchQuery.split(" ").filter(t => t !== "");
         ewsCombinedList = ewsCombinedList.filter(item => {
@@ -221,9 +226,7 @@ function renderEWSContainer() {
     const theadRow = document.getElementById("ewsTheadRow");
     document.getElementById('ewsCount').innerText = `${ewsCombinedList.length} Item`;
 
-    if (isPriorityModeActive) {
-        theadRow.innerHTML = `<th style="width: 50px;">Prioritas</th><th>Material No</th><th>Description</th><th class="text-center">Actual Stock</th><th class="text-center">Status</th>`;
-    } else if (isPRModeActive) {
+    if (isPRModeActive) {
         theadRow.innerHTML = `<th style="width: 40px;">Pilih</th><th>Material No</th><th>Description</th><th style="width: 90px;">Qty Order</th><th>Actual Stock</th><th>Remark PR</th>`;
     } else {
         theadRow.innerHTML = `<th>Material No</th><th>Description</th><th>Storage Loct</th><th class="text-center">Safety</th><th class="text-center">Actual</th><th class="text-center">Status</th>`;
@@ -242,12 +245,11 @@ function renderEwsTableRows() {
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">Kosong.</td></tr>`;
         document.getElementById('lblEwsStart').innerText = 0;
         document.getElementById('lblEwsEnd').innerText = 0;
-        document.getElementById('lblEwsTotal').innerText = 0; // Reset ke 0
+        document.getElementById('lblEwsTotal').innerText = 0;
         document.getElementById('ewsPagination').innerHTML = "";
         return;
     }
 
-    // LOGIKA SLICING (MEMOTONG DATA SESUAI HALAMAN)
     const totalPages = Math.ceil(totalItems / ewsItemsPerPage);
     if (ewsCurrentPage > totalPages) ewsCurrentPage = totalPages;
     if (ewsCurrentPage < 1) ewsCurrentPage = 1;
@@ -262,17 +264,7 @@ function renderEwsTableRows() {
         let isItemPriority = item.priority === 'Y';
         let rowClass = "";
 
-        if (isPriorityModeActive) {
-            let isChecked = isItemPriority ? "checked" : "";
-            htmlGrid += `
-                <tr class="${rowClass}">
-                    <td class="text-center"><input type="checkbox" class="form-check-input border-warning chk-priority-flag" data-matno="${item.materialNo}" ${isChecked}></td>
-                    <td class="font-monospace fw-bold">${item.materialNo} ${isItemPriority ? '⭐' : ''}</td>
-                    <td class="fw-bold text-truncate" style="max-width: 320px;">${item.description}</td>
-                    <td class="text-center fw-bold">${item.actualStock} ${item.uom}</td>
-                    <td class="text-center"><span class="badge ${isZero ? 'bg-danger' : 'bg-warning text-dark'} fw-bold">${isZero ? 'KOSONG' : 'KRITIS'}</span></td>
-                </tr>`;
-        } else if (isPRModeActive) {
+        if (isPRModeActive) {
             let memory = prSelections[item.materialNo] || {};
             let isChecked = memory.checked ? "checked" : "";
             let savedQty = memory.qty || "1";
@@ -292,7 +284,7 @@ function renderEwsTableRows() {
 
             htmlGrid += `
                 <tr class="${rowClass} ews-row" onclick="focusSearchToItem('${item.materialNo}')" style="cursor:pointer;">
-                    <td class="font-monospace fw-bold">${item.materialNo}</td>
+                    <td class="font-monospace fw-bold">${item.materialNo} ${isItemPriority ? '⭐' : ''}</td>
                     <td class="fw-bold text-truncate" style="max-width: 250px;">${item.description}</td>
                     <td><span class="badge bg-secondary-subtle text-secondary-emphasis border">${item.storLoct}</span></td>
                     <td class="text-center text-muted fw-bold">${item.safetyStock}</td>
@@ -304,12 +296,9 @@ function renderEwsTableRows() {
 
     tbody.innerHTML = htmlGrid;
 
-    // =========================================================
-    // PERBAIKAN SINKRONISASI LABEL FOOTER EWS
-    // =========================================================
     document.getElementById('lblEwsStart').innerText = startIndex + 1;
     document.getElementById('lblEwsEnd').innerText = endIndex;
-    document.getElementById('lblEwsTotal').innerText = totalItems.toLocaleString('id-ID'); // Format ribuan ala Indonesia
+    document.getElementById('lblEwsTotal').innerText = totalItems.toLocaleString('id-ID');
 
     renderEwsPagination(totalPages);
 }
@@ -318,12 +307,10 @@ function renderEwsPagination(totalPages) {
     const ul = document.getElementById('ewsPagination');
     let html = "";
 
-    // Tombol Mundur
     html += `<li class="page-item ${ewsCurrentPage === 1 ? 'disabled' : ''}">
                     <a class="page-link py-1 px-2 fw-bold" href="javascript:void(0)" onclick="changeEwsPage(${ewsCurrentPage - 1})">&laquo;</a>
                  </li>`;
 
-    // Tombol Maju
     html += `<li class="page-item ${ewsCurrentPage === totalPages ? 'disabled' : ''}">
                     <a class="page-link py-1 px-2 fw-bold" href="javascript:void(0)" onclick="changeEwsPage(${ewsCurrentPage + 1})">&raquo;</a>
                  </li>`;
@@ -333,7 +320,6 @@ function renderEwsPagination(totalPages) {
 
 function changeEwsPage(pageNum) {
     savePRState();
-    savePriorityState(); // AMAN KAN CENTANGAN SEBELUM PINDAH HALAMAN
     ewsCurrentPage = pageNum;
     renderEwsTableRows();
 }
@@ -356,7 +342,10 @@ async function executeDownloadPR() {
     try {
         const response = await fetch('/Sparepart/ExportPR', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': getCsrfToken()
+            },
             body: JSON.stringify({ Items: payloadItems })
         });
         if (response.ok) {
@@ -379,6 +368,8 @@ async function executeDownloadPR() {
 }
 
 function performFiltering() {
+    savePriorityState();
+
     const searchQuery = document.getElementById('smartSearch').value.toLowerCase().trim();
     const statusFilter = document.getElementById('statusFilter').value;
 
@@ -421,6 +412,7 @@ function focusSearchToItem(matNo) {
     document.getElementById('smartSearch').focus();
 }
 function resetDashboard() {
+    if (isPriorityModeActive) togglePriorityMode();
     document.getElementById('smartSearch').value = "";
     document.getElementById('statusFilter').value = "ALL";
     currentTableData = [...datasetSparepart];
@@ -435,6 +427,7 @@ function resetDashboard() {
 }
 
 function sortTable(colIdx) {
+    savePriorityState();
     if (currentTableData.length === 0) return;
     if (sortState.col === colIdx) { sortState.asc = !sortState.asc; }
     else { sortState.col = colIdx; sortState.asc = true; }
@@ -455,11 +448,40 @@ function sortTable(colIdx) {
 }
 
 function renderMainTableRows() {
-    const tbody = document.getElementById('sparepartTableBody');
+    savePriorityState();
 
-    // 1. Logika Jika Kosong
+    const tbody = document.getElementById('sparepartTableBody');
+    const mainThead = document.querySelector("#sparepartTable thead");
+
+    if (mainThead) {
+        if (isPriorityModeActive) {
+            mainThead.innerHTML = `
+                <tr>
+                    <th style="width: 50px;" class="text-center">⭐</th>
+                    <th style="cursor:pointer; width: 15%;" onclick="sortTable(0)">No. Material ⇅</th>
+                    <th style="cursor:pointer; width: 40%;" onclick="sortTable(1)">Deskripsi Sparepart ⇅</th>
+                    <th style="cursor:pointer; width: 12%;" onclick="sortTable(2)">Stor. Loct ⇅</th>
+                    <th style="cursor:pointer; width: 8%;" class="text-center" onclick="sortTable(3)">Safety ⇅</th>
+                    <th style="cursor:pointer; width: 8%;" class="text-center" onclick="sortTable(4)">Aktual ⇅</th>
+                    <th style="width: 12%;" class="text-center">Status</th>
+                </tr>`;
+        } else {
+            mainThead.innerHTML = `
+                <tr>
+                    <th style="cursor:pointer; width: 15%;" onclick="sortTable(0)">No. Material ⇅</th>
+                    <th style="cursor:pointer; width: 45%;" onclick="sortTable(1)">Deskripsi Sparepart ⇅</th>
+                    <th style="cursor:pointer; width: 12%;" onclick="sortTable(2)">Stor. Loct ⇅</th>
+                    <th style="cursor:pointer; width: 8%;" class="text-center" onclick="sortTable(3)">Safety ⇅</th>
+                    <th style="cursor:pointer; width: 8%;" class="text-center" onclick="sortTable(4)">Aktual ⇅</th>
+                    <th style="width: 12%;" class="text-center">Status</th>
+                </tr>`;
+        }
+    }
+
+    const colspanCount = isPriorityModeActive ? 7 : 6;
+
     if (currentTableData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted fs-6"><i class="bi bi-search me-2 fs-5"></i> Tidak ada material suku cadang yang cocok.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="${colspanCount}" class="text-center py-4 text-muted fs-6"><i class="bi bi-search me-2 fs-5"></i> Tidak ada material suku cadang yang cocok.</td></tr>`;
         document.getElementById('lblShowingStart').innerText = 0;
         document.getElementById('lblShowingEnd').innerText = 0;
         document.getElementById('lblTotalCount').innerText = 0;
@@ -467,7 +489,6 @@ function renderMainTableRows() {
         return;
     }
 
-    // 2. Logika Paginasi (Slicing Array)
     const totalItems = currentTableData.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
 
@@ -478,7 +499,6 @@ function renderMainTableRows() {
     const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
     const paginatedData = currentTableData.slice(startIndex, endIndex);
 
-    // 3. Render HTML Hanya Untuk 100 Baris (Sangat Ringan!)
     let htmlBuffer = "";
     paginatedData.forEach(item => {
         let isZero = item.actualStock === 0;
@@ -499,10 +519,15 @@ function renderMainTableRows() {
             rowStyleClass = "";
         }
 
-
+        let priorityColHtml = "";
+        if (isPriorityModeActive) {
+            let isChecked = isItemPriority ? "checked" : "";
+            priorityColHtml = `<td class="text-center"><input type="checkbox" class="form-check-input border-warning chk-priority-flag" data-matno="${item.materialNo}" ${isChecked}></td>`;
+        }
 
         htmlBuffer += `
             <tr class="${rowStyleClass}">
+                ${priorityColHtml}
                 <td class="font-monospace fw-bold text-secondary text-nowrap">${item.materialNo} ${isItemPriority ? '⭐' : ''}</td>
                 <td><div class="fw-bold text-uppercase text-truncate" style="max-width: 380px;">${item.description}</div></td>
                 <td><span class="badge bg-secondary-subtle text-secondary-emphasis border font-monospace px-2">${item.storLoct}</span></td>
@@ -514,12 +539,10 @@ function renderMainTableRows() {
 
     tbody.innerHTML = htmlBuffer;
 
-    // 4. Perbarui Label Footer
     document.getElementById('lblShowingStart').innerText = startIndex + 1;
     document.getElementById('lblShowingEnd').innerText = endIndex;
     document.getElementById('lblTotalCount').innerText = totalItems.toLocaleString('id-ID');
 
-    // 5. Gambar Tombol Navigasi Halaman
     renderPaginationControls(totalPages);
 }
 
@@ -527,12 +550,10 @@ function renderPaginationControls(totalPages) {
     const ul = document.getElementById('paginationControls');
     let html = "";
 
-    // Tombol Prev
     html += `<li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
                     <a class="page-link" href="javascript:void(0)" onclick="changePage(${currentPage - 1})">Prev</a>
                  </li>`;
 
-    // Logika Limit Tombol (Tampilkan max 5 tombol angka)
     let startPage = Math.max(1, currentPage - 2);
     let endPage = Math.min(totalPages, currentPage + 2);
 
@@ -552,7 +573,6 @@ function renderPaginationControls(totalPages) {
         html += `<li class="page-item"><a class="page-link" href="javascript:void(0)" onclick="changePage(${totalPages})">${totalPages}</a></li>`;
     }
 
-    // Tombol Next
     html += `<li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
                     <a class="page-link" href="javascript:void(0)" onclick="changePage(${currentPage + 1})">Next</a>
                  </li>`;
@@ -561,8 +581,13 @@ function renderPaginationControls(totalPages) {
 }
 
 function changePage(pageNum) {
+    savePriorityState();
     currentPage = pageNum;
     renderMainTableRows();
-    // Gulir kembali ke atas tabel secara halus saat ganti halaman
     document.getElementById('statusFilter').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function getCsrfToken() {
+    const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+    return tokenInput ? tokenInput.value : '';
 }

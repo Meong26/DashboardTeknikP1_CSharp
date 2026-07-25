@@ -13,11 +13,43 @@
     let isQuarantineEditModeActive = false; 
     let isPRModeActive = false; 
 
+    let selectedPemakaianYear = new Date().getFullYear();
+
     document.addEventListener("DOMContentLoaded", async () => {
         await fetchMasterData();
         await fetchTeknisiData();
+        await fetchAvailableYears();
         await loadHistoryFromServer();
     });
+
+    async function fetchAvailableYears() {
+        try {
+            const response = await fetch('/Pemakaian/GetAvailableYears');
+            const years = await response.json();
+            const yearDdl = document.getElementById('historyYearFilter');
+            if (yearDdl && years && years.length > 0) {
+                yearDdl.innerHTML = years.map(y => `<option value="${y}">Tahun ${y}</option>`).join('');
+                const currentYear = new Date().getFullYear();
+                if (years.includes(currentYear)) {
+                    yearDdl.value = currentYear;
+                    selectedPemakaianYear = currentYear;
+                } else {
+                    yearDdl.value = years[0];
+                    selectedPemakaianYear = years[0];
+                }
+            }
+        } catch (e) {
+            console.error("Gagal memuat tahun pemakaian:", e);
+        }
+    }
+
+    async function handlePemakaianYearChange() {
+        const yearDdl = document.getElementById('historyYearFilter');
+        if (yearDdl) {
+            selectedPemakaianYear = parseInt(yearDdl.value) || new Date().getFullYear();
+            await loadHistoryFromServer();
+        }
+    }
 
     async function fetchTeknisiData() {
         try {
@@ -38,7 +70,7 @@
 
     async function loadHistoryFromServer() {
         try {
-            const response = await fetch('/Pemakaian/GetHistoryData');
+            const response = await fetch('/Pemakaian/GetHistoryData?year=' + selectedPemakaianYear);
             const resJson = await response.json();
             
             historyDatasetEstimasi = resJson.dataEstimasi;
@@ -360,7 +392,10 @@
         try {
             const response = await fetch('/Pemakaian/QuarantineItems', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getCsrfToken()
+                },
                 body: JSON.stringify(targetIds)
             });
 
@@ -394,7 +429,10 @@
             // Tembak langsung ke fungsi ExportPR yang ada di modul EWS Anda
             const response = await fetch('/Sparepart/ExportPR', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getCsrfToken()
+                },
                 body: JSON.stringify({ Items: payloadItems })
             });
 
@@ -467,7 +505,10 @@
     async function executeRestore(id) {
         if(!confirm("Kembalikan item sparepart ini ke rekap estimasi?")) return;
         try {
-            const res = await fetch(`/Pemakaian/RestoreItem?id=${id}`, { method: 'POST' });
+            const res = await fetch(`/Pemakaian/RestoreItem?id=${id}`, { 
+                method: 'POST',
+                headers: { 'RequestVerificationToken': getCsrfToken() }
+            });
             if (res.ok) loadHistoryFromServer();
         } catch (error) { alert("Error jaringan."); }
     }
@@ -475,7 +516,10 @@
     async function executeRetur(id) {
         if(!confirm("Retur ke gudang sparepart? Data dihapus permanen.")) return;
         try {
-            const res = await fetch(`/Pemakaian/ReturItem?id=${id}`, { method: 'POST' });
+            const res = await fetch(`/Pemakaian/ReturItem?id=${id}`, { 
+                method: 'POST',
+                headers: { 'RequestVerificationToken': getCsrfToken() }
+            });
             if (res.ok) loadHistoryFromServer();
         } catch (error) { alert("Error jaringan."); }
     }
@@ -483,7 +527,10 @@
     async function executeRollForward(id) {
         if(!confirm("Geser beban biaya item ini ke minggu depan?")) return;
         try {
-            const res = await fetch(`/Pemakaian/ShiftToNextWeek?id=${id}`, { method: 'POST' });
+            const res = await fetch(`/Pemakaian/ShiftToNextWeek?id=${id}`, { 
+                method: 'POST',
+                headers: { 'RequestVerificationToken': getCsrfToken() }
+            });
             if (res.ok) loadHistoryFromServer();
         } catch (error) { alert("Error jaringan."); }
     }
@@ -974,7 +1021,10 @@
         try { 
             const response = await fetch('/Pemakaian/SaveData', { 
                 method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': getCsrfToken()
+                }, 
                 body: JSON.stringify(payload) 
             }); 
             
@@ -985,6 +1035,11 @@
                 loadHistoryFromServer(); 
             } else { alert("Gagal menyimpan."); } 
         } catch (error) { alert("Kesalahan jaringan."); } 
+    }
+
+    function getCsrfToken() {
+        const tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+        return tokenInput ? tokenInput.value : '';
     }
 
     function setActiveDropdownItem(items, index) {

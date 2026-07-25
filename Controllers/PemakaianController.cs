@@ -45,6 +45,7 @@ namespace DashboardTeknikP1.Controllers
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult SaveData([FromBody] List<PengambilanSparepart> payload)
         {
             if (payload == null || !payload.Any()) return BadRequest("Tidak ada data.");
@@ -63,13 +64,13 @@ namespace DashboardTeknikP1.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetHistoryData()
+        public async Task<IActionResult> GetHistoryData(int? year)
         {
             try
             {
-                int currentYear = DateTime.Now.Year;
-                var allHistory = await _pemakaianRepo.GetAllHistoryAsync(currentYear);
-                var sapRawTuple = await _pemakaianRepo.GetRawSapDataAsync(currentYear);
+                int targetYear = year ?? DateTime.Now.Year;
+                var allHistory = await _pemakaianRepo.GetAllHistoryAsync(targetYear);
+                var sapRawTuple = await _pemakaianRepo.GetRawSapDataAsync(targetYear);
                 
                 var resultData = _pemakaianService.ProcessHistoryData(allHistory, sapRawTuple.Item1, sapRawTuple.Item2);
 
@@ -78,8 +79,20 @@ namespace DashboardTeknikP1.Controllers
             catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
 
+        [HttpGet]
+        public async Task<IActionResult> GetAvailableYears()
+        {
+            try
+            {
+                var years = await _pemakaianRepo.GetAvailableYearsAsync();
+                return Json(years);
+            }
+            catch (Exception ex) { return StatusCode(500, ex.Message); }
+        }
+
         [Authorize(Roles = "Administrator,Supervisor,Section")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> QuarantineItems([FromBody] List<int> ids)
         {
             if (ids == null || !ids.Any()) return BadRequest("Pilih item terlebih dahulu.");
@@ -89,6 +102,7 @@ namespace DashboardTeknikP1.Controllers
 
         [Authorize(Roles = "Administrator,Supervisor,Section")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> RestoreItem(int id)
         {
             try
@@ -104,6 +118,7 @@ namespace DashboardTeknikP1.Controllers
 
         [Authorize(Roles = "Administrator,Supervisor,Section")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReturItem(int id)
         {
             await _pemakaianRepo.DeletePengambilanAsync(id);
@@ -112,6 +127,7 @@ namespace DashboardTeknikP1.Controllers
 
         [Authorize(Roles = "Administrator,Supervisor,Section")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ShiftToNextWeek(int id)
         {
             await _pemakaianRepo.ShiftToNextWeekAsync(id);

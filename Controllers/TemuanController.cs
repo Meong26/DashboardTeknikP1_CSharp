@@ -1,8 +1,15 @@
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Globalization;
+using System.Threading.Tasks;
 using DashboardTeknikP1.Models;
 using DashboardTeknikP1.Repositories;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using ClosedXML.Excel;
 
 namespace DashboardTeknikP1.Controllers
 {
@@ -10,11 +17,13 @@ namespace DashboardTeknikP1.Controllers
     public class TemuanController : Controller
     {
         private readonly TemuanRepository _repository;
+        private readonly IWebHostEnvironment _env;
 
-        // Dependency Injection untuk Repositori Temuan
-        public TemuanController(TemuanRepository repository)
+        // Dependency Injection untuk Repositori Temuan dan Environment
+        public TemuanController(TemuanRepository repository, IWebHostEnvironment env)
         {
             _repository = repository;
+            _env = env;
         }
 
         // ====================================================================
@@ -172,6 +181,105 @@ namespace DashboardTeknikP1.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, ex.Message);
+            }
+        }
+
+        // DTO Request Export Rencana Kerja PM
+        public class RencanaKerjaExportRequest
+        {
+            public List<int> SelectedIds { get; set; } = new List<int>();
+        }
+
+        // ====================================================================
+        // 8. EXPORT RENCANA KERJA PM (PREVENTIVE MAINTENANCE) KE EXCEL
+        // ====================================================================
+        [Authorize(Roles = "Administrator,Section")]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ExportRencanaKerjaPM([FromBody] RencanaKerjaExportRequest request)
+        {
+            if (request == null || request.SelectedIds == null || !request.SelectedIds.Any())
+            {
+                return BadRequest("Tidak ada data temuan yang dipilih untuk rencana kerja.");
+            }
+
+            string templatePath = Path.Combine(_env.ContentRootPath, "Templates", "Form_PM.xlsx");
+            FileInfo templateFile = new FileInfo(templatePath);
+
+            if (!templateFile.Exists)
+            {
+                return BadRequest("Gagal mengunduh: File template Form_PM.xlsx tidak ditemukan di server.");
+            }
+
+            var selectedTemuan = await _repository.GetTemuanByIdsAsync(request.SelectedIds);
+            if (!selectedTemuan.Any())
+            {
+                return BadRequest("Data temuan terpilih tidak ditemukan.");
+            }
+
+            DateTime now = DateTime.Now;
+            CultureInfo idCulture = new CultureInfo("id-ID");
+            
+            // C3: Tanggal Cetak (misal: Jumat, 24 Juli 2026)
+            string tanggalCetak = now.ToString("dddd, d MMMM yyyy", idCulture);
+
+            // C4: Tanggal Hari Minggu Setelah Dokumen Dicetak
+            int daysUntilSunday = ((int)DayOfWeek.Sunday - (int)now.DayOfWeek + 7) % 7;
+            if (daysUntilSunday == 0) daysUntilSunday = 7;
+            DateTime tanggalMinggu = now.AddDays(daysUntilSunday);
+            string tanggalRencanaPM = tanggalMinggu.ToString("dddd, d MMMM yyyy", idCulture);
+
+            // Nama Login pengunduh
+            string activeUserFull = User.Identity?.Name ?? "Admin/Section";
+
+            using (var workbook = new XLWorkbook(templateFile.FullName))
+            {
+                var sheet = workbook.Worksheet(1);
+
+                // Isikan Header Tanggal
+                sheet.Cell("C3").Value = tanggalCetak;
+                sheet.Cell("C4").Value = tanggalRencanaPM;
+
+                // Isikan Baris Rencana Kerja
+                int startRow = 8;
+                for (int i = 0; i < selectedTemuan.Count; i++)
+                {
+                    int currentRow = startRow + i;
+                    var item = selectedTemuan[i];
+
+                    sheet.Cell(currentRow, 1).Value = i + 1;                         // A8: Nomor Increment
+                    sheet.Cell(currentRow, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                    sheet.Cell(currentRow, 2).Value = "";                             // B8: Kosongkan
+
+                    sheet.Cell(currentRow, 3).Value = item.Line ?? "";                // C8: Line
+                    sheet.Cell(currentRow, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                    sheet.Cell(currentRow, 4).Value = item.KodeMesin ?? "";           // D8: KodeMesin dari Database
+                    sheet.Cell(currentRow, 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                    sheet.Cell(currentRow, 5).Value = item.DeskripsiAbnormal ?? "";   // E8: Deskripsi kendala
+                    sheet.Cell(currentRow, 6).Value = "";                             // F8: Kosongkan
+                    sheet.Cell(currentRow, 7).Value = "";                             // G8: Kosongkan
+                    sheet.Cell(currentRow, 8).Value = "";                             // H8: Kosongkan
+                    sheet.Cell(currentRow, 9).Value = "";                             // I8: Kosongkan
+                }
+
+                // C55: Nama Login
+                sheet.Cell("C55").Value = activeUserFull;
+                sheet.Cell("C55").Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                // H55: Kosongkan
+                sheet.Cell("H55").Value = "";
+
+                byte[] fileBytes;
+                using (var ms = new MemoryStream())
+                {
+                    workbook.SaveAs(ms);
+                    fileBytes = ms.ToArray();
+                }
+
+                string fileName = $"Rencana_Kerja_PM_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
         }
     }

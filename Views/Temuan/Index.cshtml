@@ -50,11 +50,30 @@
         <span class="fw-bold" style="font-size: 0.9rem;">
             <i class="bi bi-clock-history me-1"></i> Riwayat Laporan Temuan
         </span>
+        @if (User.IsInRole("Administrator") || User.IsInRole("Section"))
+        {
+            <div id="pmActionHeader">
+                <button class="btn btn-sm btn-outline-light fw-bold" id="btnModePM" onclick="toggleWorkPlanMode(true)">
+                    <i class="bi bi-file-earmark-spreadsheet me-1"></i> Buat Rencana Kerja
+                </button>
+                <div id="pmSelectionControls" class="d-none d-inline-flex gap-2">
+                    <button class="btn btn-sm btn-success fw-bold px-3 shadow-sm" id="btnExportPM" onclick="exportRencanaKerjaPM()">
+                        <i class="bi bi-file-earmark-excel-fill me-1"></i> <span id="lblBtnExportPM">Export to Excel</span>
+                    </button>
+                    <button class="btn btn-sm btn-secondary fw-bold" onclick="toggleWorkPlanMode(false)">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        }
     </div>
     <div class="card-body p-0 table-responsive" style="max-height: 45vh; overflow-y: auto;">
         <table class="table table-hover table-striped mb-0" style="font-size: 0.85rem;">
             <thead class="table-dark sticky-top">
                 <tr>
+                    <th style="width: 40px;" class="col-chk-pm d-none text-center align-middle">
+                        <input type="checkbox" class="form-check-input" id="chkSelectAllPM" onclick="toggleSelectAllPM(this)" title="Pilih Semua">
+                    </th>
                     <th style="width: 15%; cursor: pointer;" onclick="sortTable('TanggalFormated')" id="th-TanggalFormated">Waktu Laporan <i class="bi bi-arrow-down-up ms-1 text-white-50" style="font-size: 0.75rem;"></i></th>
                     <th style="width: 8%; cursor: pointer;" onclick="sortTable('Pelapor')" id="th-Pelapor">Pelapor <i class="bi bi-arrow-down-up ms-1 text-white-50" style="font-size: 0.75rem;"></i></th>
                     <th style="width: 10%; cursor: pointer;" onclick="sortTable('Line')" id="th-Line">Line <i class="bi bi-arrow-down-up ms-1 text-white-50" style="font-size: 0.75rem;"></i></th>
@@ -64,7 +83,7 @@
                 </tr>
             </thead>
             <tbody id="historyBody">
-                <tr><td colspan="6" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-secondary me-2"></div> Memuat riwayat...</td></tr>
+                <tr><td colspan="7" class="text-center py-5 text-muted"><div class="spinner-border spinner-border-sm text-secondary me-2"></div> Memuat riwayat...</td></tr>
             </tbody>
         </table>
     </div>
@@ -103,6 +122,7 @@
     const canCloseLaporan = @((!User.IsInRole("Supervisor") && !User.IsInRole("Teknisi")).ToString().ToLower());
     let masterMesin = [];
     let historyTemuan = [];
+    let isWorkPlanMode = false;
 
     document.addEventListener("DOMContentLoaded", async () => {
         await fetchApiData();
@@ -293,7 +313,7 @@
         const tbody = document.getElementById('historyBody');
         
         if (historyTemuan.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-3 d-block mb-2"></i> Belum ada laporan temuan.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-3 d-block mb-2"></i> Belum ada laporan temuan.</td></tr>`;
             return;
         }
 
@@ -326,8 +346,16 @@
                 trClass = `class="table-success-hover" title="Klik untuk melihat detail perbaikan"`;
             }
 
+            let chkHideClass = isWorkPlanMode ? "" : "d-none";
+            let chkContent = (item.Status === "OPEN")
+                ? `<input type="checkbox" class="form-check-input chk-item-pm" value="${item.TemuanID}">`
+                : ``;
+
             htmlGrid += `
                 <tr ${rowAttr} ${trClass}>
+                    <td class="text-center align-middle col-chk-pm ${chkHideClass}" onclick="event.stopPropagation()">
+                        ${chkContent}
+                    </td>
                     <td>${item.TanggalFormated}</td>
                     <td><span class="badge bg-secondary font-monospace">${item.Pelapor}</span></td>
                     
@@ -350,6 +378,93 @@
         });
         
         tbody.innerHTML = htmlGrid;
+    }
+
+    // =========================================================
+    // FITUR BUAT RENCANA KERJA PM & EXPORT EXCEL
+    // =========================================================
+    function toggleWorkPlanMode(enable) {
+        isWorkPlanMode = enable;
+        const btnModePM = document.getElementById('btnModePM');
+        const pmSelectionControls = document.getElementById('pmSelectionControls');
+        
+        if (btnModePM) btnModePM.classList.toggle('d-none', enable);
+        if (pmSelectionControls) pmSelectionControls.classList.toggle('d-none', !enable);
+
+        const chkAllHeader = document.querySelector('th.col-chk-pm');
+        if (chkAllHeader) chkAllHeader.classList.toggle('d-none', !enable);
+
+        if (!enable) {
+            const chkAll = document.getElementById('chkSelectAllPM');
+            if (chkAll) chkAll.checked = false;
+        }
+
+        renderHistoryTable();
+    }
+
+    function toggleSelectAllPM(masterChk) {
+        const checkboxes = document.querySelectorAll('.chk-item-pm');
+        checkboxes.forEach(c => c.checked = masterChk.checked);
+    }
+
+    async function exportRencanaKerjaPM() {
+        const selectedCheckboxes = document.querySelectorAll('.chk-item-pm:checked');
+        if (selectedCheckboxes.length === 0) {
+            alert("Pilih minimal satu laporan temuan untuk dijadikan Rencana Kerja PM.");
+            return;
+        }
+
+        const btnExport = document.getElementById('btnExportPM');
+        const originalContent = btnExport ? btnExport.innerHTML : '';
+
+        if (btnExport) {
+            btnExport.disabled = true;
+            btnExport.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Memproses...`;
+        }
+
+        const selectedIds = Array.from(selectedCheckboxes).map(c => parseInt(c.value));
+
+        try {
+            const tokenElement = document.querySelector('input[name="__RequestVerificationToken"]');
+            const token = tokenElement ? tokenElement.value : '';
+
+            const response = await fetch('/Temuan/ExportRencanaKerjaPM', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify({ SelectedIds: selectedIds })
+            });
+
+            if (!response.ok) {
+                const errorMsg = await response.text();
+                alert("Gagal mengunduh Rencana Kerja PM: " + errorMsg);
+                return;
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            const timestamp = new Date().toISOString().replace(/[-:T.]/g, "").slice(0, 14);
+            a.download = `Rencana_Kerja_PM_${timestamp}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+
+            // Reset mode setelah berhasil unduh
+            toggleWorkPlanMode(false);
+        } catch (ex) {
+            alert("Terjadi kesalahan jaringan saat mengespor data.");
+        } finally {
+            if (btnExport) {
+                btnExport.disabled = false;
+                btnExport.innerHTML = originalContent;
+            }
+        }
     }
 
     function showCloseModal(tanggal, closedBy, tindakan) {

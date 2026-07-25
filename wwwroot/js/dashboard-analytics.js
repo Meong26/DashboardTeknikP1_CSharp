@@ -35,22 +35,59 @@
     const getChartLabelColor = () => document.documentElement.getAttribute('data-bs-theme') === 'dark' ? '#f8f9fa' : '#333';
     const getGridColor = () => document.documentElement.getAttribute('data-bs-theme') === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
 
-    document.addEventListener("DOMContentLoaded", () => {
+    let selectedDashboardYear = new Date().getFullYear();
+
+    document.addEventListener("DOMContentLoaded", async () => {
         document.getElementById("rowBadActors").innerHTML = `
             <div class="col-12 text-center py-3">
                 <div class="spinner-border text-primary me-2 spinner-border-sm"></div> 
                 <span class="text-muted fw-bold">Memuat Analitik Performa dari Server...</span>
             </div>`;
             
-        fetchDashboardData();
+        await fetchAvailableYears();
+        await fetchDashboardData(selectedDashboardYear);
     });
 
-    async function fetchDashboardData() {
+    async function fetchAvailableYears() {
         try {
-            const response = await fetch('/Home/GetDashboardData');
+            const response = await fetch('/Home/GetAvailableYears');
+            const years = await response.json();
+            const fltTahun = document.getElementById('fltTahun');
+            if (fltTahun && years && years.length > 0) {
+                fltTahun.innerHTML = years.map(y => `<option value="${y}">${y}</option>`).join('');
+                const currentYear = new Date().getFullYear();
+                if (years.includes(currentYear)) {
+                    fltTahun.value = currentYear;
+                    selectedDashboardYear = currentYear;
+                } else {
+                    fltTahun.value = years[0];
+                    selectedDashboardYear = years[0];
+                }
+            }
+        } catch (e) {
+            console.error("Gagal memuat daftar tahun:", e);
+        }
+    }
+
+    async function handleYearChange() {
+        const fltTahun = document.getElementById('fltTahun');
+        if (fltTahun) {
+            selectedDashboardYear = parseInt(fltTahun.value) || new Date().getFullYear();
+            document.getElementById("rowBadActors").innerHTML = `
+                <div class="col-12 text-center py-3">
+                    <div class="spinner-border text-primary me-2 spinner-border-sm"></div> 
+                    <span class="text-muted fw-bold">Memuat Analitik Performa Tahun ${selectedDashboardYear}...</span>
+                </div>`;
+            await fetchDashboardData(selectedDashboardYear);
+        }
+    }
+
+    async function fetchDashboardData(year) {
+        try {
+            const targetYear = year || selectedDashboardYear;
+            const response = await fetch('/Home/GetDashboardData?year=' + targetYear);
             const data = await response.json();
             
-            // Beri jeda agar browser bisa render state awal & menghentikan animasi loading di Tab
             setTimeout(() => {
                 ypDataRaw = data.ypData || [];
                 yrDataRaw = data.yrData || [];

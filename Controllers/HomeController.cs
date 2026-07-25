@@ -43,17 +43,17 @@ namespace DashboardTeknikP1.Controllers
         // 2. Jalur API khusus untuk menyuplai data ke Dashboard
         [Authorize(Roles = "Administrator,Manager,Supervisor,Section,Teknisi,Dashboard")]
         [HttpGet]
-        public async Task<IActionResult> GetDashboardData()
+        public async Task<IActionResult> GetDashboardData(int? year)
         {
-            int currentYear = DateTime.Now.Year;
-            string cacheKey = $"DashboardData_{currentYear}";
+            int targetYear = year ?? DateTime.Now.Year;
+            string cacheKey = $"DashboardData_{targetYear}";
 
             // Coba ambil dari memori (RAM) Server
             if (!_cache.TryGetValue(cacheKey, out object resultData))
             {
                 // Jika cache kosong (atau sudah kedaluwarsa), hajar ke Database
-                var detailsYP = await _repository.GetDowntimeDetailsAsync(currentYear);
-                var detailsYR = await _repository.GetProduksiDetailsAsync(currentYear);
+                var detailsYP = await _repository.GetDowntimeDetailsAsync(targetYear);
+                var detailsYR = await _repository.GetProduksiDetailsAsync(targetYear);
 
                 resultData = new
                 {
@@ -69,6 +69,13 @@ namespace DashboardTeknikP1.Controllers
             }
 
             return Json(resultData, new JsonSerializerOptions { PropertyNamingPolicy = null });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetAvailableYears()
+        {
+            var years = await _repository.GetAvailableYearsAsync();
+            return Json(years);
         }
     }
 }

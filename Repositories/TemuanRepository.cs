@@ -145,5 +145,42 @@ namespace DashboardTeknikP1.Repositories
                 });
             }
         }
+
+        // ====================================================================
+        // 6. METHOD: AMBIL MULTIPLE DATA TEMUAN BERDASARKAN DAFTAR ID
+        // ====================================================================
+        public async Task<List<TemuanAbnormal>> GetTemuanByIdsAsync(IEnumerable<int> ids)
+        {
+            if (ids == null || !ids.Any()) return new List<TemuanAbnormal>();
+
+            using (SqlConnection conn = new SqlConnection(_connectionString))
+            {
+                string query = @"
+                    SELECT t.TemuanID, t.TanggalInput, COALESCE(u.NamaLengkap, t.UserID) AS UserID, t.Line, t.KodeMesin, 
+                           m.NamaMesin, t.DeskripsiAbnormal, t.TindakanKorektif, t.StatusTemuan,
+                           t.TanggalClosed, t.ClosedBy, uc.NamaLengkap AS ClosedByName
+                    FROM tbl_TemuanAbnormal t
+                    LEFT JOIN tbl_Mesin m ON t.KodeMesin = m.KodeMesin
+                    LEFT JOIN tbl_Users u ON t.UserID = u.UserID
+                    LEFT JOIN tbl_Users uc ON t.ClosedBy = uc.UserID
+                    WHERE t.TemuanID IN @Ids
+                    ORDER BY t.TanggalInput DESC";
+
+                var result = await conn.QueryAsync<TemuanAbnormal>(query, new { Ids = ids });
+                
+                foreach (var item in result)
+                {
+                    item.UserID ??= "-";
+                    item.Line ??= "-";
+                    item.KodeMesin ??= "-";
+                    item.NamaMesin ??= "Mesin Tidak Dikenal";
+                    item.DeskripsiAbnormal ??= "-";
+                    item.TindakanKorektif ??= "";
+                    item.StatusTemuan ??= "OPEN";
+                }
+                
+                return result.AsList();
+            }
+        }
     }
 }

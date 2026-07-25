@@ -44,7 +44,7 @@ namespace DashboardTeknikP1.Controllers
                     UserID = model.UserID,
                     NamaLengkap = model.NamaLengkap,
                     RoleID = model.RoleID,
-                    PasswordHash = HashHelper.ComputeSha256Hash(model.Password)
+                    PasswordHash = HashHelper.HashPassword(model.Password)
                 };
 
                 bool success = await _userRepo.AddUserAsync(user);
@@ -133,7 +133,7 @@ namespace DashboardTeknikP1.Controllers
         {
             if (ModelState.IsValid)
             {
-                string hashed = HashHelper.ComputeSha256Hash(model.NewPassword);
+                string hashed = HashHelper.HashPassword(model.NewPassword);
                 await _userRepo.ChangePasswordAsync(model.UserID, hashed);
                 
                 TempData["SuccessMessage"] = "Kata sandi berhasil diubah.";

@@ -53,6 +53,7 @@ namespace DashboardTeknikP1.Controllers
 
         [Authorize(Roles = "Administrator,Supervisor,Section")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> ExportPR([FromBody] PRRequestModel request)
         {
             if (request == null || !request.Items.Any())
@@ -156,6 +157,7 @@ namespace DashboardTeknikP1.Controllers
         
         [Authorize(Roles = "Administrator,Supervisor,Section")]
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdatePriorities([FromBody] List<string> priorityMaterials)
         {
             try

@@ -31,55 +31,75 @@ namespace DashboardTeknikP1.Controllers
             return View();
         }
 
+        private class UserAuthDto
+        {
+            public string UserID { get; set; } = string.Empty;
+            public string NamaLengkap { get; set; } = string.Empty;
+            public string PasswordHash { get; set; } = string.Empty;
+            public string RoleName { get; set; } = string.Empty;
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
 
-            string hashedPassword = HashHelper.ComputeSha256Hash(model.Password);
-
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
-                string query = @"SELECT u.NamaLengkap, r.RoleName 
+                string query = @"SELECT u.UserID, u.NamaLengkap, u.PasswordHash, r.RoleName 
                                  FROM tbl_Users u
                                  INNER JOIN tbl_Roles r ON u.RoleID = r.RoleID
-                                 WHERE u.UserID = @UserID AND u.PasswordHash = @PasswordHash AND u.IsActive = 1";
+                                 WHERE u.UserID = @UserID AND u.IsActive = 1";
 
-                var userRecord = await conn.QueryFirstOrDefaultAsync(query, new { UserID = model.UserID, PasswordHash = hashedPassword });
+                var userRecord = await conn.QueryFirstOrDefaultAsync<UserAuthDto>(query, new { UserID = model.UserID });
 
                 if (userRecord != null)
                 {
-                    string namaLengkap = userRecord.NamaLengkap;
-                    string roleName = userRecord.RoleName;
+                    string storedHash = userRecord.PasswordHash ?? "";
+                    bool isValid = HashHelper.VerifyPassword(model.Password, storedHash);
 
-                    // Terbitkan "KTP Digital" (Claims)
-                    var claims = new List<Claim>
+                    if (isValid)
                     {
-                        new Claim(ClaimTypes.NameIdentifier, model.UserID), 
-                        new Claim(ClaimTypes.Name, namaLengkap),            
-                        new Claim(ClaimTypes.Role, roleName)                
-                    };
+                        // SEAMLESS AUTO-MIGRATION: Jika kata sandi masih menggunakan legacy SHA-256, upgrade ke PBKDF2 (Salted)
+                        if (HashHelper.IsLegacyHash(storedHash))
+                        {
+                            string newPbkdf2Hash = HashHelper.HashPassword(model.Password);
+                            string updateQuery = "UPDATE tbl_Users SET PasswordHash = @NewHash WHERE UserID = @UserID";
+                            await conn.ExecuteAsync(updateQuery, new { NewHash = newPbkdf2Hash, UserID = model.UserID });
+                        }
 
-                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                    var principal = new ClaimsPrincipal(identity);
+                        string namaLengkap = userRecord.NamaLengkap;
+                        string roleName = userRecord.RoleName;
 
-                    // Masukkan KTP ke dalam Cookie Browser
-                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+                        // Terbitkan "KTP Digital" (Claims)
+                        var claims = new List<Claim>
+                        {
+                            new Claim(ClaimTypes.NameIdentifier, model.UserID), 
+                            new Claim(ClaimTypes.Name, namaLengkap),            
+                            new Claim(ClaimTypes.Role, roleName)                
+                        };
 
-                    if (roleName == "Dashboard")
-                    {
-                        return RedirectToAction("TvDashboard", "Home");
+                        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                        var principal = new ClaimsPrincipal(identity);
+
+                        // Masukkan KTP ke dalam Cookie Browser
+                        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+
+                        if (roleName == "Dashboard")
+                        {
+                            return RedirectToAction("TvDashboard", "Home");
+                        }
+                        else if (roleName == "WHS.SP")
+                        {
+                            return RedirectToAction("Index", "Sparepart");
+                        }
+                        return RedirectToAction("Index", "Home");
                     }
-                    else if (roleName == "WHS.SP")
-                    {
-                        return RedirectToAction("Index", "Sparepart");
-                    }
-                    return RedirectToAction("Index", "Home");
                 }
             }
 
-            ModelState.AddModelError("", "NIK Karyawan tidak terdaftar di sistem.");
+            ModelState.AddModelError("", "NIK Karyawan atau Kata Sandi tidak sesuai.");
             return View(model);
         }
 

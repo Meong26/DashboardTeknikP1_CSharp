@@ -29,7 +29,8 @@ namespace DashboardTeknikP1.Controllers
         }
 
         [HttpPost]
-        public IActionResult ProcessUpload(IFormFile fileYP11, IFormFile fileYR21, IFormFile fileSP, IFormFile fileYP14)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ProcessUpload(IFormFile fileYP11, IFormFile fileYR21, IFormFile fileSP, IFormFile fileYP14)
         {
             try 
             {
@@ -38,7 +39,6 @@ namespace DashboardTeknikP1.Controllers
                 // =========================================================
                 if (fileYP11 != null && fileYP11.Length > 0)
             {
-                _repository.TruncateTable("tbl_SAP_YP11");
                 var listData = new List<SAP_YP11>();
                 using (var stream = new MemoryStream())
                 {
@@ -70,7 +70,7 @@ namespace DashboardTeknikP1.Controllers
                         }
                     }
                 }
-                _repository.InsertBulkYP11(listData);
+                await _repository.InsertBulkYP11Async(listData);
                 _repository.LogUpload("tbl_SAP_YP11");
             }
 
@@ -79,7 +79,6 @@ namespace DashboardTeknikP1.Controllers
             // =========================================================
             if (fileYR21 != null && fileYR21.Length > 0)
             {
-                _repository.TruncateTable("tbl_SAP_YR21");
                 var listData = new List<SAP_YR21>();
                 using (var stream = new MemoryStream())
                 {
@@ -109,7 +108,7 @@ namespace DashboardTeknikP1.Controllers
                         }
                     }
                 }
-                _repository.InsertBulkYR21(listData);
+                await _repository.InsertBulkYR21Async(listData);
                 _repository.LogUpload("tbl_SAP_YR21");
             }
 
@@ -120,7 +119,6 @@ namespace DashboardTeknikP1.Controllers
             {
                 var savedPriorities = _repository.GetExistingPriorities();
 
-                _repository.TruncateTable("tbl_SAP_Sparepart");
                 var rawList = new List<SAP_Sparepart>();
                 using (var stream = new MemoryStream())
                 {
@@ -162,7 +160,7 @@ namespace DashboardTeknikP1.Controllers
                         return firstItem;
                     }).ToList();
 
-                _repository.InsertBulkSparepart(groupedSpList);
+                await _repository.InsertBulkSparepartAsync(groupedSpList);
                 _repository.LogUpload("tbl_SAP_Sparepart");
             }
 
@@ -171,7 +169,6 @@ namespace DashboardTeknikP1.Controllers
             // =========================================================
             if (fileYP14 != null && fileYP14.Length > 0)
             {
-                _repository.TruncateTable("tbl_SAP_YP14");
                 var listData = new List<SAP_YP14>();
                 using (var stream = new MemoryStream())
                 {
@@ -204,7 +201,7 @@ namespace DashboardTeknikP1.Controllers
                         }
                     }
                 }
-                _repository.InsertBulkYP14(listData);
+                await _repository.InsertBulkYP14Async(listData);
                 _repository.LogUpload("tbl_SAP_YP14");
             }
 
