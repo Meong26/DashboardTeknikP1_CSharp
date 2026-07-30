@@ -138,12 +138,12 @@
                 <div class="expanded-view flex-column align-items-center justify-content-center py-3 w-100">
                     <img src="~/images/logo_indofood.svg" alt="Logo" height="38" class="mb-2" style="object-fit: contain;">
                     <span class="fw-bold text-warning text-center" style="font-size: 0.85rem; letter-spacing: 0.5px;">
-                        Teknik P1 Super App
+                        Teknik Super App
                     </span>
                 </div>
 
                 <div class="collapsed-view align-items-center justify-content-center w-100 py-3 text-white">
-                    <i class="bi bi-list fs-2"></i>
+                    <img src="~/images/logo-app.png" alt="Logo" height="38" style="object-fit: contain;">
                 </div>
 
             </div>
@@ -258,23 +258,25 @@
             const sidebarWrapper = document.getElementById('sidebar-wrapper');
             const sidebarToggleArea = document.getElementById('sidebarToggleArea'); 
 
-            // --- 1. LOGIKA TOGGLE SUPER APP ---
-            const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-            if (isSidebarCollapsed) {
+            // --- 1. LOGIKA AUTO-HIDE SIDEBAR (HOVER) ---
+            // Cek apakah saat halaman dimuat, kursor mouse SUDAH berada di atas sidebar
+            if (!sidebarWrapper.matches(':hover')) {
                 sidebarWrapper.classList.add('collapsed');
+            } else {
+                sidebarWrapper.classList.remove('collapsed');
             }
 
-            function toggleSidebar() {
-                sidebarWrapper.classList.toggle('collapsed');
-                const isCollapsedNow = sidebarWrapper.classList.contains('collapsed');
-                localStorage.setItem('sidebarCollapsed', isCollapsedNow);
-                
-                setTimeout(() => {
-                    window.dispatchEvent(new Event('resize')); // Resize grafik Chart.js
-                }, 300);
-            }
+            // Auto-expand saat mouse masuk ke area sidebar
+            sidebarWrapper.addEventListener('mouseenter', () => {
+                sidebarWrapper.classList.remove('collapsed');
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+            });
 
-            sidebarToggleArea.addEventListener('click', toggleSidebar);
+            // Auto-collapse saat mouse keluar dari area sidebar
+            sidebarWrapper.addEventListener('mouseleave', () => {
+                sidebarWrapper.classList.add('collapsed');
+                setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+            });
 
             // --- 2. LOGIKA DARK MODE (KLIK BARIS MENU) ---
             const htmlElement = document.getElementById('html-root');
