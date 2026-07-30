@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using DashboardTeknikP1.Repositories;
 using DashboardTeknikP1.Models;
+using DashboardTeknikP1.Helpers;
 using ClosedXML.Excel;
 using System;
 using System.IO;
@@ -204,6 +205,9 @@ namespace DashboardTeknikP1.Controllers
                 await _repository.InsertBulkYP14Async(listData);
                 _repository.LogUpload("tbl_SAP_YP14");
             }
+
+            // Hapus / Bersihkan RAM Cache secara instan agar Dashboard Analytics langsung ter-update seketika
+            CacheSignal.Reset();
 
             TempData["SuccessMessage"] = "Data Excel SAP berhasil diunggah dan disimpan ke Database.";
             }

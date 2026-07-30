@@ -4,6 +4,8 @@ using System.Text.Json;
 using DashboardTeknikP1.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Primitives;
+using DashboardTeknikP1.Helpers;
 using System;
 
 namespace DashboardTeknikP1.Controllers
@@ -43,6 +45,7 @@ namespace DashboardTeknikP1.Controllers
         // 2. Jalur API khusus untuk menyuplai data ke Dashboard
         [Authorize(Roles = "Administrator,Manager,Supervisor,Section,Teknisi,Dashboard")]
         [HttpGet]
+        [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<IActionResult> GetDashboardData(int? year)
         {
             int targetYear = year ?? DateTime.Now.Year;
@@ -61,9 +64,11 @@ namespace DashboardTeknikP1.Controllers
                     yrData = detailsYR
                 };
 
-                // Simpan ke Cache selama 1 menit (60 detik) untuk menangkal auto-refresh TV Dashboard
+                // Simpan ke Cache selama 5 menit (300 detik) untuk mencegah CPU overload (Targeted Caching),
+                // namun akan langsung terhapus secara otomatis jika user melakukan Upload Data Baru SAP
                 var cacheEntryOptions = new MemoryCacheEntryOptions()
-                    .SetAbsoluteExpiration(TimeSpan.FromSeconds(60));
+                    .SetAbsoluteExpiration(TimeSpan.FromSeconds(300))
+                    .AddExpirationToken(new CancellationChangeToken(CacheSignal.TokenSource.Token));
                 
                 _cache.Set(cacheKey, resultData, cacheEntryOptions);
             }
@@ -76,6 +81,13 @@ namespace DashboardTeknikP1.Controllers
         {
             var years = await _repository.GetAvailableYearsAsync();
             return Json(years);
+        }
+
+        [AllowAnonymous]
+        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
+        public IActionResult Error()
+        {
+            return View();
         }
     }
 }

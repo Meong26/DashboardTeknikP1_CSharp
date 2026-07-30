@@ -3,6 +3,11 @@ using Microsoft.AspNetCore.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Mendaftarkan pabrik Http Client untuk menjaga stabilitas koneksi jaringan (mencegah socket exhaustion & DNS staleness)
+builder.Services.AddHttpClient();
+// Mendaftarkan RAM (Memory Cache)
+builder.Services.AddMemoryCache();
+
 // REGISTER REPOSITORY
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.HomeRepository>();
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.UploadRepository>();
@@ -12,6 +17,7 @@ builder.Services.AddScoped<DashboardTeknikP1.Repositories.PemakaianRepository>()
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.SettingRepository>();
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.UserRepository>();
 builder.Services.AddScoped<DashboardTeknikP1.Repositories.TeknisiRepository>();
+builder.Services.AddScoped<DashboardTeknikP1.Repositories.HmiRepository>();
 
 // REGISTER SERVICE
 builder.Services.AddScoped<DashboardTeknikP1.Services.PemakaianService>();

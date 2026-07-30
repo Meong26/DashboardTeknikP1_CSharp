@@ -1,0 +1,73 @@
+@model List<DashboardTeknikP1.Models.HmiLog>
+@{
+    ViewData["Title"] = "Riwayat Log Akses HMI";
+}
+
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="fw-bold mb-0 text-body-emphasis">
+            <i class="bi bi-journal-text text-primary me-2"></i>Riwayat Log HMI
+        </h4>
+        <a href="/Hmi" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Kembali
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped align-middle mb-0">
+                    <thead class="table-light text-muted">
+                        <tr>
+                            <th class="ps-4">No</th>
+                            <th>Waktu Akses</th>
+                            <th>Pengguna</th>
+                            <th>Role / Jabatan</th>
+                            <th>Target Mesin (HMI)</th>
+                            <th>Alamat IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Count > 0)
+                        {
+                            int i = 1;
+                            foreach (var log in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-semibold text-muted">@i</td>
+                                    <td>
+                                        <div class="fw-bold text-body-emphasis">@log.WaktuAkses.ToString("dd MMM yyyy")</div>
+                                        <div class="small text-muted font-monospace">@log.WaktuAkses.ToString("HH:mm:ss")</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold text-primary">@log.NamaLengkap</div>
+                                        <div class="small text-muted">@log.UserID</div>
+                                    </td>
+                                    <td>
+                                        <span class="badge @(log.RoleName == "Administrator" ? "bg-danger" : (log.RoleName == "Supervisor" ? "bg-warning text-dark" : "bg-primary")) px-2 py-1 rounded-pill">
+                                            @log.RoleName
+                                        </span>
+                                    </td>
+                                    <td class="fw-semibold text-body-emphasis">@log.HmiName</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border font-monospace px-2 py-1">@log.HmiIp</span>
+                                    </td>
+                                </tr>
+                                i++;
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="6" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-1 d-block mb-3"></i>
+                                    Belum ada data log akses HMI.
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

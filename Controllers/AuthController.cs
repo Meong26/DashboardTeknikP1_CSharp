@@ -10,15 +10,20 @@ using DashboardTeknikP1.Models;
 using DashboardTeknikP1.Helpers;
 using Dapper;
 
+using Microsoft.Extensions.Caching.Memory;
+using System;
+
 namespace DashboardTeknikP1.Controllers
 {
     public class AuthController : Controller
     {
         private readonly string _connectionString;
+        private readonly IMemoryCache _cache;
 
-        public AuthController(IConfiguration configuration)
+        public AuthController(IConfiguration configuration, IMemoryCache cache)
         {
             _connectionString = configuration.GetConnectionString("DefaultConnection");
+            _cache = cache;
         }
 
         [HttpGet]
@@ -44,6 +49,18 @@ namespace DashboardTeknikP1.Controllers
         public async Task<IActionResult> Login(LoginViewModel model)
         {
             if (!ModelState.IsValid) return View(model);
+
+            // ==========================================
+            // RATE LIMITING & BRUTE-FORCE PROTECTION
+            // ==========================================
+            string lockoutKey = $"Lockout_{model.UserID}";
+            string attemptKey = $"LoginAttempts_{model.UserID}";
+
+            if (_cache.TryGetValue(lockoutKey, out _))
+            {
+                ModelState.AddModelError(string.Empty, "Akun dikunci sementara karena terlalu banyak percobaan gagal. Silakan tunggu 5 menit.");
+                return View(model);
+            }
 
             using (SqlConnection conn = new SqlConnection(_connectionString))
             {
@@ -85,6 +102,8 @@ namespace DashboardTeknikP1.Controllers
 
                         // Masukkan KTP ke dalam Cookie Browser
                         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+                        // Login Sukses: Bersihkan hitungan gagal
+                        _cache.Remove(attemptKey);
 
                         if (roleName == "Dashboard")
                         {
@@ -96,11 +115,33 @@ namespace DashboardTeknikP1.Controllers
                         }
                         return RedirectToAction("Index", "Home");
                     }
+                    else
+                    {
+                        // Kata sandi salah: Tambah hitungan gagal
+                        int attempts = _cache.TryGetValue(attemptKey, out int currentAttempts) ? currentAttempts : 0;
+                        attempts++;
+
+                        if (attempts >= 5)
+                        {
+                            _cache.Set(lockoutKey, true, TimeSpan.FromMinutes(5));
+                            _cache.Remove(attemptKey);
+                            ModelState.AddModelError(string.Empty, "Akun dikunci sementara karena terlalu banyak percobaan gagal. Silakan tunggu 5 menit.");
+                        }
+                        else
+                        {
+                            _cache.Set(attemptKey, attempts, TimeSpan.FromMinutes(10));
+                            ModelState.AddModelError(string.Empty, $"Kata sandi salah. Percobaan tersisa: {5 - attempts}");
+                        }
+                        return View(model);
+                    }
+                }
+                else
+                {
+                    // User tidak ditemukan
+                    ModelState.AddModelError(string.Empty, "NIK / User ID tidak ditemukan atau tidak aktif.");
+                    return View(model);
                 }
             }
-
-            ModelState.AddModelError("", "NIK Karyawan atau Kata Sandi tidak sesuai.");
-            return View(model);
         }
 
         public async Task<IActionResult> Logout()

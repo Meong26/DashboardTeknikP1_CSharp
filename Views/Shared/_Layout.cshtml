@@ -162,6 +162,13 @@
                         <i class="bi bi-tools"></i> <span class="nav-text">Log Kerusakan</span>
                     </a>
                 }
+
+                @if (User.IsInRole("Administrator") || User.IsInRole("Manager") || User.IsInRole("Supervisor") || User.IsInRole("Section") || User.IsInRole("Teknisi") || User.IsInRole("Dashboard"))
+                {
+                    <a href="/Hmi" class="list-group-item list-group-item-action text-decoration-none nav-link-item">
+                        <i class="bi bi-display"></i> <span class="nav-text">HMI Live Monitoring</span>
+                    </a>
+                }
                 
                 @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor") || User.IsInRole("Section") || User.IsInRole("Teknisi") || User.IsInRole("WHS.SP"))
                 {
