@@ -1033,8 +1033,8 @@
                 htmlTable += `<tr>
                     <td class="text-center fw-bold">${index + 1}</td>
                     <td class="text-center">${dateStr}</td>
-                    <td class="fw-bold text-primary">${line} - ${machine}</td>
-                    <td class="text-truncate" style="max-width: 350px;" title="${item.ActivityText || item.NotificationDesc}">${item.ActivityText || item.NotificationDesc || '-'}</td>
+                    <td class="fw-bold text-primary">${escapeHtml(line)} - ${escapeHtml(machine)}</td>
+                    <td class="text-truncate" style="max-width: 350px;" title="${escapeHtml(item.ActivityText || item.NotificationDesc)}">${escapeHtml(item.ActivityText || item.NotificationDesc || '-')}</td>
                     <td class="text-danger fw-bold text-end pe-3">${item.TotalDownTimeInMinutes} Menit</td>
                 </tr>`;
             });
@@ -1062,8 +1062,8 @@
                 htmlTable += `<tr>
                     <td class="text-center fw-bold">${index + 1}</td>
                     <td class="text-center">${dateStr}</td>
-                    <td class="fw-bold text-primary">${line} - ${machine}</td>
-                    <td class="text-truncate" style="max-width: 350px;" title="${item.ActivityText || item.NotificationDesc}">${item.ActivityText || item.NotificationDesc || '-'}</td>
+                    <td class="fw-bold text-primary">${escapeHtml(line)} - ${escapeHtml(machine)}</td>
+                    <td class="text-truncate" style="max-width: 350px;" title="${escapeHtml(item.ActivityText || item.NotificationDesc)}">${escapeHtml(item.ActivityText || item.NotificationDesc || '-')}</td>
                     <td class="text-danger fw-bold text-end pe-3">${item.TotalDownTimeInMinutes} Menit</td>
                 </tr>`;
             });
@@ -1152,7 +1152,7 @@
             sortedFreq.forEach((item, index) => {
                 htmlTable += `<tr>
                     <td class="text-center fw-bold">${index + 1}</td>
-                    <td class="fw-bold text-success ps-3">${item.name}</td>
+                    <td class="fw-bold text-success ps-3">${escapeHtml(item.name)}</td>
                     <td class="text-warning text-center fw-bold fs-6">${item.count} Kali</td>
                     <td class="text-danger text-end fw-bold pe-3">${item.mins} Menit</td>
                 </tr>`;
@@ -1266,7 +1266,7 @@
             sortedDowntime.forEach((item, index) => {
                 htmlTable += `<tr>
                     <td class="text-center fw-bold">${index + 1}</td>
-                    <td class="fw-bold text-primary ps-3">${item.name}</td>
+                    <td class="fw-bold text-primary ps-3">${escapeHtml(item.name)}</td>
                     <td class="text-danger text-end fw-bold pe-3">${item.mins} Menit</td>
                     <td class="text-success text-center fw-bold">${item.avail.toFixed(2)} %</td>
                 </tr>`;

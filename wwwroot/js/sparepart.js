@@ -271,24 +271,24 @@ function renderEwsTableRows() {
             let savedRemark = memory.remark || "";
             htmlGrid += `
                 <tr class="${rowClass}">
-                    <td class="text-center"><input type="checkbox" class="form-check-input chk-pr-item" data-matno="${item.materialNo}" ${isChecked}></td>
-                    <td class="font-monospace fw-bold">${item.materialNo} ${isItemPriority ? '⭐' : ''}</td>
-                    <td class="fw-bold text-truncate" style="max-width: 220px;">${item.description}</td>
-                    <td><input type="number" class="form-control form-control-sm txt-pr-qty" min="1" value="${savedQty}" style="padding: 2px 5px;"></td>
-                    <td class="text-center fw-bold">${item.actualStock} ${item.uom}</td>
-                    <td><input type="text" class="form-control form-control-sm txt-pr-remark" value="${savedRemark}" placeholder="Urgent" style="padding: 2px 5px;"></td>
+                    <td class="text-center"><input type="checkbox" class="form-check-input chk-pr-item" data-matno="${escapeHtml(item.materialNo)}" ${isChecked}></td>
+                    <td class="font-monospace fw-bold">${escapeHtml(item.materialNo)} ${isItemPriority ? '⭐' : ''}</td>
+                    <td class="fw-bold text-truncate" style="max-width: 220px;">${escapeHtml(item.description)}</td>
+                    <td><input type="number" class="form-control form-control-sm txt-pr-qty" min="1" value="${escapeHtml(savedQty)}" style="padding: 2px 5px;"></td>
+                    <td class="text-center fw-bold">${item.actualStock} ${escapeHtml(item.uom)}</td>
+                    <td><input type="text" class="form-control form-control-sm txt-pr-remark" value="${escapeHtml(savedRemark)}" placeholder="Urgent" style="padding: 2px 5px;"></td>
                 </tr>`;
         } else {
             let badgeClass = isZero ? "bg-danger" : "bg-warning text-dark border border-warning";
             let statusText = isZero ? "KOSONG" : "KRITIS";
 
             htmlGrid += `
-                <tr class="${rowClass} ews-row" onclick="focusSearchToItem('${item.materialNo}')" style="cursor:pointer;">
-                    <td class="font-monospace fw-bold">${item.materialNo} ${isItemPriority ? '⭐' : ''}</td>
-                    <td class="fw-bold text-truncate" style="max-width: 250px;">${item.description}</td>
-                    <td><span class="badge bg-secondary-subtle text-secondary-emphasis border">${item.storLoct}</span></td>
+                <tr class="${rowClass} ews-row" onclick="focusSearchToItem('${escapeHtml(item.materialNo)}')" style="cursor:pointer;">
+                    <td class="font-monospace fw-bold">${escapeHtml(item.materialNo)} ${isItemPriority ? '⭐' : ''}</td>
+                    <td class="fw-bold text-truncate" style="max-width: 250px;">${escapeHtml(item.description)}</td>
+                    <td><span class="badge bg-secondary-subtle text-secondary-emphasis border">${escapeHtml(item.storLoct)}</span></td>
                     <td class="text-center text-muted fw-bold">${item.safetyStock}</td>
-                    <td class="text-center fw-bold ${isZero ? 'text-danger' : ''}">${item.actualStock} <span class="small">${item.uom}</span></td>
+                    <td class="text-center fw-bold ${isZero ? 'text-danger' : ''}">${item.actualStock} <span class="small">${escapeHtml(item.uom)}</span></td>
                     <td class="text-center"><span class="badge ${badgeClass} fw-bold w-100">${statusText}</span></td>
                 </tr>`;
         }
@@ -522,17 +522,17 @@ function renderMainTableRows() {
         let priorityColHtml = "";
         if (isPriorityModeActive) {
             let isChecked = isItemPriority ? "checked" : "";
-            priorityColHtml = `<td class="text-center"><input type="checkbox" class="form-check-input border-warning chk-priority-flag" data-matno="${item.materialNo}" ${isChecked}></td>`;
+            priorityColHtml = `<td class="text-center"><input type="checkbox" class="form-check-input border-warning chk-priority-flag" data-matno="${escapeHtml(item.materialNo)}" ${isChecked}></td>`;
         }
 
         htmlBuffer += `
             <tr class="${rowStyleClass}">
                 ${priorityColHtml}
-                <td class="font-monospace fw-bold text-secondary text-nowrap">${item.materialNo} ${isItemPriority ? '⭐' : ''}</td>
-                <td><div class="fw-bold text-uppercase text-truncate" style="max-width: 380px;">${item.description}</div></td>
-                <td><span class="badge bg-secondary-subtle text-secondary-emphasis border font-monospace px-2">${item.storLoct}</span></td>
+                <td class="font-monospace fw-bold text-secondary text-nowrap">${escapeHtml(item.materialNo)} ${isItemPriority ? '⭐' : ''}</td>
+                <td><div class="fw-bold text-uppercase text-truncate" style="max-width: 380px;">${escapeHtml(item.description)}</div></td>
+                <td><span class="badge bg-secondary-subtle text-secondary-emphasis border font-monospace px-2">${escapeHtml(item.storLoct)}</span></td>
                 <td class="text-center text-secondary fw-bold">${item.safetyStock}</td>
-                <td class="text-center ${textStockStyle}">${item.actualStock} <span class="small text-muted fw-normal" style="font-size:0.7rem">${item.uom}</span></td>
+                <td class="text-center ${textStockStyle}">${item.actualStock} <span class="small text-muted fw-normal" style="font-size:0.7rem">${escapeHtml(item.uom)}</span></td>
                 <td class="text-center">${badgeComponent}</td>
             </tr>`;
     });

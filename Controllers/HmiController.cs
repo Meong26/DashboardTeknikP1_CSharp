@@ -47,6 +47,26 @@ namespace DashboardTeknikP1.Controllers
         {
             if (string.IsNullOrWhiteSpace(ip)) return Json(new { online = false, latencyMs = 0 });
 
+            if (!System.Net.IPAddress.TryParse(ip, out var parsedIp))
+                return Json(new { online = false, latencyMs = 0 });
+
+            if (System.Net.IPAddress.IsLoopback(parsedIp))
+                return Json(new { online = false, latencyMs = 0 });
+
+            byte[] ipBytes = parsedIp.GetAddressBytes();
+            bool isAllowed = false;
+            
+            // Rentang HMI: 10.124.8.10 - 10.124.8.40
+            if (ipBytes.Length == 4 && ipBytes[0] == 10 && ipBytes[1] == 124 && ipBytes[2] == 8)
+            {
+                if (ipBytes[3] >= 10 && ipBytes[3] <= 40)
+                {
+                    isAllowed = true;
+                }
+            }
+
+            if (!isAllowed) return Json(new { online = false, latencyMs = 0 });
+
             try
             {
                 var ping = new Ping();

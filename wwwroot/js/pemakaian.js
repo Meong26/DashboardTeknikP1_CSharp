@@ -327,14 +327,14 @@
             if (currentHistoryMode === 'FIX') {
                 htmlGrid += `
                 <tr class="table-success opacity-85">
-                    <td class="text-center text-secondary">${item.TanggalFormated}</td>
-                    <td class="font-monospace fw-bold text-dark">${item.MaterialNo}</td>
-                    <td class="text-uppercase text-truncate" style="max-width: 260px;" title="${item.MaterialDesc}">${item.MaterialDesc}</td>
-                    <td class="text-muted text-truncate" style="max-width: 180px;" title="${item.TujuanPengambilan}">${item.TujuanPengambilan || '-'}</td>
-                    <td>${item.OrderNo}</td>
-                    <td class="text-center fw-bold text-primary">${item.JumlahPengambilan}</td>
-                    <td class="text-end font-monospace">Rp ${item.HargaSatuanFormated}</td>
-                    <td class="text-end font-monospace fw-bold text-danger">Rp ${item.TotalHargaFormated}</td>
+                    <td class="text-center text-secondary">${escapeHtml(item.TanggalFormated)}</td>
+                    <td class="font-monospace fw-bold text-dark">${escapeHtml(item.MaterialNo)}</td>
+                    <td class="text-uppercase text-truncate" style="max-width: 260px;" title="${escapeHtml(item.MaterialDesc)}">${escapeHtml(item.MaterialDesc)}</td>
+                    <td class="text-muted text-truncate" style="max-width: 180px;" title="${escapeHtml(item.TujuanPengambilan || '-')}">${escapeHtml(item.TujuanPengambilan || '-')}</td>
+                    <td>${escapeHtml(item.OrderNo)}</td>
+                    <td class="text-center fw-bold text-primary">${escapeHtml(item.JumlahPengambilan)}</td>
+                    <td class="text-end font-monospace">Rp ${escapeHtml(item.HargaSatuanFormated)}</td>
+                    <td class="text-end font-monospace fw-bold text-danger">Rp ${escapeHtml(item.TotalHargaFormated)}</td>
                 </tr>`;
             } else {
                 // PENYESUAIAN C#: item.MaterialNo di Pemakaian dicocokkan dengan m.Material di tabel Sparepart yang baru
@@ -354,7 +354,7 @@
                     prefixTd = `<td class="text-center"><input type="checkbox" class="form-check-input border-danger chk-quarantine-item" data-id="${item.PengambilanID}"></td>`;
                 } else if (isPRModeActive) {
                     if (isKritis) {
-                        prefixTd = `<td class="text-center"><input type="checkbox" class="form-check-input border-info chk-pr-item" data-matno="${item.MaterialNo}" data-desc="${item.MaterialDesc}" data-stok="${sisaStok}"></td>`;
+                        prefixTd = `<td class="text-center"><input type="checkbox" class="form-check-input border-info chk-pr-item" data-matno="${escapeHtml(item.MaterialNo)}" data-desc="${escapeHtml(item.MaterialDesc)}" data-stok="${escapeHtml(sisaStok)}"></td>`;
                     } else {
                         prefixTd = `<td class="text-center"><i class="bi bi-dash text-muted"></i></td>`;
                     }
@@ -363,16 +363,16 @@
                 htmlGrid += `
                 <tr>
                     ${prefixTd}
-                    <td class="text-center text-secondary">${item.TanggalFormated}</td>
-                    <td class="font-monospace fw-bold text-body-emphasis">${item.MaterialNo}</td>
-                    <td class="text-uppercase text-truncate" style="max-width: 260px;" title="${item.MaterialDesc}">${item.MaterialDesc}</td>
-                    <td class="text-muted text-truncate" style="max-width: 180px;" title="${item.TujuanPengambilan}">${item.TujuanPengambilan || '-'}</td>
-                    <td>${item.NamaPengambil || '-'}</td>
-                    <td><span class="badge bg-secondary">${item.Plant || '-'}</span></td>
-                    <td class="text-center fw-bold text-primary">${item.JumlahPengambilan}</td>
+                    <td class="text-center text-secondary">${escapeHtml(item.TanggalFormated)}</td>
+                    <td class="font-monospace fw-bold text-body-emphasis">${escapeHtml(item.MaterialNo)}</td>
+                    <td class="text-uppercase text-truncate" style="max-width: 260px;" title="${escapeHtml(item.MaterialDesc)}">${escapeHtml(item.MaterialDesc)}</td>
+                    <td class="text-muted text-truncate" style="max-width: 180px;" title="${escapeHtml(item.TujuanPengambilan || '-')}">${escapeHtml(item.TujuanPengambilan || '-')}</td>
+                    <td>${escapeHtml(item.NamaPengambil || '-')}</td>
+                    <td><span class="badge bg-secondary">${escapeHtml(item.Plant || '-')}</span></td>
+                    <td class="text-center fw-bold text-primary">${escapeHtml(item.JumlahPengambilan)}</td>
                     <td class="text-center align-middle">${stokHtml}</td>
-                    <td class="text-end font-monospace">Rp ${item.HargaSatuanFormated}</td>
-                    <td class="text-end font-monospace fw-bold text-danger">Rp ${item.TotalHargaFormated}</td>
+                    <td class="text-end font-monospace">Rp ${escapeHtml(item.HargaSatuanFormated)}</td>
+                    <td class="text-end font-monospace fw-bold text-danger">Rp ${escapeHtml(item.TotalHargaFormated)}</td>
                 </tr>`;
             }
         });
@@ -477,13 +477,13 @@
         historyDatasetKarantina.forEach(item => {
             htmlGrid += `
             <tr>
-                <td class="text-center text-secondary">${item.TanggalFormated}</td>
-                <td class="font-monospace fw-bold">${item.MaterialNo}</td>
-                <td class="text-truncate text-uppercase" style="max-width: 220px;">${item.MaterialDesc}</td>
-                <td class="text-muted text-truncate" style="max-width: 150px;">${item.TujuanPengambilan || '-'}</td>
-                <td>${item.NamaPengambil || '-'}</td>
-                <td class="text-center fw-bold text-body-emphasis">${item.JumlahPengambilan}</td>
-                <td class="text-end font-monospace text-danger fw-bold">Rp ${item.TotalHargaFormated}</td>
+                <td class="text-center text-secondary">${escapeHtml(item.TanggalFormated)}</td>
+                <td class="font-monospace fw-bold">${escapeHtml(item.MaterialNo)}</td>
+                <td class="text-truncate text-uppercase" style="max-width: 220px;" title="${escapeHtml(item.MaterialDesc)}">${escapeHtml(item.MaterialDesc)}</td>
+                <td class="text-muted text-truncate" style="max-width: 150px;" title="${escapeHtml(item.TujuanPengambilan || '-')}">${escapeHtml(item.TujuanPengambilan || '-')}</td>
+                <td>${escapeHtml(item.NamaPengambil || '-')}</td>
+                <td class="text-center fw-bold text-body-emphasis">${escapeHtml(item.JumlahPengambilan)}</td>
+                <td class="text-end font-monospace text-danger fw-bold">Rp ${escapeHtml(item.TotalHargaFormated)}</td>
                 <td class="text-center">
                     <div class="btn-group btn-group-sm w-100">
                         <button class="btn btn-outline-primary fw-bold py-1" onclick="executeRestore(${item.PengambilanID})" title="Batal Tahan">
@@ -775,12 +775,12 @@
                 let stokTeks = sisaStok > 0 ? `${sisaStok} ${part.UoM || 'PC'}` : 'KOSONG';
                 
                 html += `
-                <button type="button" class="list-group-item list-group-item-action p-2 border-bottom" onmousedown="selectMaterialFromDropdown(this, '${part.Material}')">
+                <button type="button" class="list-group-item list-group-item-action p-2 border-bottom" onmousedown="selectMaterialFromDropdown(this, '${escapeHtml(part.Material)}')">
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="fw-bold font-monospace text-primary small">${part.Material}</span>
-                        <span class="badge ${badgeClass} shadow-sm" style="font-size: 0.7rem;">${stokTeks}</span>
+                        <span class="fw-bold font-monospace text-primary small">${escapeHtml(part.Material)}</span>
+                        <span class="badge ${badgeClass} shadow-sm" style="font-size: 0.7rem;">${escapeHtml(stokTeks)}</span>
                     </div>
-                    <div class="small text-truncate text-uppercase text-dark" style="max-width: 380px;">${part.MaterialDescription}</div>
+                    <div class="small text-truncate text-uppercase text-dark" style="max-width: 380px;">${escapeHtml(part.MaterialDescription)}</div>
                 </button>`;
             });
             dropdown.innerHTML = html;
@@ -871,10 +871,10 @@
                 let nama = teknisi.Nama || teknisi.nama || "";
                 let plant = teknisi.Plant || teknisi.plant || "";
                 html += `
-                <button type="button" class="list-group-item list-group-item-action p-2 border-bottom" onmousedown="selectTeknisiFromDropdown('${nama}', '${plant}')">
+                <button type="button" class="list-group-item list-group-item-action p-2 border-bottom" onmousedown="selectTeknisiFromDropdown('${escapeHtml(nama)}', '${escapeHtml(plant)}')">
                     <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold text-dark small">${nama}</span>
-                        <span class="badge bg-secondary shadow-sm" style="font-size: 0.7rem;">${plant}</span>
+                        <span class="fw-bold text-dark small">${escapeHtml(nama)}</span>
+                        <span class="badge bg-secondary shadow-sm" style="font-size: 0.7rem;">${escapeHtml(plant)}</span>
                     </div>
                 </button>`;
             });
