@@ -428,7 +428,14 @@ let modalReportBuilderInst = null;
 
         if (!currentWeekStr) currentWeekStr = ""; 
 
-        let fYP = (ypDataRaw || []).filter(item => item.WeekKalendarIndofood === currentWeekStr && item.NotificationType === 'NT');
+        let fYP = (ypDataRaw || []).filter(item => {
+            if (item.WeekKalendarIndofood !== currentWeekStr) return false;
+            if (item.NotificationType !== 'NT') return false;
+            let isSteamIncluded = document.getElementById("chkSteam") ? document.getElementById("chkSteam").checked : true;
+            let mBoiler = !(getMachineName(item.FunctionLocation, item.ActivityText) === "Boiler" && !isSteamIncluded);
+            if (!mBoiler) return false;
+            return true;
+        });
         let fYR = (yrDataRaw || []).filter(item => item.WeekOfBasicFinishedDate === currentWeekStr);
 
         let dtMins = fYP.reduce((sum, item) => sum + item.TotalDownTimeInMinutes, 0);

@@ -708,7 +708,9 @@
 
         let thisWeekYP = ypDataRaw.filter(item => {
             let mShift = !fltShift || (item.WageGroup_GroupShift && item.WageGroup_GroupShift.includes(fltShift));
-            return item.WeekKalendarIndofood === currentWeekStr && item.NotificationType === 'NT' && mShift;
+            let isSteamIncluded = document.getElementById("chkSteam") ? document.getElementById("chkSteam").checked : true;
+            let mBoiler = !(getMachineName(item.FunctionLocation, item.ActivityText) === "Boiler" && !isSteamIncluded);
+            return item.WeekKalendarIndofood === currentWeekStr && item.NotificationType === 'NT' && mShift && mBoiler;
         });
         
         let thisWeekYR = yrDataRaw.filter(item => {
@@ -976,6 +978,9 @@
             if (item.WeekKalendarIndofood !== currentWeekStr) return false;
             if (item.NotificationType !== 'NT') return false;
             if (fltShift && (!item.WageGroup_GroupShift || !item.WageGroup_GroupShift.includes(fltShift))) return false;
+            let isSteamIncluded = document.getElementById("chkSteam") ? document.getElementById("chkSteam").checked : true;
+            let mBoiler = !(getMachineName(item.FunctionLocation, item.ActivityText) === "Boiler" && !isSteamIncluded);
+            if (!mBoiler) return false;
             return true;
         });
 
