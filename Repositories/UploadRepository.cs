@@ -86,6 +86,17 @@ namespace DashboardTeknikP1.Repositories
                 }
 
                 string mergeInsertQuery = @"
+                    -- Hapus data pada rentang tanggal yang ada di file Excel
+                    DECLARE @MinDate DATE = (SELECT MIN(NotificationDate) FROM #Staging_YP11);
+                    DECLARE @MaxDate DATE = (SELECT MAX(NotificationDate) FROM #Staging_YP11);
+                    
+                    IF @MinDate IS NOT NULL AND @MaxDate IS NOT NULL
+                    BEGIN
+                        DELETE FROM tbl_SAP_YP11 
+                        WHERE NotificationDate >= @MinDate AND NotificationDate <= @MaxDate;
+                    END
+
+                    -- Insert semua data baru dari Excel
                     INSERT INTO tbl_SAP_YP11 (
                         WeekKalendarIndofood, FunctionLocation, NotificationType, NotificationDesc, NotificationDate, 
                         TotalDownTimeInMinutes, DownTimeStartTime, DownTimeEndTime, ActivityText, WageGroup_GroupShift, 
@@ -95,16 +106,7 @@ namespace DashboardTeknikP1.Repositories
                         s.WeekKalendarIndofood, s.FunctionLocation, s.NotificationType, s.NotificationDesc, s.NotificationDate, 
                         s.TotalDownTimeInMinutes, s.DownTimeStartTime, s.DownTimeEndTime, s.ActivityText, s.WageGroup_GroupShift, 
                         s.MasterReceipt, s.ProcessOrder, s.WorkCenterPPDesc, s.DownTimeCode_ActivityCodeDesc
-                    FROM #Staging_YP11 s
-                    WHERE NOT EXISTS (
-                        SELECT 1 FROM tbl_SAP_YP11 t
-                        WHERE (t.FunctionLocation = s.FunctionLocation OR (t.FunctionLocation IS NULL AND s.FunctionLocation IS NULL))
-                          AND (t.NotificationDate = s.NotificationDate OR (t.NotificationDate IS NULL AND s.NotificationDate IS NULL))
-                          AND (t.DownTimeStartTime = s.DownTimeStartTime OR (t.DownTimeStartTime IS NULL AND s.DownTimeStartTime IS NULL))
-                          AND (t.DownTimeEndTime = s.DownTimeEndTime OR (t.DownTimeEndTime IS NULL AND s.DownTimeEndTime IS NULL))
-                          AND (t.TotalDownTimeInMinutes = s.TotalDownTimeInMinutes OR (t.TotalDownTimeInMinutes IS NULL AND s.TotalDownTimeInMinutes IS NULL))
-                          AND (t.ProcessOrder = s.ProcessOrder OR (t.ProcessOrder IS NULL AND s.ProcessOrder IS NULL))
-                    );
+                    FROM #Staging_YP11 s;
 
                     DROP TABLE #Staging_YP11;";
 
@@ -151,6 +153,17 @@ namespace DashboardTeknikP1.Repositories
                 }
 
                 string mergeInsertQuery = @"
+                    -- Hapus data pada rentang tanggal yang ada di file Excel
+                    DECLARE @MinDate DATE = (SELECT MIN(PostingDate) FROM #Staging_YR21);
+                    DECLARE @MaxDate DATE = (SELECT MAX(PostingDate) FROM #Staging_YR21);
+                    
+                    IF @MinDate IS NOT NULL AND @MaxDate IS NOT NULL
+                    BEGIN
+                        DELETE FROM tbl_SAP_YR21 
+                        WHERE PostingDate >= @MinDate AND PostingDate <= @MaxDate;
+                    END
+
+                    -- Insert semua data baru dari Excel
                     INSERT INTO tbl_SAP_YR21 (
                         WeekOfBasicFinishedDate, PostingDate, ResourceName, WageGroup, GroupName, 
                         PlannedHour, ActualHour, StdOutputPcs, DelivQtyPcs, EffectivityPO_Pct, Efficiency_Pct, Ach_Pct
@@ -158,17 +171,7 @@ namespace DashboardTeknikP1.Repositories
                     SELECT 
                         s.WeekOfBasicFinishedDate, s.PostingDate, s.ResourceName, s.WageGroup, s.GroupName, 
                         s.PlannedHour, s.ActualHour, s.StdOutputPcs, s.DelivQtyPcs, s.EffectivityPO_Pct, s.Efficiency_Pct, s.Ach_Pct
-                    FROM #Staging_YR21 s
-                    WHERE NOT EXISTS (
-                        SELECT 1 FROM tbl_SAP_YR21 t
-                        WHERE (t.PostingDate = s.PostingDate OR (t.PostingDate IS NULL AND s.PostingDate IS NULL))
-                          AND (t.ResourceName = s.ResourceName OR (t.ResourceName IS NULL AND s.ResourceName IS NULL))
-                          AND (t.WageGroup = s.WageGroup OR (t.WageGroup IS NULL AND s.WageGroup IS NULL))
-                          AND (t.GroupName = s.GroupName OR (t.GroupName IS NULL AND s.GroupName IS NULL))
-                          AND (t.PlannedHour = s.PlannedHour OR (t.PlannedHour IS NULL AND s.PlannedHour IS NULL))
-                          AND (t.ActualHour = s.ActualHour OR (t.ActualHour IS NULL AND s.ActualHour IS NULL))
-                          AND (t.DelivQtyPcs = s.DelivQtyPcs OR (t.DelivQtyPcs IS NULL AND s.DelivQtyPcs IS NULL))
-                    );
+                    FROM #Staging_YR21 s;
 
                     DROP TABLE #Staging_YR21;";
 
