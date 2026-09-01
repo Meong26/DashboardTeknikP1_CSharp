@@ -129,7 +129,8 @@
     });
 
     async function fetchApiData() {
-        document.getElementById('loadingForm').classList.remove('d-none');
+        const loadingForm = document.getElementById('loadingForm');
+        if (loadingForm) loadingForm.classList.remove('d-none');
         try {
             const response = await fetch('/Temuan/GetApiData');
             const data = await response.json();
@@ -146,8 +147,11 @@
             }
         } catch (error) {
             console.error("Gagal menarik data API Temuan", error);
+            const tbody = document.getElementById('historyBody');
+            if(tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center py-5 text-danger"><i class="bi bi-exclamation-triangle-fill fs-3 d-block mb-2"></i> Koneksi terputus. Gagal memuat riwayat laporan.</td></tr>`;
         } finally {
-            document.getElementById('loadingForm').classList.add('d-none');
+            const loadingForm = document.getElementById('loadingForm');
+            if (loadingForm) loadingForm.classList.add('d-none');
         }
     }
 
