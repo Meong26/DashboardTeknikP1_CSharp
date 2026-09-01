@@ -30,7 +30,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/Auth/Login"; // Jika belum login, lempar ke sini
         options.LogoutPath = "/Auth/Logout";
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(5); // Sesi login kedaluwarsa dalam 30 Menit jika tidak ada aktivitas
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Sesi login kedaluwarsa dalam 30 Menit jika tidak ada aktivitas
         options.SlidingExpiration = true; // Perbarui waktu secara otomatis jika user aktif mengakses server
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Mengikuti protokol (HTTP/HTTPS) agar bisa diakses dari HP lokal
         options.Cookie.HttpOnly = true; // Mencegah XSS

@@ -209,7 +209,7 @@
                     </div>
                 }
                 
-                @if (User.IsInRole("Administrator") || User.IsInRole("Section"))
+                @if (User.IsInRole("Administrator") || User.IsInRole("Section") || User.IsInRole("Supervisor"))
                 {
                     <a href="/Upload" class="list-group-item list-group-item-action text-decoration-none nav-link-item">
                         <i class="bi bi-cloud-arrow-up-fill"></i> <span class="nav-text">Sinkronisasi SAP</span>
