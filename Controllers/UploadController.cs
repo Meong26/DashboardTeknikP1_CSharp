@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize(Roles = "Administrator,Section,Supervisor")]
+    [Authorize(Roles = "Administrator,Section Teknik,Supervisor Teknik")]
     public class UploadController : Controller
     {
         private readonly UploadRepository _repository;

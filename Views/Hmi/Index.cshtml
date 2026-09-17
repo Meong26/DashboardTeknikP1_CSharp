@@ -40,7 +40,7 @@
 
                 <!-- Right: Status Badge & Action Controls -->
                 <div class="d-flex align-items-center gap-2">
-                    @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor") || User.IsInRole("Section"))
+                    @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor Teknik") || User.IsInRole("Section Teknik"))
                     {
                         <a href="/Hmi/Logs" class="btn btn-sm btn-outline-info fw-semibold">
                             <i class="bi bi-journal-text me-1"></i> Lihat Log

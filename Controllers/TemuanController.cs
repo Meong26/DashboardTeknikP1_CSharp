@@ -13,7 +13,7 @@ using ClosedXML.Excel;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize(Roles = "Administrator,Supervisor,Section,Teknisi,Dashboard")]
+    [Authorize(Roles = "Administrator,Supervisor Teknik,Section Teknik,Teknisi,Dashboard")]
     public class TemuanController : Controller
     {
         private readonly TemuanRepository _repository;
@@ -39,7 +39,7 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         // 2. HALAMAN FORM INPUT BARU (CREATE - GET)
         // ====================================================================
-        [Authorize(Roles = "Administrator,Section,Teknisi")]
+        [Authorize(Roles = "Administrator,Section Teknik,Teknisi")]
         [HttpGet]
         public async Task<IActionResult> Create()
         {
@@ -55,7 +55,7 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         // 3. PROSES SIMPAN DATA FORM (CREATE - POST)
         // ====================================================================
-        [Authorize(Roles = "Administrator,Section,Teknisi")]
+        [Authorize(Roles = "Administrator,Section Teknik,Teknisi")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("KodeMesin,Line,DeskripsiAbnormal,TindakanKorektif")] TemuanAbnormal model)
@@ -88,7 +88,7 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         // 4. HALAMAN TUTUP LAPORAN (CLOSE - GET)
         // ====================================================================
-        [Authorize(Roles = "Administrator,Section")]
+        [Authorize(Roles = "Administrator,Section Teknik")]
         [HttpGet]
         public async Task<IActionResult> Close(int id)
         {
@@ -110,7 +110,7 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         // 5. PROSES EKSEKUSI TUTUP LAPORAN (CLOSE - POST)
         // ====================================================================
-        [Authorize(Roles = "Administrator,Section")]
+        [Authorize(Roles = "Administrator,Section Teknik")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Close(int TemuanID, string TindakanKorektif)
@@ -193,7 +193,7 @@ namespace DashboardTeknikP1.Controllers
         // ====================================================================
         // 8. EXPORT RENCANA KERJA PM (PREVENTIVE MAINTENANCE) KE EXCEL
         // ====================================================================
-        [Authorize(Roles = "Administrator,Section")]
+        [Authorize(Roles = "Administrator,Section Teknik")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ExportRencanaKerjaPM([FromBody] RencanaKerjaExportRequest request)

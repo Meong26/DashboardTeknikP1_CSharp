@@ -13,7 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize(Roles = "Administrator,Supervisor,Section,Teknisi,WHS.SP,Dashboard")]
+    [Authorize(Roles = "Administrator,Supervisor Teknik,Section Teknik,Teknisi,WHS.SP,Dashboard")]
     public class SparepartController : Controller
     {
         private readonly SparepartRepository _sparepartRepo;
@@ -25,7 +25,7 @@ namespace DashboardTeknikP1.Controllers
             _env = env;
         }
 
-        [Authorize(Roles = "Administrator,Supervisor,Section,Teknisi,WHS.SP")]
+        [Authorize(Roles = "Administrator,Supervisor Teknik,Section Teknik,Teknisi,WHS.SP")]
         public IActionResult Index()
         {
             return View();
@@ -51,7 +51,7 @@ namespace DashboardTeknikP1.Controllers
             public List<PRItemInput> Items { get; set; } = new List<PRItemInput>();
         }
 
-        [Authorize(Roles = "Administrator,Supervisor,Section")]
+        [Authorize(Roles = "Administrator,Supervisor Teknik,Section Teknik")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ExportPR([FromBody] PRRequestModel request)
@@ -155,7 +155,7 @@ namespace DashboardTeknikP1.Controllers
             }
         }
         
-        [Authorize(Roles = "Administrator,Supervisor,Section")]
+        [Authorize(Roles = "Administrator,Supervisor Teknik,Section Teknik")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdatePriorities([FromBody] List<string> priorityMaterials)

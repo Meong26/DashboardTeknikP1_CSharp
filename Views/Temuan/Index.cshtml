@@ -9,7 +9,7 @@
     </div>
 </div>
 
-@if (!User.IsInRole("Supervisor"))
+@if (!User.IsInRole("Supervisor Teknik"))
 {
     @Html.AntiForgeryToken()
     <div class="card shadow-sm border-0 border-top border-4 border-primary mb-4">
@@ -50,7 +50,7 @@
         <span class="fw-bold" style="font-size: 0.9rem;">
             <i class="bi bi-clock-history me-1"></i> Riwayat Laporan Temuan
         </span>
-        @if (User.IsInRole("Administrator") || User.IsInRole("Section"))
+        @if (User.IsInRole("Administrator") || User.IsInRole("Section Teknik"))
         {
             <div id="pmActionHeader">
                 <button class="btn btn-sm btn-outline-light fw-bold" id="btnModePM" onclick="toggleWorkPlanMode(true)">
@@ -119,7 +119,7 @@
 </div>
 
 <script>
-    const canCloseLaporan = @((!User.IsInRole("Supervisor") && !User.IsInRole("Teknisi")).ToString().ToLower());
+    const canCloseLaporan = @((!User.IsInRole("Supervisor Teknik") && !User.IsInRole("Teknisi")).ToString().ToLower());
     let masterMesin = [];
     let historyTemuan = [];
     let isWorkPlanMode = false;

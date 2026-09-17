@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize(Roles = "Administrator,Manager,Supervisor,Section,Teknisi,Dashboard")]
+    [Authorize(Roles = "Administrator,Manager Teknik,Supervisor Teknik,Section Teknik,Teknisi,Dashboard")]
     public class HmiController : Controller
     {
         private readonly IHttpClientFactory _httpClientFactory;
@@ -26,7 +26,7 @@ namespace DashboardTeknikP1.Controllers
             return View();
         }
 
-        [Authorize(Roles = "Administrator,Supervisor,Section")]
+        [Authorize(Roles = "Administrator,Supervisor Teknik,Section Teknik")]
         public async Task<IActionResult> Logs()
         {
             var logs = await _hmiRepo.GetRecentLogsAsync(200);

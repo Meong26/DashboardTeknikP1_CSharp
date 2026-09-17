@@ -25,7 +25,7 @@ namespace DashboardTeknikP1.Controllers
         }
 
         // 1. Luncurkan kerangka HTML kosong secepat kilat
-        [Authorize(Roles = "Administrator,Manager,Supervisor,Section,Teknisi")]
+        [Authorize(Roles = "Administrator,Manager Teknik,Supervisor Teknik,Section Teknik,Teknisi")]
         public async Task<IActionResult> Index()
         {
             ViewBag.TargetDowntime = await _settingRepo.GetSettingValueAsync("TargetDowntime", "1.5");
@@ -43,7 +43,7 @@ namespace DashboardTeknikP1.Controllers
         }
 
         // 2. Jalur API khusus untuk menyuplai data ke Dashboard
-        [Authorize(Roles = "Administrator,Manager,Supervisor,Section,Teknisi,Dashboard")]
+        [Authorize(Roles = "Administrator,Manager Teknik,Supervisor Teknik,Section Teknik,Teknisi,Dashboard")]
         [HttpGet]
         [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
         public async Task<IActionResult> GetDashboardData(int? year)

@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace DashboardTeknikP1.Controllers
 {
-    [Authorize(Roles = "Administrator,Supervisor,Section,WHS.SP,Dashboard")]
+    [Authorize(Roles = "Administrator,Supervisor Teknik,Section Teknik,WHS.SP,Dashboard")]
     public class PemakaianController : Controller
     {
         private readonly PemakaianRepository _pemakaianRepo;
@@ -24,7 +24,7 @@ namespace DashboardTeknikP1.Controllers
             _teknisiRepo = teknisiRepo;
         }
 
-        [Authorize(Roles = "Administrator,Supervisor,Section,WHS.SP")]
+        [Authorize(Roles = "Administrator,Supervisor Teknik,Section Teknik,WHS.SP")]
         public IActionResult Index()
         {
             return View();
@@ -90,7 +90,7 @@ namespace DashboardTeknikP1.Controllers
             catch (Exception ex) { return StatusCode(500, ex.Message); }
         }
 
-        [Authorize(Roles = "Administrator,Supervisor,Section")]
+        [Authorize(Roles = "Administrator,Supervisor Teknik,Section Teknik")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> QuarantineItems([FromBody] List<int> ids)
@@ -100,7 +100,7 @@ namespace DashboardTeknikP1.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Administrator,Supervisor,Section")]
+        [Authorize(Roles = "Administrator,Supervisor Teknik,Section Teknik")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> RestoreItem(int id)
@@ -116,7 +116,7 @@ namespace DashboardTeknikP1.Controllers
             }
         }
 
-        [Authorize(Roles = "Administrator,Supervisor,Section")]
+        [Authorize(Roles = "Administrator,Supervisor Teknik,Section Teknik")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ReturItem(int id)
@@ -125,7 +125,7 @@ namespace DashboardTeknikP1.Controllers
             return Ok();
         }
 
-        [Authorize(Roles = "Administrator,Supervisor,Section")]
+        [Authorize(Roles = "Administrator,Supervisor Teknik,Section Teknik")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ShiftToNextWeek(int id)

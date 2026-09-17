@@ -163,28 +163,28 @@
             </div>
             
             <div class="list-group list-group-flush sidebar-menu mt-3 flex-grow-1" style="overflow-y: auto; overflow-x: hidden;">
-                @if (User.IsInRole("Administrator") || User.IsInRole("Manager") || User.IsInRole("Supervisor") || User.IsInRole("Section") || User.IsInRole("Teknisi"))
+                @if (User.IsInRole("Administrator") || User.IsInRole("Manager Teknik") || User.IsInRole("Supervisor Teknik") || User.IsInRole("Section Teknik") || User.IsInRole("Teknisi"))
                 {
                     <a href="/" class="list-group-item list-group-item-action text-decoration-none nav-link-item">
                         <i class="bi bi-bar-chart-fill"></i> <span class="nav-text">Analitik Performa</span>
                     </a>
                 }
 
-                @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor") || User.IsInRole("Section") || User.IsInRole("Teknisi"))
+                @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor Teknik") || User.IsInRole("Section Teknik") || User.IsInRole("Teknisi"))
                 {
                     <a href="/Temuan" class="list-group-item list-group-item-action text-decoration-none nav-link-item">
                         <i class="bi bi-tools"></i> <span class="nav-text">Log Kerusakan</span>
                     </a>
                 }
 
-                @if (User.IsInRole("Administrator") || User.IsInRole("Manager") || User.IsInRole("Supervisor") || User.IsInRole("Section") || User.IsInRole("Teknisi") || User.IsInRole("Dashboard"))
+                @if (User.IsInRole("Administrator") || User.IsInRole("Manager Teknik") || User.IsInRole("Supervisor Teknik") || User.IsInRole("Section Teknik") || User.IsInRole("Teknisi") || User.IsInRole("Dashboard"))
                 {
                     <a href="/Hmi" class="list-group-item list-group-item-action text-decoration-none nav-link-item">
                         <i class="bi bi-display"></i> <span class="nav-text">HMI Live Monitoring</span>
                     </a>
                 }
                 
-                @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor") || User.IsInRole("Section") || User.IsInRole("Teknisi") || User.IsInRole("WHS.SP"))
+                @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor Teknik") || User.IsInRole("Section Teknik") || User.IsInRole("Teknisi") || User.IsInRole("WHS.SP"))
                 {
                     <a href="#sparepartMenu" data-bs-toggle="collapse" class="list-group-item list-group-item-action text-decoration-none d-flex justify-content-between align-items-center nav-link-item">
                         <div>
@@ -193,14 +193,14 @@
                         <i class="bi bi-chevron-down nav-text" style="font-size: 0.8rem; margin-right: 0; min-width: auto;"></i>
                     </a>
                     <div class="collapse" id="sparepartMenu">
-                        @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor") || User.IsInRole("Section") || User.IsInRole("Teknisi") || User.IsInRole("WHS.SP"))
+                        @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor Teknik") || User.IsInRole("Section Teknik") || User.IsInRole("Teknisi") || User.IsInRole("WHS.SP"))
                         {
                             <a href="/Sparepart" class="list-group-item list-group-item-action text-decoration-none nav-link-item ps-4" style="font-size: 0.9rem; background-color: rgba(0,0,0,0.2);">
                                 <i class="bi bi-search me-2" style="font-size: 1rem;"></i> <span class="nav-text">Stok & EWS</span>
                             </a>
                         }
                         
-                        @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor") || User.IsInRole("Section") || User.IsInRole("WHS.SP"))
+                        @if (User.IsInRole("Administrator") || User.IsInRole("Supervisor Teknik") || User.IsInRole("Section Teknik") || User.IsInRole("WHS.SP"))
                         {
                             <a href="/Pemakaian" class="list-group-item list-group-item-action text-decoration-none nav-link-item ps-4" style="font-size: 0.9rem; background-color: rgba(0,0,0,0.2);">
                                 <i class="bi bi-cart-dash me-2" style="font-size: 1rem;"></i> <span class="nav-text">Pemakaian Part</span>
@@ -209,7 +209,7 @@
                     </div>
                 }
                 
-                @if (User.IsInRole("Administrator") || User.IsInRole("Section") || User.IsInRole("Supervisor"))
+                @if (User.IsInRole("Administrator") || User.IsInRole("Section Teknik") || User.IsInRole("Supervisor Teknik"))
                 {
                     <a href="/Upload" class="list-group-item list-group-item-action text-decoration-none nav-link-item">
                         <i class="bi bi-cloud-arrow-up-fill"></i> <span class="nav-text">Sinkronisasi SAP</span>
