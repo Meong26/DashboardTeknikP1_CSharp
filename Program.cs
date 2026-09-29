@@ -30,6 +30,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
     {
         options.LoginPath = "/Auth/Login"; // Jika belum login, lempar ke sini
         options.LogoutPath = "/Auth/Logout";
+        options.AccessDeniedPath = "/Error/403";
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Sesi login kedaluwarsa dalam 30 Menit jika tidak ada aktivitas
         options.SlidingExpiration = true; // Perbarui waktu secara otomatis jika user aktif mengakses server
         options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Mengikuti protokol (HTTP/HTTPS) agar bisa diakses dari HP lokal
@@ -42,9 +43,11 @@ var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
+
+app.UseStatusCodePagesWithReExecute("/Error/{0}");
 
 // app.UseHttpsRedirection(); // Dinonaktifkan sementara agar bisa diakses dari HP via IP lokal HTTP
 app.UseRouting();

@@ -1,0 +1,78 @@
+@{
+    ViewData["Title"] = "Error";
+    Layout = null;
+    int statusCode = ViewBag.StatusCode ?? 500;
+    string errorTitle = "Terjadi Kesalahan";
+    string errorMessage = "Maaf, terjadi kendala teknis pada peladen (server) kami. Tim IT sedang menanganinya.";
+    string iconClass = "bi-exclamation-triangle-fill text-danger";
+    
+    if (statusCode == 404)
+    {
+        errorTitle = "404 - Tidak Ditemukan";
+        errorMessage = "Ups! Halaman yang Anda cari tidak ada atau sudah dipindahkan.";
+        iconClass = "bi-search text-warning";
+    }
+    else if (statusCode == 403 || statusCode == 401)
+    {
+        errorTitle = "403 - Akses Ditolak";
+        errorMessage = "Maaf, Anda tidak memiliki izin otorisasi untuk melihat halaman ini.";
+        iconClass = "bi-shield-lock-fill text-danger";
+    }
+    else if (statusCode >= 500)
+    {
+        errorTitle = "500 - Server Error";
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@errorTitle - Dashboard Teknik P1</title>
+    <link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="~/lib/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .error-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 3rem;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+        .error-icon {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+        h1 {
+            font-weight: 700;
+            color: #343a40;
+        }
+        p {
+            color: #6c757d;
+            margin-bottom: 2rem;
+        }
+        .btn-custom {
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <i class="bi @iconClass error-icon"></i>
+        <h1>@errorTitle</h1>
+        <p>@errorMessage</p>
+        <a href="/" class="btn btn-primary btn-custom"><i class="bi bi-house-door-fill me-2"></i>Kembali ke Beranda</a>
+    </div>
+</body>
+</html>

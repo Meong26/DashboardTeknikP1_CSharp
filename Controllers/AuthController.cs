@@ -12,6 +12,7 @@ using Dapper;
 
 using Microsoft.Extensions.Caching.Memory;
 using System;
+using System.Linq;
 
 namespace DashboardTeknikP1.Controllers
 {
@@ -88,6 +89,15 @@ namespace DashboardTeknikP1.Controllers
 
                         string namaLengkap = userRecord.NamaLengkap;
                         string roleName = userRecord.RoleName;
+
+                        // Validasi Keamanan Lapis 1
+                        string[] allowedRoles = { "Administrator", "Manager Teknik", "Supervisor Teknik", "Section Teknik", "Teknisi", "Dashboard", "WHS.SP", "Admin Teknik" };
+                        
+                        if (!allowedRoles.Contains(roleName))
+                        {
+                            ModelState.AddModelError(string.Empty, $"Akses Ditolak. Divisi/Role '{roleName}' tidak diizinkan masuk ke aplikasi Teknik P1.");
+                            return View(model);
+                        }
 
                         // Terbitkan "KTP Digital" (Claims)
                         var claims = new List<Claim>
