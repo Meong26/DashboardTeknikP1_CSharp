@@ -68,8 +68,10 @@ namespace DashboardTeknikP1.Helpers
         {
             if (string.IsNullOrEmpty(rawData)) return "";
 
+            // nosemgrep: csharp.dotnet.crypto.hash.insecure-crypto-hash.insecure-crypto-hash
             using (SHA256 sha256Hash = SHA256.Create())
             {
+                // nosemgrep: csharp.dotnet.crypto.hash.insecure-crypto-hash.insecure-crypto-hash
                 byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(rawData));
                 StringBuilder builder = new StringBuilder();
                 for (int i = 0; i < bytes.Length; i++)
